@@ -15,7 +15,7 @@ Manage XYZ geometry files:
    1. Translate/rotate single XYS geometries
    2. Set two geometries at a controlled distance 
 
-## Prerequisites
+### Prerequisites
 
    - Python 3.8.10 or later
 
