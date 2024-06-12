@@ -4,7 +4,7 @@
 
 - [About](#about)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
+- [How to Use](#howtouse)
 - [License](#license)
 - [Contact](#contact)
 
@@ -20,7 +20,7 @@ Manage XYZ geometry files:
    - Python 3.8.10 or later
 
 
-## Installation
+## How to use
 
    python3 geom -h
 
