@@ -19,19 +19,19 @@ def read_command_line(argv,inp):
       print ('  Execution:')
       print ('  ==========')
       print ('')
-      print ('     * The inputs must contain each angle(degrees)/distance(Å) in different lines, ending with a non-blank line')
+      print ('     * The inputs must contain each angle(degrees)/distance(Å) in different lines, without blank lines')
       print ('')
       print ('     ------------')
       print ('     Translation:')
       print ('     ------------')
       print ('')
-      print ('     Distances in input (controlled dist between 2 files):')
+      print ('     Distances in input (controlled dist. between 2 files):')
       print ('')
-      print ('     ./geom.py -t distances_input geom1.xyz origin_CM_1{origin_CM_1_yes/no} geom2.xyz origin_CM{origin_CM_2_yes/no} axis{+-}{x/y/z} verbose{verbose_yes/no}')
+      print ('       python3 geom.py -t distances_input geom1.xyz origin_CM_1{origin_CM_1_yes/no} geom2.xyz origin_CM_2{origin_CM_2_yes/no} axis{+-}{x/y/z} verbose{verbose_yes/no}')
       print ('')
       print ('     One translation:')
       print ('')
-      print ('     ./geom.py -t1 shift geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom.py -t1 shift geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('')
       print ('     ---------')
@@ -40,25 +40,25 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Angles in input:')
       print ('')
-      print ('     ./geom.py -r angles_input geom1.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom.py -r angles_input geom1.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('     One rotation:')
       print ('')
-      print ('     ./geom.py -r1 angle geom1.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom.py -r1 angle geom1.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('')
       print ('     -----------------')
       print ('     Minimum Distance:')
       print ('     -----------------')
       print ('')
-      print ('     ./geom.py -min geom1.xyz geom2.xyz')
+      print ('     python3 geom.py -min geom1.xyz geom2.xyz')
       print ('')
       print ('')
       print ('     --------------------')
       print ('     Centers grid points:')
       print ('     --------------------')
       print ('')
-      print ('     ./geom.py -c geom_inputs')
+      print ('     python3 geom.py -c geom_inputs')
       print ('')
    
       sys.exit()
@@ -78,13 +78,18 @@ def read_command_line(argv,inp):
       if (inp.verbose_inp == 'verbose_yes'): inp.verbose = True
    
    elif argv[1] == '-t1':
-      inp.translate_1     = True
-      inp.shift_t1        = float(argv[2])
-      inp.geom2_file      = str(argv[3]) 
-      inp.origin_CM_2     = str(argv[4])
-      inp.dir_axis_input  = str(argv[5])
+      inp.translate_1    = True
+      inp.shift_t1       = float(argv[2])
+      inp.geom_file      = str(argv[3]) 
+      inp.origin_CM      = str(argv[4])
+      inp.dir_axis_input = str(argv[5])
+
+      if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
    
    elif argv[1] == '-r':
+
+      output.error('Rotate input not supported')
+      
       inp.rotate = True
       inp.angles_input    = str(argv[2])
       inp.geom1_file      = str(argv[3]) 
@@ -92,6 +97,8 @@ def read_command_line(argv,inp):
       inp.dir_axis_input  = str(argv[5])
    
    elif argv[1] == '-r1':
+      output.error('Rotate 1 not supported')
+
       inp.rotate_1 = True
       inp.angle           = float(argv[2])
       inp.geom1_file      = str(argv[3]) 
@@ -99,11 +106,14 @@ def read_command_line(argv,inp):
       inp.dir_axis_input  = str(argv[5])
    
    elif argv[1] == '-min':
+      output.error('Min distance nor supported')
+
       inp.minimum_distance = True
       inp.geom1_file      = str(argv[2])
       inp.geom2_file      = str(argv[3])
    
    elif argv[1] == '-c':
+      output.error('Centroids list not supported')
       inp.centers_grid = True
       inp.input_geom_files = str(argv[2])
    
@@ -164,7 +174,7 @@ def create_results_geom():
    """ 
    Create results folder
    """
-   if (os.path.exists(f'results_geom')):
+   if (os.path.exists('results_geom')):
       print(' ')
       print(' ------------------------------------------------')
       print(f'  WARNING: "results_geom" folder already exists"')
@@ -191,7 +201,5 @@ def create_results_geom():
          print(' ')
          sys.exit()
 
-   os.system(f'mkdir results_geom')
-# -------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------
+   if (not(os.path.exists('results_geom'))): os.system(f'mkdir results_geom')
 # -------------------------------------------------------------------------------------

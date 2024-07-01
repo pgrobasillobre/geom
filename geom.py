@@ -1,7 +1,7 @@
 import sys 
 
 from classes import parameters, input_class
-from functions import general, translate 
+from functions import general, output, translate 
 
 #                    ██████╗ ███████╗ ██████╗ ███╗   ███╗     ██████╗ ██████╗ ██████╗ ███████╗                
 #                   ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║    ██╔════╝██╔═══██╗██╔══██╗██╔════╝                
@@ -28,7 +28,11 @@ inp = input_class.input_class()
 general.read_command_line(sys.argv,inp)
 
 # -- Select geom code case
-if inp.translate_controlled_distance:
+if (inp.translate_controlled_distance):
    translate.translate_controlled_distance(inp)
 
+elif (inp.translate_1):
+   translate.translate_1(inp)
 
+# -- Close
+output.print_normal_termination()
