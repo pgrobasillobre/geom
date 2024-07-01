@@ -23,8 +23,7 @@ def translate_controlled_distance(inp):
    :inp: input class
    """
    #
-
-   # Check input, create results folder, intialize logfile
+   # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
    out_log = output.logfile_init()
@@ -154,8 +153,44 @@ def translate_controlled_distance(inp):
 
       dist_pre = dist_new
    
-   # -- Close and save Logfile
+   # Close and save Logfile
    output.logfile_close(out_log)
    
    
+#
+#     ______                      __      __          ___
+#    /_  __/________ _____  _____/ /___ _/ /____     <  /
+#     / / / ___/ __ `/ __ \/ ___/ / __ `/ __/ _ \    / / 
+#    / / / /  / /_/ / / / (__  ) / /_/ / /_/  __/   / /  
+#   /_/ /_/   \__,_/_/ /_/____/_/\__,_/\__/\___/   /_/  
+#   
+#
+
+def translate_1(inp):
+   #
+   """ 
+   Translate one molecule by a given shift.
+
+   :inp: input class
+   """
+   #
+   # Check input, create results folder, initialize logfile
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+
+   # Initialize molecule class and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file,inp.move_geom_to_000)
+ 
+   # Translate 
+   mol.translate_geom(inp.shift_t1,inp.dir_factor)
+
+   # Save shifted geometry
+   shift_rounded = math.ceil(inp.shift_t1 * 100) / 100
+   file_geom_translated = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_d_{shift_rounded:.2f}"
+   
+   # Close and save logfile
+   output.print_geom(mol, file_geom_translated)
+
 
