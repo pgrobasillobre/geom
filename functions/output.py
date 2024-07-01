@@ -105,6 +105,7 @@ def print_convergence_achieved(dist):
    """
    # 
    print('  Convergence achieved to distance ' +  str(round(dist,4)) + ' Å') 
+   print('')
 # -------------------------------------------------------------------------------------
 def save_distance_opt(out_log,distance,dist_new,dir_axis_input):
 
@@ -113,10 +114,13 @@ def save_distance_opt(out_log,distance,dist_new,dir_axis_input):
    
    out_log.write(f" {'  Convergence achieved to distance':>34} {dist_new:20.8f} {'Å':>5}\n\n\n")
 # -------------------------------------------------------------------------------------
+def print_normal_termination():
+   """
+   Print normal termination banner
+   """
+   print(' ')
+   print(' ===================================== ')
+   print('           NORMAL TERMINATION          ')
+   print(' ===================================== ')
+   print(' ')
 # -------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------
-#
-#
-#
