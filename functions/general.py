@@ -40,7 +40,7 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Angles in input:')
       print ('')
-      print ('       python3 geom.py -r angles_input geom1.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom.py -r angles_input geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('     One rotation:')
       print ('')
@@ -87,15 +87,14 @@ def read_command_line(argv,inp):
       if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
    
    elif argv[1] == '-r':
+      inp.rotate_angles  = True
+      inp.angles_input   = str(argv[2])
+      inp.geom_file      = str(argv[3]) 
+      inp.origin_CM      = str(argv[4])
+      inp.dir_axis_input = str(argv[5])
 
-      output.error('Rotate input not supported')
-      
-      inp.rotate = True
-      inp.angles_input    = str(argv[2])
-      inp.geom1_file      = str(argv[3]) 
-      inp.origin_CM       = str(argv[4])
-      inp.dir_axis_input  = str(argv[5])
-   
+      if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
+
    elif argv[1] == '-r1':
       output.error('Rotate 1 not supported')
 
@@ -201,5 +200,5 @@ def create_results_geom():
          print(' ')
          sys.exit()
 
-   if (not(os.path.exists('results_geom'))): os.system(f'mkdir results_geom')
+   if (not(os.path.exists('results_geom'))): os.system('mkdir results_geom')
 # -------------------------------------------------------------------------------------
