@@ -89,7 +89,15 @@ class input_class:
          general.check_file_extension(self.geom_file,'.xyz')
 
          general.check_dir_axis(self)
-         
+
+      elif (self.min_dist):
+         general.check_file_exists(self.geom1_file)
+         general.check_file_exists(self.geom2_file)
+
+         general.check_file_extension(self.geom1_file,'.xyz')
+         general.check_file_extension(self.geom2_file,'.xyz')
+
+ 
 
    # ------------------------------------------- #
    # ------- Read distances/angles input ------- #
