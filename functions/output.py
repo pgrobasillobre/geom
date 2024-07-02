@@ -108,21 +108,44 @@ def print_convergence_achieved(dist):
    print('')
 # -------------------------------------------------------------------------------------
 def save_distance_opt(out_log,distance,dist_new,dir_axis_input):
+   #
    """
    Save converged distance in logfile
    """
+   #
    out_log.write(f"\n"
                  f" {' ------ Optimizing d =':>22} {distance:20.8f} {'Å ------ ':>12}\n\n")
    
    out_log.write(f" {'  Convergence achieved to distance':>34} {dist_new:20.8f} {'Å':>5}\n\n\n")
 # -------------------------------------------------------------------------------------
-def print_normal_termination():
+def print_normal_termination(inp):
+   #
    """
    Print normal termination banner
    """
-   print(' ')
-   print(' ===================================== ')
-   print('           NORMAL TERMINATION          ')
-   print(' ===================================== ')
-   print(' ')
+   #
+   if (not inp.min_dist):
+      print(' ')
+      print(' ===================================== ')
+      print('           NORMAL TERMINATION          ')
+      print(' ===================================== ')
+      print(' ')
+# -------------------------------------------------------------------------------------
+def print_min_dist(inp,distance):
+   #
+   """
+   Print minimum distance
+   """
+   #
+
+   distance = round(distance,4)
+
+   print('')
+   print('  -------------------------------')
+   print(f'    Geometry 1: {inp.geom1_file}')
+   print(f'    Geometry 2: {inp.geom2_file}')
+   print('')
+   print(f'    Minimum\n    distance  : {distance} Å')
+   print('  -------------------------------')
+   print('')
 # -------------------------------------------------------------------------------------

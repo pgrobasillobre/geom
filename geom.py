@@ -48,4 +48,4 @@ else:
    output.error('STOP: GEOM case not recognised.')
 
 # -- Close
-output.print_normal_termination()
+output.print_normal_termination(inp)
