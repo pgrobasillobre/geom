@@ -2,7 +2,7 @@ import math
 import copy
 
 from classes import molecule
-from functions import tools
+from functions import tools, output
 
 #        __  ____       _                         
 #       /  |/  (_)___  (_)___ ___  __  ______ ___ 
@@ -39,14 +39,7 @@ def min_dist(inp):
    # Calc min distance
    distance = tools.calc_min_distance(mol_1,mol_2)
 
-   print('')
-   print('  -------------------------------')
-   print('    Geometry 1: ' + inp.geom1_file)
-   print('    Geometry 2: ' + inp.geom2_file)
-   print('')
-   print('    Minimum\n' + 
-         '    distance  : ' + str(round(distance,4)) + ' Å')
-   print('  -------------------------------')
-   
+   # Print calculated minimum distance
+   output.print_min_dist(inp,distance)
 
 
