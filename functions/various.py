@@ -25,11 +25,11 @@ def min_dist(inp):
    :inp: input class
    """
    #
-   #
-   # Check input, create results folder, initialize logfile
+    
+   # Check input
    inp.check_input_case()   
  
-   # Initialize molecules class and read geometries
+   # Initialize molecules and read geometries
    mol_1 = molecule.molecule()
    mol_2 = molecule.molecule()
 
@@ -42,4 +42,29 @@ def min_dist(inp):
    # Print calculated minimum distance
    output.print_min_dist(inp,distance)
 
+
+#       ______           __             
+#      / ____/__  ____  / /____  _____
+#     / /   / _ \/ __ \/ __/ _ \/ ___/
+#    / /___/  __/ / / / /_/  __/ /  
+#    \____/\___/_/ /_/\__/\___/_/  
+#                                                                 
+
+def geom_center(inp):
+   #
+   """ 
+   Calculate geometrical center
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+ 
+   # Initialize molecule and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file,False)
+ 
+   output.print_geom_center(inp,mol.xyz_center)
 
