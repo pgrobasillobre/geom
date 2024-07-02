@@ -1,7 +1,7 @@
 import sys 
 
 from classes import parameters, input_class
-from functions import general, output, translate, rotate
+from functions import general, output, translate, rotate, various
 
 
 #                    ██████╗ ███████╗ ██████╗ ███╗   ███╗     ██████╗ ██████╗ ██████╗ ███████╗                
@@ -40,6 +40,12 @@ elif(inp.rotate_angles):
 
 elif(inp.rotate_1):
    rotate.rotate_1(inp)
+
+elif(inp.min_dist):
+   various.min_dist(inp)
+
+else:
+   output.error('STOP: GEOM case not recognised.')
 
 # -- Close
 output.print_normal_termination()

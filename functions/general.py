@@ -65,6 +65,7 @@ def read_command_line(argv,inp):
     
    elif argv[1] == '-t':
       inp.translate_controlled_distance = True
+
       inp.distances_input = str(argv[2])
       inp.geom1_file      = str(argv[3]) 
       inp.origin_CM_1     = str(argv[4])
@@ -78,7 +79,8 @@ def read_command_line(argv,inp):
       if (inp.verbose_inp == 'verbose_yes'): inp.verbose = True
    
    elif argv[1] == '-t1':
-      inp.translate_1    = True
+      inp.translate_1 = True
+
       inp.shift_t1       = float(argv[2])
       inp.geom_file      = str(argv[3]) 
       inp.origin_CM      = str(argv[4])
@@ -87,7 +89,8 @@ def read_command_line(argv,inp):
       if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
    
    elif argv[1] == '-r':
-      inp.rotate_angles  = True
+      inp.rotate_angles = True
+
       inp.angles_input   = str(argv[2])
       inp.geom_file      = str(argv[3]) 
       inp.origin_CM      = str(argv[4])
@@ -97,6 +100,7 @@ def read_command_line(argv,inp):
 
    elif argv[1] == '-r1':
       inp.rotate_1 = True
+
       inp.angle          = float(argv[2])
       inp.geom_file      = str(argv[3]) 
       inp.origin_CM      = str(argv[4])
@@ -105,11 +109,9 @@ def read_command_line(argv,inp):
       if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
    
    elif argv[1] == '-min':
-      output.error('Min distance nor supported')
-
-      inp.minimum_distance = True
-      inp.geom1_file      = str(argv[2])
-      inp.geom2_file      = str(argv[3])
+      inp.min_dist = True
+      inp.geom1_file = str(argv[2])
+      inp.geom2_file = str(argv[3])
    
    elif argv[1] == '-c':
       output.error('Centroids list not supported')
@@ -117,13 +119,7 @@ def read_command_line(argv,inp):
       inp.input_geom_files = str(argv[2])
    
    else:
-      print ('')
-      print ('   ERROR: Option not recognised.')
-      print ('')
-      print ('   --> Try ./geom.py -h')
-      print ('')
-   
-      sys.exit()
+      output.error('ERROR: Option not recognised. Try python3 geom.py -h')
 # -------------------------------------------------------------------------------------
 def check_file_exists(infile):
    #
