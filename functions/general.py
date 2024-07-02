@@ -96,13 +96,13 @@ def read_command_line(argv,inp):
       if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
 
    elif argv[1] == '-r1':
-      output.error('Rotate 1 not supported')
-
       inp.rotate_1 = True
-      inp.angle           = float(argv[2])
-      inp.geom1_file      = str(argv[3]) 
-      inp.origin_CM       = str(argv[4])
-      inp.dir_axis_input  = str(argv[5])
+      inp.angle          = float(argv[2])
+      inp.geom_file      = str(argv[3]) 
+      inp.origin_CM      = str(argv[4])
+      inp.dir_axis_input = str(argv[5])
+
+      if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
    
    elif argv[1] == '-min':
       output.error('Min distance nor supported')

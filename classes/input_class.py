@@ -38,6 +38,8 @@ class input_class:
       self.angles = []
 
       self.angles_input = ''
+
+      self.angle = 0.0
       
       # -- Center grid points
       self.centers_grid = False
@@ -77,6 +79,12 @@ class input_class:
          general.check_file_exists(self.angles_input)
          self.read_input(what='angles')
 
+         general.check_file_exists(self.geom_file)
+         general.check_file_extension(self.geom_file,'.xyz')
+
+         general.check_dir_axis(self)
+
+      elif (self.rotate_1):
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
 

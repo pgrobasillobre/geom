@@ -38,5 +38,8 @@ elif (inp.translate_1):
 elif(inp.rotate_angles):
    rotate.rotate_angles(inp)
 
+elif(inp.rotate_1):
+   rotate.rotate_1(inp)
+
 # -- Close
 output.print_normal_termination()
