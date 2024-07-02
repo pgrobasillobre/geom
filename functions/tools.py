@@ -1,10 +1,11 @@
 import math
+import copy
 
 # ------------------------------------------ #
 # ------- Calculate minimum distance ------- #
 
 def calc_min_distance(geom1,geom2):
-#
+   #
    """
    Calculate the minimum distance between two molecule classes
 
@@ -13,7 +14,7 @@ def calc_min_distance(geom1,geom2):
 
    :return: dist: minimum distance between the two geometries
    """ 
-#
+   #
    distIJ_min = 999999999999.9 # Initialize
  
    for i in range(geom2.nAtoms):
@@ -27,4 +28,45 @@ def calc_min_distance(geom1,geom2):
          if(distIJ < distIJ_min): distIJ_min = distIJ
  
    return (distIJ_min)
+
+# ------------------------------- #
+# ------- Rotate geometry ------- #
+
+def rotate(mol,angle,dir_axis_input,mol_rot):
+   #
+   """
+   Rotate molecule geometry
+
+   :mol           : initial geometry
+   :angle         : rotation angle (degrees)
+   :dir_axis_input: rotation axis and sense {+-}{xyz}
+
+   :return: mol_rot: rotated geometry
+   """ 
+   #
+   mol_rot = copy.deepcopy(mol)
+
+   theta = math.radians(angle)
+
+   cos_theta = math.cos(theta)
+   sin_theta = math.sin(theta)
+
+   if (dir_axis_input[1]=='x'):
+      mol_rot.xyz[1, :] =  mol.xyz[1, :] * cos_theta - mol.xyz[2, :] * sin_theta
+      mol_rot.xyz[2, :] =  mol.xyz[1, :] * sin_theta + mol.xyz[2, :] * cos_theta
+
+   elif (dir_axis_input[1]=='y'): 
+      mol_rot.xyz[0, :] =  mol.xyz[0, :] * cos_theta + mol.xyz[2, :] * sin_theta
+      mol_rot.xyz[2, :] = -mol.xyz[0, :] * sin_theta + mol.xyz[2, :] * cos_theta
+
+   elif (dir_axis_input[1]=='z'):
+      mol_rot.xyz[0, :] =  mol.xyz[0, :] * cos_theta - mol.xyz[1, :] * sin_theta
+      mol_rot.xyz[1, :] =  mol.xyz[0, :] * sin_theta + mol.xyz[1, :] * cos_theta
+
+   return(mol_rot)
+
+
+
+
+
 
