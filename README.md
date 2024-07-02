@@ -12,8 +12,11 @@
 
 Manage XYZ geometry files:
 
-   1. Translate/rotate single XYS geometries
-   2. Set two geometries at a controlled distance 
+   1. Translate/rotate single XYZ files.
+   2. Set two geometries at a controlled distance.
+   3. Calculate minimum distance between two XYZ files.
+   4. Calculate geometrical center XYZ file.
+
 
 ### Prerequisites
 
