@@ -1,7 +1,8 @@
 import sys 
 
 from classes import parameters, input_class
-from functions import general, output, translate 
+from functions import general, output, translate, rotate
+
 
 #                    ██████╗ ███████╗ ██████╗ ███╗   ███╗     ██████╗ ██████╗ ██████╗ ███████╗                
 #                   ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║    ██╔════╝██╔═══██╗██╔══██╗██╔════╝                
@@ -33,6 +34,9 @@ if (inp.translate_controlled_distance):
 
 elif (inp.translate_1):
    translate.translate_1(inp)
+
+elif(inp.rotate_angles):
+   rotate.rotate_angles(inp)
 
 # -- Close
 output.print_normal_termination()

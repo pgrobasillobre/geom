@@ -153,7 +153,7 @@ def translate_controlled_distance(inp):
 
       dist_pre = dist_new
    
-   # Close and save Logfile
+   # Close and save logfile
    output.logfile_close(out_log)
    
    
@@ -189,8 +189,9 @@ def translate_1(inp):
    # Save shifted geometry
    shift_rounded = math.ceil(inp.shift_t1 * 100) / 100
    file_geom_translated = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_d_{shift_rounded:.2f}"
-   
-   # Close and save logfile
+
    output.print_geom(mol, file_geom_translated)
 
-
+   # Close and save logfile
+   output.logfile_close(out_log)
+ 

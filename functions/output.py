@@ -19,7 +19,7 @@ def error(error_message):
 def error_dir_axis(dir_axis_input):
    #
    """ 
-   Raise error related to the axis input
+   Raise error related to axis input
 
    :error_message : Error message to raise
    """
@@ -101,14 +101,16 @@ def print_computed_distance(dist):
 def print_convergence_achieved(dist):
    #
    """
-   Print computed distance
+   Print converged achieved 
    """
    # 
    print('  Convergence achieved to distance ' +  str(round(dist,4)) + ' Å') 
    print('')
 # -------------------------------------------------------------------------------------
 def save_distance_opt(out_log,distance,dist_new,dir_axis_input):
-
+   """
+   Save converged distance in logfile
+   """
    out_log.write(f"\n"
                  f" {' ------ Optimizing d =':>22} {distance:20.8f} {'Å ------ ':>12}\n\n")
    
