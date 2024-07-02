@@ -23,7 +23,7 @@ def rotate_angles(inp):
    general.create_results_geom()
    out_log = output.logfile_init()
 
-   # Initialize molecules class and read geometry
+   # Initialize molecules and read geometry
    mol = molecule.molecule()
    mol_rot = molecule.molecule()
 
@@ -67,7 +67,7 @@ def rotate_1(inp):
    general.create_results_geom()
    out_log = output.logfile_init()
 
-   # Initialize molecules class and read geometry
+   # Initialize molecules and read geometry
    mol = molecule.molecule()
    mol_rot = molecule.molecule()
 

@@ -21,7 +21,7 @@ def error_dir_axis(dir_axis_input):
    """ 
    Raise error related to axis input
 
-   :error_message : Error message to raise
+   :error_message: Error message to raise
    """
    #
    print(' ')
@@ -124,7 +124,7 @@ def print_normal_termination(inp):
    Print normal termination banner
    """
    #
-   if (not inp.min_dist):
+   if (not inp.min_dist and not inp.geom_center):
       print(' ')
       print(' ===================================== ')
       print('           NORMAL TERMINATION          ')
@@ -141,11 +141,33 @@ def print_min_dist(inp,distance):
    distance = round(distance,4)
 
    print('')
-   print('  -------------------------------')
+   print('  -----------------------------------------------')
    print(f'    Geometry 1: {inp.geom1_file}')
    print(f'    Geometry 2: {inp.geom2_file}')
    print('')
    print(f'    Minimum\n    distance  : {distance} Å')
-   print('  -------------------------------')
+   print('  -----------------------------------------------')
+   print('')
+# -------------------------------------------------------------------------------------
+def print_geom_center(inp,xyz_c):
+   #
+   """
+   Print geometrical center of given molecule distance
+
+   :inp  : input class
+   :xyz_c: geometrical center
+   """
+   #
+
+   x = round(xyz_c[0],4)
+   y = round(xyz_c[1],4)
+   z = round(xyz_c[2],4)
+
+   print('')
+   print('  ------------------------------------------')
+   print(f'    Geometry : {inp.geom_file}')
+   print('')
+   print(f'    Geometrical \n    Center (xyz,Å)  : {x} {y} {z} ')
+   print('  ------------------------------------------')
    print('')
 # -------------------------------------------------------------------------------------

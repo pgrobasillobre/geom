@@ -28,7 +28,7 @@ def translate_controlled_distance(inp):
    general.create_results_geom()
    out_log = output.logfile_init()
 
-   # Initialize molecules class and read geometries
+   # Initialize molecules and read geometries
    mol_1 = molecule.molecule()
    mol_2 = molecule.molecule()
 
@@ -179,7 +179,7 @@ def translate_1(inp):
    general.create_results_geom()
    out_log = output.logfile_init()
 
-   # Initialize molecule class and read geometry
+   # Initialize molecule and read geometry
    mol = molecule.molecule()
    mol.read_geom(inp.geom_file,inp.move_geom_to_000)
  

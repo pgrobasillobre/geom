@@ -44,7 +44,7 @@ def read_command_line(argv,inp):
       print ('')
       print ('     One rotation:')
       print ('')
-      print ('       python3 geom.py -r1 angle geom1.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom.py -r1 angle geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('')
       print ('     -----------------')
@@ -54,11 +54,11 @@ def read_command_line(argv,inp):
       print ('     python3 geom.py -min geom1.xyz geom2.xyz')
       print ('')
       print ('')
-      print ('     --------------------')
-      print ('     Centers grid points:')
-      print ('     --------------------')
+      print ('     -------------------')
+      print ('     Geometrical Center:')
+      print ('     -------------------')
       print ('')
-      print ('     python3 geom.py -c geom_inputs')
+      print ('     python3 geom.py -c geom.xyz')
       print ('')
    
       sys.exit()
@@ -114,9 +114,9 @@ def read_command_line(argv,inp):
       inp.geom2_file = str(argv[3])
    
    elif argv[1] == '-c':
-      output.error('Centroids list not supported')
-      inp.centers_grid = True
-      inp.input_geom_files = str(argv[2])
+      inp.geom_center = True
+
+      inp.geom_file = str(argv[2])
    
    else:
       output.error('ERROR: Option not recognised. Try python3 geom.py -h')
