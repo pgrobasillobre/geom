@@ -29,7 +29,7 @@ class input_class:
       self.direction = 1.0
 
       # -- Minimum distance
-      self.minimum_distance = False
+      self.min_dist = False
       
       # -- Rotate
       self.rotate_angles = False
@@ -42,7 +42,7 @@ class input_class:
       self.angle = 0.0
       
       # -- Center grid points
-      self.centers_grid = False
+      self.geom_center = False
 
       # -- Verbose
       self.verbose = False
@@ -97,7 +97,10 @@ class input_class:
          general.check_file_extension(self.geom1_file,'.xyz')
          general.check_file_extension(self.geom2_file,'.xyz')
 
- 
+      elif (self.geom_center):
+         general.check_file_exists(self.geom_file)
+         general.check_file_extension(self.geom_file,'.xyz')
+
 
    # ------------------------------------------- #
    # ------- Read distances/angles input ------- #

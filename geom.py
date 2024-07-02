@@ -44,6 +44,9 @@ elif(inp.rotate_1):
 elif(inp.min_dist):
    various.min_dist(inp)
 
+elif(inp.geom_center):
+   various.geom_center(inp)
+
 else:
    output.error('STOP: GEOM case not recognised.')
 
