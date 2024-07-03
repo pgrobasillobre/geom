@@ -47,8 +47,5 @@ elif(inp.min_dist):
 elif(inp.geom_center):
    various.geom_center(inp)
 
-else:
-   output.error('STOP: GEOM case not recognised.')
-
 # -- Close
 output.print_normal_termination(inp)
