@@ -1,6 +1,6 @@
 import sys 
 
-from classes import parameters, input_class
+from classes import input_class
 from functions import general, output, translate, rotate, various
 
 
