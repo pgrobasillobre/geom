@@ -13,6 +13,7 @@ class molecule:
       self.nAtoms = 0
 
       self.xyz_center = np.zeros(3)
+      self.xyz_min    = np.zeros(3)
       self.xyz_max    = np.zeros(3)
 
    # ----------------------------- #
@@ -62,10 +63,14 @@ class molecule:
 
          output.print_geom(self,geom_file[:-4]+'_000')
 
-      # Save maximun coordinates limits
+      # Save maximun/minimum coordinates limits
       self.xyz_max[0] = np.max(self.xyz[0,:])
       self.xyz_max[1] = np.max(self.xyz[1,:])
       self.xyz_max[2] = np.max(self.xyz[2,:])
+
+      self.xyz_min[0] = np.min(self.xyz[0,:])
+      self.xyz_min[1] = np.min(self.xyz[1,:])
+      self.xyz_min[2] = np.min(self.xyz[2,:])
 
       return(self)
 

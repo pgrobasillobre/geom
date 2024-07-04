@@ -105,15 +105,18 @@ def geom_specular(inp):
  
    # Initialize molecule and read geometry
    mol = molecule.molecule()
-   mol_spec = molecule.molecule()
-
    mol.read_geom(inp.geom_file,True)
  
-   # Create specular geometry
-   mol_spec = tools.create_specular_geom(mol,mol_spec)
+   # Create specular geometry along x and move at 5 Å 
+   shift = (mol.xyz_max[0] - mol.xyz_min[0]) + 5.0
+   dir_factor = [1.0,0.0,0.0]
+
+   mol.xyz[0,:] = -mol.xyz[0,:]
+
+   mol.translate_geom(shift,dir_factor)
  
    # Save specular geometry
-   output.print_geom(mol_spec, inp.geom_file[:-4]+'_000_mirror')
+   output.print_geom(mol, inp.geom_file[:-4]+'_000_mirror')
 
    # Close and save logfile
    output.logfile_close(out_log)
