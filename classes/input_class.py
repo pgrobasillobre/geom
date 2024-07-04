@@ -41,8 +41,11 @@ class input_class:
 
       self.angle = 0.0
       
-      # -- Center grid points
+      # -- Geometrical center
       self.geom_center = False
+
+      # -- Specular geometry
+      self.geom_specular = False
 
       # -- Verbose
       self.verbose = False
@@ -101,6 +104,9 @@ class input_class:
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
 
+      elif (self.geom_specular):
+         general.check_file_exists(self.geom_file)
+         general.check_file_extension(self.geom_file,'.xyz')
 
    # ------------------------------------------- #
    # ------- Read distances/angles input ------- #

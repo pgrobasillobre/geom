@@ -47,5 +47,8 @@ elif(inp.min_dist):
 elif(inp.geom_center):
    various.geom_center(inp)
 
+elif(inp.geom_specular):
+   various.geom_specular(inp)
+
 # -- Close
 output.print_normal_termination(inp)
