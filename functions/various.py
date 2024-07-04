@@ -2,7 +2,7 @@ import math
 import copy
 
 from classes import molecule
-from functions import tools, output
+from functions import tools, general, output
 
 #        __  ____       _                         
 #       /  |/  (_)___  (_)___ ___  __  ______ ___ 
@@ -25,7 +25,7 @@ def min_dist(inp):
    :inp: input class
    """
    #
-    
+
    # Check input
    inp.check_input_case()   
  
@@ -43,12 +43,18 @@ def min_dist(inp):
    output.print_min_dist(inp,distance)
 
 
-#       ______           __             
+#       ______                        
+#      / ____/__  ____  ____ ___      
+#     / / __/ _ \/ __ \/ __ `__ \     
+#    / /_/ /  __/ /_/ / / / / / /     
+#    \____/\___/\____/_/ /_/ /_/      
+#                                     
+#       ______           __           
 #      / ____/__  ____  / /____  _____
 #     / /   / _ \/ __ \/ __/ _ \/ ___/
-#    / /___/  __/ / / / /_/  __/ /  
-#    \____/\___/_/ /_/\__/\___/_/  
-#                                                                 
+#    / /___/  __/ / / / /_/  __/ /    
+#    \____/\___/_/ /_/\__/\___/_/     
+#                                     
 
 def geom_center(inp):
    #
@@ -68,3 +74,47 @@ def geom_center(inp):
  
    output.print_geom_center(inp,mol.xyz_center)
 
+
+#       ______                                  
+#      / ____/__  ____  ____ ___                
+#     / / __/ _ \/ __ \/ __ `__ \               
+#    / /_/ /  __/ /_/ / / / / / /               
+#    \____/\___/\____/_/ /_/ /_/                
+#                                               
+#       _____                       __          
+#      / ___/____  ___  _______  __/ /___ ______
+#      \__ \/ __ \/ _ \/ ___/ / / / / __ `/ ___/
+#     ___/ / /_/ /  __/ /__/ /_/ / / /_/ / /    
+#    /____/ .___/\___/\___/\__,_/_/\__,_/_/     
+#        /_/                                    
+#
+
+def geom_specular(inp):
+   #
+   """ 
+   Create specular geometry
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+ 
+   # Initialize molecule and read geometry
+   mol = molecule.molecule()
+   mol_spec = molecule.molecule()
+
+   mol.read_geom(inp.geom_file,True)
+ 
+   # Create specular geometry
+   mol_spec = tools.create_specular_geom(mol,mol_spec)
+ 
+   # Save specular geometry
+   output.print_geom(mol_spec, inp.geom_file[:-4]+'_000_mirror')
+
+   # Close and save logfile
+   output.logfile_close(out_log)
+ 
