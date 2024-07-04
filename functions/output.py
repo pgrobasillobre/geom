@@ -35,30 +35,34 @@ def error_dir_axis(dir_axis_input):
    sys.exit()
 # -------------------------------------------------------------------------------------
 def logfile_init():
+   #
    """
    Initialize logfile memory unit
    """
+   #
    out_log = open('results_geom/logfile.txt','w')
 
    return(out_log)
 # -------------------------------------------------------------------------------------
 def logfile_close(out_log):
+   #
    """
    Close logfile memory unit
    """
+   #
    out_log.close()
 
    return(out_log)
 # -------------------------------------------------------------------------------------
 def print_geom(molecule,output_file):
-#
+   #
    """
    Print geometry to xyz file
 
    :molecule   : molecule class 
    :output_file: output file name
    """
-#
+   #
    with open(f'results_geom/{output_file}.xyz', 'w') as out_f:
        out_f.write(f"{molecule.nAtoms}\n")
        out_f.write('Generated with GEOM code\n')
@@ -137,7 +141,6 @@ def print_min_dist(inp,distance):
    Print minimum distance
    """
    #
-
    distance = round(distance,4)
 
    print('')
@@ -158,7 +161,6 @@ def print_geom_center(inp,xyz_c):
    :xyz_c: geometrical center
    """
    #
-
    x = round(xyz_c[0],4)
    y = round(xyz_c[1],4)
    z = round(xyz_c[2],4)

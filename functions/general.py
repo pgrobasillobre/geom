@@ -60,6 +60,13 @@ def read_command_line(argv,inp):
       print ('')
       print ('     python3 geom.py -c geom.xyz')
       print ('')
+      print ('')
+      print ('     ------------------')
+      print ('     Specular geometry:')
+      print ('     ------------------')
+      print ('')
+      print ('     python3 geom.py -mirror geom.xyz')
+      print ('')
    
       sys.exit()
     
@@ -117,6 +124,11 @@ def read_command_line(argv,inp):
       inp.geom_center = True
 
       inp.geom_file = str(argv[2])
+
+   elif argv[1] == '-mirror':
+      inp.geom_specular = True
+
+      inp.geom_file = str(argv[2])
    
    else:
       output.error('ERROR: Option not recognised. Try python3 geom.py -h')
@@ -169,6 +181,7 @@ def create_results_geom():
    """ 
    Create results folder
    """
+   #
    if (os.path.exists('results_geom')):
       print(' ')
       print(' ------------------------------------------------')
