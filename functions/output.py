@@ -21,7 +21,7 @@ def error_dir_axis(dir_axis_input):
    """ 
    Raise error related to axis input
 
-   :error_message: Error message to raise
+   :dir_axis_input: Direction axis not supported
    """
    #
    print(' ')
