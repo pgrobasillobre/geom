@@ -72,7 +72,7 @@ def read_command_line(argv,inp):
       print ('     Generate Tip Microscope Geometry')
       print ('     --------------------------------')
       print ('')
-      print ('     python3 geom.py -gentip atom_type{Ag/Au} z_min z_max')
+      print ('     python3 geom.py -gentip atom_type{Ag/Au} z_max a b')
       print ('')
    
       sys.exit()
@@ -152,8 +152,9 @@ def read_command_line(argv,inp):
       if inp.atomtype=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
       if inp.atomtype=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
 
-      inp.elliptic_parabola_z_min = float(argv[3])
-      inp.elliptic_parabola_z_max = float(argv[4])
+      inp.elliptic_parabola_z_max = float(argv[3])
+      inp.elliptic_parabola_a = float(argv[4])
+      inp.elliptic_parabola_b = float(argv[5])
 
    else:
       output.error('ERROR: Option not recognised. Try python3 geom.py -h')
