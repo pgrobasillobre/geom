@@ -17,6 +17,7 @@ Manage XYZ geometry files:
    3. Calculate minimum distance between two XYZ files.
    4. Calculate geometrical center of XYZ file.
    5. Create specular geometry.
+   6. Create round tip geometry.
 
 
 ### Prerequisites
