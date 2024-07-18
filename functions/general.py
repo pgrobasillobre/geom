@@ -72,7 +72,7 @@ def read_command_line(argv,inp):
       print ('     Generate Tip Microscope Geometry')
       print ('     --------------------------------')
       print ('')
-      print ('     python3 geom.py -gentip atom_type{Ag/Au}')
+      print ('     python3 geom.py -gentip atom_type{Ag/Au} z_min z_max')
       print ('')
    
       sys.exit()
@@ -146,10 +146,14 @@ def read_command_line(argv,inp):
       script_dir = os.path.dirname(script_path)
       # Get upper directory
       base_dir = os.path.dirname(script_dir)
-
       # Determine the base directory from the script's location to access data-repository
-      if argv[2].lower()=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
-      if argv[2].lower()=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
+      inp.atomtype = argv[2].lower()
+      if inp.atomtype!='ag' and inp.atomtype!='au': output.error(f'Atom Type "{argv[2]}" not recognised') 
+      if inp.atomtype=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
+      if inp.atomtype=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
+
+      inp.elliptic_parabola_z_min = float(argv[3])
+      inp.elliptic_parabola_z_max = float(argv[4])
 
    else:
       output.error('ERROR: Option not recognised. Try python3 geom.py -h')
