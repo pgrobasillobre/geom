@@ -114,8 +114,8 @@ class molecule:
 
       # Condition for points to be within the paraboloid and within z bounds
       condition = ((z >= inp.elliptic_parabola_z_min) &
-                   (z >= paraboloid_limit) &
-                   (z <= inp.elliptic_parabola_z_max))
+                   (z <= inp.elliptic_parabola_z_max) &
+                   (z >= paraboloid_limit))
 
       x_filtered = self.xyz[0, condition]
       y_filtered = self.xyz[1, condition]
