@@ -49,6 +49,13 @@ class input_class:
 
       # -- Generate tip microscope geometry
       self.gen_tip = False
+      self.elliptic_parabola_a = 1.0 # Modifies stepness along x
+      self.elliptic_parabola_b = 1.0 # Modifies stepness along y
+      self.elliptic_parabola_c = 0.0 # Fixed for xy parabolloid
+      self.elliptic_parabola_z_min = 0.0 
+      self.elliptic_parabola_z_max = 0.0 
+
+      self.atomtype = ''
 
       # -- Verbose
       self.verbose = False

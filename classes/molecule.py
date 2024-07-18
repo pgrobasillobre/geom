@@ -93,6 +93,55 @@ class molecule:
    
       return(self)
 
+   # ----------------------------------------------------- #
+   # ------- Filter XYZ within elliptic paraboloid ------- #
+   
+   def filter_xyz_in_elliptic_paraboloid(self,inp):
+      #
+      """
+      Consider xyz points within an elliptic paraboloid 
+   
+      :inp: input class
+      """ 
+      #
+
+      x = self.xyz[0, :]
+      y = self.xyz[1, :]
+      z = self.xyz[2, :]
+      
+      # Calculate the paraboloid limit for each (x, y)
+      paraboloid_limit = inp.elliptic_parabola_a * x**2 + inp.elliptic_parabola_b * y**2 + inp.elliptic_parabola_c
+
+      # Condition for points to be within the paraboloid and within z bounds
+      condition = ((z >= inp.elliptic_parabola_z_min) &
+                   (z >= paraboloid_limit) &
+                   (z <= inp.elliptic_parabola_z_max))
+
+      x_filtered = self.xyz[0, condition]
+      y_filtered = self.xyz[1, condition]
+      z_filtered = self.xyz[2, condition]
+
+      # Fill previous geometry with current structure
+      self.atoms = []
+      self.atoms = [inp.atomtype] * self.nAtoms
+
+      self.nAtoms = len(x_filtered)
+
+      self.xyz_center = np.zeros(3)
+      self.xyz_min    = np.zeros(3)
+      self.xyz_max    = np.zeros(3)
+
+      self.xyz = np.zeros((3,self.nAtoms))
+      self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+      # Calculate geometrical center
+      self.xyz_center = np.mean(self.xyz, axis=1)
+
+      # Save maximum/minimum coordinates limits
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
+
+      return(self)
 
 
 
