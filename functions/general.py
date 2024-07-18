@@ -67,6 +67,13 @@ def read_command_line(argv,inp):
       print ('')
       print ('     python3 geom.py -mirror geom.xyz')
       print ('')
+      print ('')
+      print ('     --------------------------------')
+      print ('     Generate Tip Microscope Geometry')
+      print ('     --------------------------------')
+      print ('')
+      print ('     python3 geom.py -gentip atom_type{Ag/Au}')
+      print ('')
    
       sys.exit()
     
@@ -130,6 +137,20 @@ def read_command_line(argv,inp):
 
       inp.geom_file = str(argv[2])
    
+   elif argv[1] == '-gentip':
+      inp.gen_tip = True
+
+      # Determine the script's location
+      script_path = os.path.abspath(__file__)
+      # Get the directory containing the script
+      script_dir = os.path.dirname(script_path)
+      # Get upper directory
+      base_dir = os.path.dirname(script_dir)
+
+      # Determine the base directory from the script's location to access data-repository
+      if argv[2].lower()=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
+      if argv[2].lower()=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
+
    else:
       output.error('ERROR: Option not recognised. Try python3 geom.py -h')
 # -------------------------------------------------------------------------------------

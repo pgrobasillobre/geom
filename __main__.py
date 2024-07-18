@@ -1,7 +1,7 @@
 import sys 
 
 from classes import input_class
-from functions import general, output, translate, rotate, various
+from functions import general, output, translate, rotate, various, create_geom
 
 
 #                    ██████╗ ███████╗ ██████╗ ███╗   ███╗     ██████╗ ██████╗ ██████╗ ███████╗                
@@ -49,6 +49,9 @@ elif(inp.geom_center):
 
 elif(inp.geom_specular):
    various.geom_specular(inp)
+
+elif(inp.gen_tip):
+   create_geom.tip(inp)
 
 # -- Close
 output.print_normal_termination(inp)
