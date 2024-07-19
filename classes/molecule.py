@@ -112,7 +112,7 @@ class molecule:
       # Calculate the paraboloid limit for each (x, y)
       paraboloid_limit = inp.elliptic_parabola_a * x**2 + inp.elliptic_parabola_b * y**2 + inp.elliptic_parabola_c
 
-      # Condition for points to be within the paraboloid and within z bounds
+      # Condition for points to be within the paraboloid 
       condition = ((z >= inp.z_min) &
                    (z <= inp.z_max) &
                    (z >= paraboloid_limit))
@@ -144,4 +144,57 @@ class molecule:
       return(self)
 
 
+   # ----------------------------------------------------- #
+   # ------- Filter XYZ within square-base pyramid ------- #
+   
+   def filter_xyz_in_pyramid(self,inp,centers,planes):
+      #
+      """
+      Consider xyz points within a pyramid with square base
+   
+      :inp    : input class
+      :centers: vertices delimiting structure 
+      :planes : surfaces conecting centers
+      """ 
+      #
 
+      x = self.xyz[0, :]
+      y = self.xyz[1, :]
+      z = self.xyz[2, :]
+
+      # Condition for points to be within the pyramid
+      condition = (
+          (centers["center_1"][2] <= z) & (z <= centers["center_5"][2]) &
+          (centers["center_4"][0] <= x) & (x <= centers["center_1"][0]) &
+          (centers["center_3"][1] <= y) & (y <= centers["center_4"][1]) &
+          (planes["n_125"][0][0] * x + planes["n_125"][0][1] * y + planes["n_125"][0][2] * z >= -planes["n_125"][1]) &
+          (planes["n_235"][0][0] * x + planes["n_235"][0][1] * y + planes["n_235"][0][2] * z >= -planes["n_235"][1]) &
+          (planes["n_345"][0][0] * x + planes["n_345"][0][1] * y + planes["n_345"][0][2] * z >= -planes["n_345"][1]) &
+          (planes["n_415"][0][0] * x + planes["n_415"][0][1] * y + planes["n_415"][0][2] * z >= -planes["n_415"][1])
+      )
+
+      x_filtered = x[condition]
+      y_filtered = y[condition]
+      z_filtered = z[condition]
+
+      # Fill previous geometry with current structure
+      self.atoms = []
+      self.atoms = [inp.atomtype] * self.nAtoms
+
+      self.nAtoms = len(x_filtered)
+
+      self.xyz_center = np.zeros(3)
+      self.xyz_min    = np.zeros(3)
+      self.xyz_max    = np.zeros(3)
+
+      self.xyz = np.zeros((3,self.nAtoms))
+      self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+      # Calculate geometrical center
+      self.xyz_center = np.mean(self.xyz, axis=1)
+
+      # Save maximum/minimum coordinates limits
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
+
+      return(self)
