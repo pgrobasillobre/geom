@@ -72,9 +72,11 @@ def read_command_line(argv,inp):
       print ('     Generate Geometry')
       print ('     -----------------')
       print ('')
-      print ('     Tip microscope: python3 geom -create -tip atom_type{Ag/Au} z_max a b')
+      print ('     Tip (elliptic paraboloid): python3 geom -create -tip atom_type{Ag/Au} z_max a b')
       print ('')
       print ('     Pyramid (square base): python3 geom -create -pyramid atom_type{Ag/Au} z_max base_side_length')
+      print ('')
+      print ('     Microscope: python3 geom -create -microscope atom_type{Ag/Au} z_max_paraboloid a b z_max_pyramid base_side_length')
       print ('')
       print ('     ----------------')
       print ('     Merge Geometries')
@@ -174,6 +176,14 @@ def read_command_line(argv,inp):
          inp.gen_pyramid = True
          inp.z_max = float(argv[4])
          inp.side_length =  float(argv[5])
+
+      if (argv[2] == '-microscope'): 
+         inp.gen_microscope = True
+         inp.z_max_paraboloid = float(argv[4])
+         inp.elliptic_parabola_a = float(argv[5])
+         inp.elliptic_parabola_b = float(argv[6])
+         inp.z_max_pyramid = float(argv[7])                                              
+         inp.side_length =  float(argv[8])
 
    elif argv[1] == '-merge':
       inp.merge = True
