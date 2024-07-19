@@ -5,6 +5,7 @@ import copy
 from classes import molecule
 from functions import general, output
 
+# -------------------------------------------------------------------------------------
 def select_case(inp):
    #
    """ 
@@ -16,8 +17,7 @@ def select_case(inp):
 
    if (inp.gen_tip):     tip(inp)
    if (inp.gen_pyramid): pyramid(inp)
- 
-
+# -------------------------------------------------------------------------------------
 def tip(inp):
    #
    """ 
@@ -42,8 +42,7 @@ def tip(inp):
    # Save filtered geometry
    file_geom_filtered = f'ellyptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
    output.print_geom(mol, file_geom_filtered)
-
-
+# -------------------------------------------------------------------------------------
 def pyramid(inp):
    #
    """
@@ -103,6 +102,7 @@ def pyramid(inp):
    # Save filtered geometry
    file_geom_filtered = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}'
    output.print_geom(mol, file_geom_filtered)
+# -------------------------------------------------------------------------------------
 
 
 
