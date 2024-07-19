@@ -27,11 +27,11 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Distances in input (controlled dist. between 2 files):')
       print ('')
-      print ('       python3 geom.py -t distances_input geom1.xyz origin_CM_1{origin_CM_1_yes/no} geom2.xyz origin_CM_2{origin_CM_2_yes/no} axis{+-}{x/y/z} verbose{verbose_yes/no}')
+      print ('       python3 geom/ -t distances_input geom1.xyz origin_CM_1{origin_CM_1_yes/no} geom2.xyz origin_CM_2{origin_CM_2_yes/no} axis{+-}{x/y/z} verbose{verbose_yes/no}')
       print ('')
       print ('     One translation:')
       print ('')
-      print ('       python3 geom.py -t1 shift geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom/ -t1 shift geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('')
       print ('     ---------')
@@ -40,39 +40,41 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Angles in input:')
       print ('')
-      print ('       python3 geom.py -r angles_input geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom/ -r angles_input geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('     One rotation:')
       print ('')
-      print ('       python3 geom.py -r1 angle geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
+      print ('       python3 geom/ -r1 angle geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}')
       print ('')
       print ('')
       print ('     -----------------')
       print ('     Minimum Distance:')
       print ('     -----------------')
       print ('')
-      print ('     python3 geom.py -min geom1.xyz geom2.xyz')
+      print ('     python3 geom/ -min geom1.xyz geom2.xyz')
       print ('')
       print ('')
       print ('     -------------------')
       print ('     Geometrical Center:')
       print ('     -------------------')
       print ('')
-      print ('     python3 geom.py -c geom.xyz')
+      print ('     python3 geom/ -c geom.xyz')
       print ('')
       print ('')
       print ('     ------------------')
       print ('     Specular geometry:')
       print ('     ------------------')
       print ('')
-      print ('     python3 geom.py -mirror geom.xyz')
+      print ('     python3 geom/ -mirror geom.xyz')
       print ('')
       print ('')
-      print ('     --------------------------------')
-      print ('     Generate Tip Microscope Geometry')
-      print ('     --------------------------------')
+      print ('     -----------------')
+      print ('     Generate Geometry')
+      print ('     -----------------')
       print ('')
-      print ('     python3 geom.py -gentip atom_type{Ag/Au} z_max a b')
+      print ('     Tip microscope: python3 geom/ -create -tip atom_type{Ag/Au} z_max a b')
+      print ('')
+      print ('     Pyramid (square base): python3 geom/ -create -pyramid atom_type{Ag/Au} z_max base_side_length')
       print ('')
    
       sys.exit()
@@ -137,8 +139,11 @@ def read_command_line(argv,inp):
 
       inp.geom_file = str(argv[2])
    
-   elif argv[1] == '-gentip':
-      inp.gen_tip = True
+   elif argv[1] == '-create':
+
+      inp.create_geom = True 
+
+      inp.atomtype = argv[3].lower()
 
       # Determine the script's location
       script_path = os.path.abspath(__file__)
@@ -147,17 +152,24 @@ def read_command_line(argv,inp):
       # Get upper directory
       base_dir = os.path.dirname(script_dir)
       # Determine the base directory from the script's location to access data-repository
-      inp.atomtype = argv[2].lower()
+
       if inp.atomtype!='ag' and inp.atomtype!='au': output.error(f'Atom Type "{argv[2]}" not recognised') 
       if inp.atomtype=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
       if inp.atomtype=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
 
-      inp.elliptic_parabola_z_max = float(argv[3])
-      inp.elliptic_parabola_a = float(argv[4])
-      inp.elliptic_parabola_b = float(argv[5])
+      if (argv[2] == '-tip'): 
+         inp.gen_tip = True
+         inp.z_max = float(argv[4])
+         inp.elliptic_parabola_a = float(argv[5])
+         inp.elliptic_parabola_b = float(argv[6])
+
+      if (argv[2] == '-pyramid'): 
+         inp.gen_pyramid = True
+         inp.z_max = float(argv[4])
+         inp.side_length =  float(argv[5])
 
    else:
-      output.error('ERROR: Option not recognised. Try python3 geom.py -h')
+      output.error('ERROR: Option not recognised. Try python3 geom/ -h')
 # -------------------------------------------------------------------------------------
 def check_file_exists(infile):
    #

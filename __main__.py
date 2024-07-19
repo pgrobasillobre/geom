@@ -50,8 +50,8 @@ elif(inp.geom_center):
 elif(inp.geom_specular):
    various.geom_specular(inp)
 
-elif(inp.gen_tip):
-   create_geom.tip(inp)
+elif(inp.create_geom):
+   if (inp.gen_tip): create_geom.tip(inp)
 
 # -- Close
 output.print_normal_termination(inp)
