@@ -51,18 +51,22 @@ class input_class:
       self.create_geom = False
       self.gen_tip = False
       self.gen_pyramid = False
+      self.gen_microscope = False
       self.elliptic_parabola_a = 1.0 # Modifies stepness along x
       self.elliptic_parabola_b = 1.0 # Modifies stepness along y
       self.elliptic_parabola_c = 0.0 # Fixed for xy parabolloid
       self.z_min = 0.0 
       self.z_max = 0.0 
+      self.z_max_paraboloid = 0.0
+      self.z_max_pyramid = 0.0 
       self.side_length = 0.0
 
       self.atomtype = ''
 
       # -- Merge geometries
       self.merge = False
-      self.merge_cutoff = 0.0
+      self.merge_cutoff = 2.88 # Defaul for Ag/Au
+      self.lc = 4.09 # Default reticular distance Ag/Au
 
       # -- Verbose
       self.verbose = False
@@ -133,7 +137,9 @@ class input_class:
          general.check_file_extension(self.geom_file,'.xyz')
 
       elif (self.create_geom):
-         if (not self.gen_tip and not self.gen_pyramid): output.error("Create geom option not recognised.")
+         if (not self.gen_tip     and 
+             not self.gen_pyramid and
+             not self.gen_microscope): output.error("Create geom option not recognised.")
 
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
