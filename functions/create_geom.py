@@ -28,7 +28,7 @@ def tip(inp):
    mol.filter_xyz_in_elliptic_paraboloid(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'ellyptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.elliptic_parabola_z_min}_zmax-{inp.elliptic_parabola_z_max}'
+   file_geom_filtered = f'ellyptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
    output.print_geom(mol, file_geom_filtered)
 
  

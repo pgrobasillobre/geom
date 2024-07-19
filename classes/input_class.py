@@ -47,13 +47,16 @@ class input_class:
       # -- Specular geometry
       self.geom_specular = False
 
-      # -- Generate tip microscope geometry
+      # -- Generate structure geometry
+      self.create_geom = False
       self.gen_tip = False
+      self.gen_pyramid = False
       self.elliptic_parabola_a = 1.0 # Modifies stepness along x
       self.elliptic_parabola_b = 1.0 # Modifies stepness along y
       self.elliptic_parabola_c = 0.0 # Fixed for xy parabolloid
-      self.elliptic_parabola_z_min = 0.0 
-      self.elliptic_parabola_z_max = 0.0 
+      self.z_min = 0.0 
+      self.z_max = 0.0 
+      self.side_length = 0.0
 
       self.atomtype = ''
 
@@ -118,7 +121,7 @@ class input_class:
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
 
-      elif (self.gen_tip):
+      elif (self.create_geom):
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
 
