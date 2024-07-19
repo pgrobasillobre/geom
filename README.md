@@ -12,12 +12,13 @@
 
 Manage XYZ geometry files:
 
-   1. Translate/rotate single XYZ files.
-   2. Set two geometries at a controlled distance.
-   3. Calculate minimum distance between two XYZ files.
-   4. Calculate geometrical center of XYZ file.
-   5. Create specular geometry.
-   6. Create round tip geometry.
+   1. Create XYZ geometries (tip, pyramid, etc.)
+   2. Translate/rotate single XYZ files.
+   3. Set two geometries at a controlled distance.
+   4. Calculate minimum distance between two XYZ files.
+   5. Calculate geometrical center of XYZ file.
+   6. Create specular geometry.
+   
 
 
 ### Prerequisites
