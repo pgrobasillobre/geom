@@ -60,6 +60,10 @@ class input_class:
 
       self.atomtype = ''
 
+      # -- Merge geometries
+      self.merge = False
+      self.merge_cutoff = 0.0
+
       # -- Verbose
       self.verbose = False
       self.verbose_inp = ''
@@ -107,6 +111,13 @@ class input_class:
          general.check_dir_axis(self)
 
       elif (self.min_dist):
+         general.check_file_exists(self.geom1_file)
+         general.check_file_exists(self.geom2_file)
+
+         general.check_file_extension(self.geom1_file,'.xyz')
+         general.check_file_extension(self.geom2_file,'.xyz')
+
+      elif (self.merge):
          general.check_file_exists(self.geom1_file)
          general.check_file_exists(self.geom2_file)
 

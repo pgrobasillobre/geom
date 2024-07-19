@@ -122,10 +122,10 @@ class molecule:
       z_filtered = self.xyz[2, condition]
 
       # Fill previous geometry with current structure
+      self.nAtoms = len(x_filtered)
+
       self.atoms = []
       self.atoms = [inp.atomtype] * self.nAtoms
-
-      self.nAtoms = len(x_filtered)
 
       self.xyz_center = np.zeros(3)
       self.xyz_min    = np.zeros(3)
