@@ -5,6 +5,18 @@ import copy
 from classes import molecule
 from functions import general, output
 
+def select_case(inp):
+   #
+   """ 
+   Select create geometry case
+
+   :inp: input class
+   """
+   #
+
+   if (inp.gen_tip):     tip(inp)
+   if (inp.gen_pyramid): pyramid(inp)
+ 
 
 def tip(inp):
    #
