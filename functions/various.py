@@ -121,3 +121,48 @@ def geom_specular(inp):
    # Close and save logfile
    output.logfile_close(out_log)
  
+
+#        __  ___                                            
+#       /  |/  /__  _________ ____                          
+#      / /|_/ / _ \/ ___/ __ `/ _ \                         
+#     / /  / /  __/ /  / /_/ /  __/                         
+#    /_/  /_/\___/_/   \__, /\___/                          
+#                     /____/                                
+#       ______                          __       _          
+#      / ____/__  ____  ____ ___  ___  / /______(_)__  _____
+#     / / __/ _ \/ __ \/ __ `__ \/ _ \/ __/ ___/ / _ \/ ___/
+#    / /_/ /  __/ /_/ / / / / / /  __/ /_/ /  / /  __(__  ) 
+#    \____/\___/\____/_/ /_/ /_/\___/\__/_/  /_/\___/____/  
+#                                                           
+
+def merge_geoms(inp):
+   #
+   """ 
+   Merge two geometries
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+ 
+   # Initialize molecules and read geometries
+   mol_1 = molecule.molecule()
+   mol_2 = molecule.molecule()
+
+   mol_1.read_geom(inp.geom1_file,False)
+   mol_2.read_geom(inp.geom2_file,False)
+ 
+   # Merge two geometries
+   mol_3 = tools.merge_geoms(inp,mol_1,mol_2)
+
+   # Save merged geometry
+   file_geom_merged = f"{inp.geom1_file[:-4]}_MERGED_{inp.geom2_file[:-4]}"
+   output.print_geom(mol_3, file_geom_merged)
+
+   # Close and save logfile
+   output.logfile_close(out_log)
+ 

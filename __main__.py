@@ -50,6 +50,9 @@ elif(inp.geom_center):
 elif(inp.geom_specular):
    various.geom_specular(inp)
 
+elif(inp.merge):
+   various.merge_geoms(inp)
+
 elif(inp.create_geom):
    create_geom.select_case(inp)
 
