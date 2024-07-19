@@ -17,7 +17,8 @@ Manage XYZ geometry files:
    3. Set two geometries at a controlled distance.
    4. Calculate minimum distance between two XYZ files.
    5. Calculate geometrical center of XYZ file.
-   6. Create specular geometry.
+   6. Merge geometries.
+   7. Create specular geometry.
    
 
 
