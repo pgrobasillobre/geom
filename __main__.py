@@ -51,7 +51,8 @@ elif(inp.geom_specular):
    various.geom_specular(inp)
 
 elif(inp.create_geom):
-   if (inp.gen_tip): create_geom.tip(inp)
+   if (inp.gen_tip):     create_geom.tip(inp)
+   if (inp.gen_pyramid): create_geom.pyramid(inp)
 
 # -- Close
 output.print_normal_termination(inp)

@@ -122,6 +122,8 @@ class input_class:
          general.check_file_extension(self.geom_file,'.xyz')
 
       elif (self.create_geom):
+         if (not self.gen_tip and not self.gen_pyramid): output.error("Create geom option not recognised.")
+
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
 
