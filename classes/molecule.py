@@ -198,3 +198,51 @@ class molecule:
       self.xyz_min = np.min(self.xyz, axis=1)
 
       return(self)
+
+
+   # -------------------------------------- #
+   # ------- Filter XYZ within cone ------- #
+   
+   def filter_xyz_in_cone(self,inp):
+      #
+      """
+      Consider xyz points within cone 
+   
+      :inp: input class
+      """ 
+      #
+
+      x = self.xyz[0, :]
+      y = self.xyz[1, :]
+      z = self.xyz[2, :]
+ 
+      # Condition for points inside the cone
+      condition = (x**2 + y**2 <= (inp.radius / inp.z_max)**2 * z**2) & (z >= 0) & (z <= inp.z_max)
+      
+      # Select the points that satisfy the condition
+      x_filtered = x[condition]
+      y_filtered = y[condition]
+      z_filtered = z[condition]
+      
+      # Fill previous geometry with current structure
+      self.atoms = []
+      self.atoms = [inp.atomtype] * self.nAtoms
+
+      self.nAtoms = len(x_filtered)
+
+      self.xyz_center = np.zeros(3)
+      self.xyz_min    = np.zeros(3)
+      self.xyz_max    = np.zeros(3)
+
+      self.xyz = np.zeros((3,self.nAtoms))
+      self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+      # Calculate geometrical center
+      self.xyz_center = np.mean(self.xyz, axis=1)
+
+      # Save maximum/minimum coordinates limits
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
+
+      return(self)
+
