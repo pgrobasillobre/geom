@@ -19,6 +19,7 @@ def select_case(inp):
    if (inp.gen_tip):        tip(inp)
    if (inp.gen_pyramid):    pyramid(inp)
    if (inp.gen_microscope): microscope(inp)
+   if (inp.gen_cone):       cone(inp)
 # -------------------------------------------------------------------------------------
 def tip(inp):
    #
@@ -103,6 +104,31 @@ def pyramid(inp):
 
    # Save filtered geometry
    file_geom_filtered = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}'
+   output.print_geom(mol, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+def cone(inp):
+   #
+   """
+   Generate cone geometry 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()
+   general.create_results_geom()
+   out_log = output.logfile_init()
+
+   # Initialize bulk "molecule" and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file, False)
+
+   # Pick only atoms within the defined cone
+   mol.filter_xyz_in_cone(inp)
+
+   # Save filtered geometry
+   file_geom_filtered = f'cone_radius-{inp.radius}_zmin-{inp.z_min}_zmax-{inp.z_max}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def microscope(inp):
