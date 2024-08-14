@@ -50,6 +50,7 @@ class input_class:
       # -- Generate structure geometry
       self.create_geom = False
       self.gen_tip = False
+      self.gen_cone = False
       self.gen_pyramid = False
       self.gen_microscope = False
       self.elliptic_parabola_a = 1.0 # Modifies stepness along x
@@ -60,6 +61,7 @@ class input_class:
       self.z_max_paraboloid = 0.0
       self.z_max_pyramid = 0.0 
       self.side_length = 0.0
+      self.radius = 0.0
 
       self.atomtype = ''
 
@@ -139,6 +141,7 @@ class input_class:
       elif (self.create_geom):
          if (not self.gen_tip     and 
              not self.gen_pyramid and
+             not self.gen_cone    and
              not self.gen_microscope): output.error("Create geom option not recognised.")
 
          general.check_file_exists(self.geom_file)

@@ -76,6 +76,8 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Pyramid (square base): python3 geom -create -pyramid atom_type{Ag/Au} z_max base_side_length')
       print ('')
+      print ('     Cone: python3 geom -create -cone atom_type{Ag/Au} z_max base_radius')
+      print ('')
       print ('     Microscope: python3 geom -create -microscope atom_type{Ag/Au} z_max_paraboloid a b z_max_pyramid base_side_length')
       print ('')
       print ('     ----------------')
@@ -184,6 +186,12 @@ def read_command_line(argv,inp):
          inp.elliptic_parabola_b = float(argv[6])
          inp.z_max_pyramid = float(argv[7])                                              
          inp.side_length =  float(argv[8])
+
+      if (argv[2] == '-cone'): 
+         inp.gen_cone = True
+         inp.z_max = float(argv[4])
+         inp.radius = float(argv[5])
+
 
    elif argv[1] == '-merge':
       inp.merge = True
