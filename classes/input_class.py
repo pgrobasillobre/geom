@@ -49,6 +49,7 @@ class input_class:
 
       # -- Generate structure geometry
       self.create_geom = False
+      self.gen_graphene = False
       self.gen_tip = False
       self.gen_cone = False
       self.gen_pyramid = False
@@ -62,8 +63,12 @@ class input_class:
       self.z_max_pyramid = 0.0 
       self.side_length = 0.0
       self.radius = 0.0
+      self.X_length = 0.0
+      self.Y_length = 0.0
 
       self.atomtype = ''
+      self.graphene_structures = ["rib"]
+      self.graphene_structure  = ""
 
       # -- Merge geometries
       self.merge = False
@@ -139,9 +144,10 @@ class input_class:
          general.check_file_extension(self.geom_file,'.xyz')
 
       elif (self.create_geom):
-         if (not self.gen_tip     and 
-             not self.gen_pyramid and
-             not self.gen_cone    and
+         if (not self.gen_graphene and
+             not self.gen_tip      and 
+             not self.gen_pyramid  and
+             not self.gen_cone     and
              not self.gen_microscope): output.error("Create geom option not recognised.")
 
          general.check_file_exists(self.geom_file)
