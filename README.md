@@ -12,13 +12,14 @@
 
 Manage XYZ geometry files:
 
-   1. Create XYZ geometries (tip, pyramid, etc.)
-   2. Translate/rotate single XYZ files.
-   3. Set two geometries at a controlled distance.
-   4. Calculate minimum distance between two XYZ files.
-   5. Calculate geometrical center of XYZ file.
-   6. Merge geometries.
-   7. Create specular geometry.
+   1. Create XYZ nanoparticles geometries (tip, pyramid, etc.)
+   2. Create graphene structures (ribbons, disks, triangles, etc.)
+   3. Translate/rotate single XYZ files.
+   4. Set two geometries at a controlled distance.
+   5. Calculate minimum distance between two XYZ files.
+   6. Calculate geometrical center of XYZ file.
+   7. Merge geometries.
+   8. Create specular geometry.
    
 
 
