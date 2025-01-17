@@ -74,8 +74,11 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Graphene:')
       print ('')
-      print ('       Nanoribbon (X: zigzag | Y: armchair): python3 geom -create -graphene rib X_length Y_length')
+      print ('       Ribbon (X: zigzag | Y: armchair): python3 geom -create -graphene rib X_length Y_length')
       print ('')
+      print ('       Disk: python3 geom -create -graphene disk radius')
+      print ('')
+      print ('       Triangle: python3 geom -create -triangle edge_type{armchair/zigzag} side_length')
       print ('')
       print ('     Nanoparticles (Ag/Au):')
       print ('')
@@ -184,6 +187,12 @@ def read_command_line(argv,inp):
 
          elif inp.graphene_structure == 'disk':
             inp.radius = float(argv[4])
+
+         elif inp.graphene_structure == 'triangle':
+            inp.graphene_edge_type = argv[4]
+            inp.side_length = float(argv[5])
+            if inp.graphene_edge_type not in inp.graphene_edge_types:
+               output.error(f'Requested edge type "{inp.graphene_edge_type}" not recognised')
 
       else:
          inp.atomtype = argv[3].lower()

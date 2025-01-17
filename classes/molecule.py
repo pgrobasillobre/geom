@@ -184,6 +184,65 @@ class molecule:
    
        return self
 
+   # -------------------------------------------------- #
+   # ------- Filter XYZ within a triangle shape ------- #
+
+   def filter_xyz_graphene_to_triangle(self, inp):
+       """
+       Filter the graphene sheet to create a triangular shape with specified edge type.
+       
+       :inp: input class
+       """
+   
+       x = self.xyz[0, :]
+       y = self.xyz[1, :]
+       z = self.xyz[2, :]
+   
+       # Define triangular region based on edge type
+       if inp.graphene_edge_type == 'armchair':
+           # Armchair triangle aligned with the armchair direction
+           condition = (
+               (y >= 0) &
+               (y <= inp.side_length * np.sqrt(3) / 2) &
+               (x >= -y / np.sqrt(3)) &
+               (x <= y / np.sqrt(3))
+           )
+       elif inp.graphene_edge_type == 'zigzag':
+           # Zigzag triangle aligned with the zigzag direction
+           condition = (
+               (x >= 0) &
+               (x <= inp.side_length) &
+               (y >= -x / np.sqrt(3)) &
+               (y <= x / np.sqrt(3))
+           )
+       else:
+           raise ValueError("Invalid edge type. Must be 'armchair' or 'zigzag'.")
+   
+       # Filter coordinates based on condition
+       x_filtered = x[condition]
+       y_filtered = y[condition]
+       z_filtered = z[condition]
+   
+       # Update the atom list and geometry based on filtered data
+       self.nAtoms = len(x_filtered)
+       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+   
+       self.xyz_center = np.zeros(3)
+       self.xyz_min    = np.zeros(3)
+       self.xyz_max    = np.zeros(3)
+   
+       self.xyz = np.zeros((3, self.nAtoms))
+       self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+   
+       # Calculate geometrical center
+       self.xyz_center = np.mean(self.xyz, axis=1)
+   
+       # Save maximum/minimum coordinate limits
+       self.xyz_max = np.max(self.xyz, axis=1)
+       self.xyz_min = np.min(self.xyz, axis=1)
+   
+       return self
+
    # ---------------------------------------------- #
    # ------- Remove graphene dangling bonds ------- #
 
