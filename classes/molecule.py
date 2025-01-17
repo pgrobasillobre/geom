@@ -94,6 +94,55 @@ class molecule:
       return(self)
 
    # ----------------------------------------------------- #
+   # ------- Filter XYZ within a ribbon shape ------- #
+   
+   def filter_xyz_graphene_to_ribbon(self, inp):
+       """
+       Filter the graphene sheet to create a ribbon with specified X and Y lengths.
+       
+       :inp: input class
+       """
+   
+       x = self.xyz[0, :]
+       y = self.xyz[1, :]
+       z = self.xyz[2, :]
+   
+       # Define X and Y bounds based on inp parameters
+       x_min, x_max = -inp.X_length / 2, inp.X_length / 2
+       y_min, y_max = -inp.Y_length / 2, inp.Y_length / 2
+
+       # Condition for points to be within the ribbon
+       condition = (
+           (x_min <= x) & (x <= x_max) &
+           (y_min <= y) & (y <= y_max)
+       )
+   
+       # Filter coordinates based on condition
+       x_filtered = x[condition]
+       y_filtered = y[condition]
+       z_filtered = z[condition]
+   
+       # Update the atom list and geometry based on filtered data
+       self.nAtoms = len(x_filtered)
+       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+   
+       self.xyz_center = np.zeros(3)
+       self.xyz_min    = np.zeros(3)
+       self.xyz_max    = np.zeros(3)
+   
+       self.xyz = np.zeros((3, self.nAtoms))
+       self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+   
+       # Calculate geometrical center
+       self.xyz_center = np.mean(self.xyz, axis=1)
+   
+       # Save maximum/minimum coordinate limits
+       self.xyz_max = np.max(self.xyz, axis=1)
+       self.xyz_min = np.min(self.xyz, axis=1)
+   
+       return self
+
+   # ----------------------------------------------------- #
    # ------- Filter XYZ within elliptic paraboloid ------- #
    
    def filter_xyz_in_elliptic_paraboloid(self,inp):
