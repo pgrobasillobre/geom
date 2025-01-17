@@ -72,13 +72,20 @@ def read_command_line(argv,inp):
       print ('     Generate Geometry')
       print ('     -----------------')
       print ('')
-      print ('     Tip (elliptic paraboloid): python3 geom -create -tip atom_type{Ag/Au} z_max a b')
+      print ('     Graphene:')
       print ('')
-      print ('     Pyramid (square base): python3 geom -create -pyramid atom_type{Ag/Au} z_max base_side_length')
+      print ('       Nanoribbon (X: zigzag | Y: armchair): python3 geom -create -graphene rib X_length Y_length')
       print ('')
-      print ('     Cone: python3 geom -create -cone atom_type{Ag/Au} z_max base_radius')
       print ('')
-      print ('     Microscope: python3 geom -create -microscope atom_type{Ag/Au} z_max_paraboloid a b z_max_pyramid base_side_length')
+      print ('     Nanoparticles (Ag/Au):')
+      print ('')
+      print ('       Tip (elliptic paraboloid): python3 geom -create -tip atom_type{Ag/Au} z_max a b')
+      print ('')
+      print ('       Pyramid (square base): python3 geom -create -pyramid atom_type{Ag/Au} z_max base_side_length')
+      print ('')
+      print ('       Cone: python3 geom -create -cone atom_type{Ag/Au} z_max base_radius')
+      print ('')
+      print ('       Microscope: python3 geom -create -microscope atom_type{Ag/Au} z_max_paraboloid a b z_max_pyramid base_side_length')
       print ('')
       print ('     ----------------')
       print ('     Merge Geometries')
@@ -154,43 +161,59 @@ def read_command_line(argv,inp):
 
       inp.create_geom = True 
 
-      inp.atomtype = argv[3].lower()
-
       # Determine the script's location
       script_path = os.path.abspath(__file__)
       # Get the directory containing the script
       script_dir = os.path.dirname(script_path)
       # Get upper directory
       base_dir = os.path.dirname(script_dir)
-      # Determine the base directory from the script's location to access data-repository
+      
+      if (argv[2] == '-graphene'):
+         inp.gen_graphene = True
+         inp.graphene_structure = argv[3] 
 
-      if inp.atomtype!='ag' and inp.atomtype!='au': output.error(f'Atom Type "{argv[2]}" not recognised') 
-      if inp.atomtype=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
-      if inp.atomtype=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
+         # Determine the base directory from the script's location to access data-repository
+         inp.geom_file = os.path.join(base_dir, 'data/bulk-graphene/graphene.xyz')
 
-      if (argv[2] == '-tip'): 
-         inp.gen_tip = True
-         inp.z_max = float(argv[4])
-         inp.elliptic_parabola_a = float(argv[5])
-         inp.elliptic_parabola_b = float(argv[6])
+         if inp.graphene_structure not in inp.graphene_structures: 
+            output.error(f'Requested graphene structure "{graphene_structure}" not recognised') 
 
-      if (argv[2] == '-pyramid'): 
-         inp.gen_pyramid = True
-         inp.z_max = float(argv[4])
-         inp.side_length =  float(argv[5])
+         elif inp.graphene_structure == "rib":
+            inp.X_length = float(argv[4])
+            inp.Y_length = float(argv[5])
 
-      if (argv[2] == '-microscope'): 
-         inp.gen_microscope = True
-         inp.z_max_paraboloid = float(argv[4])
-         inp.elliptic_parabola_a = float(argv[5])
-         inp.elliptic_parabola_b = float(argv[6])
-         inp.z_max_pyramid = float(argv[7])                                              
-         inp.side_length =  float(argv[8])
+      else:
+         inp.atomtype = argv[3].lower()
+         if inp.atomtype!='ag' and inp.atomtype!='au': output.error(f'Atom Type "{argv[2]}" not recognised') 
 
-      if (argv[2] == '-cone'): 
-         inp.gen_cone = True
-         inp.z_max = float(argv[4])
-         inp.radius = float(argv[5])
+         # Determine the base directory from the script's location to access data-repository
+         if inp.atomtype=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
+         if inp.atomtype=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
+
+
+         if (argv[2] == '-tip'): 
+            inp.gen_tip = True
+            inp.z_max = float(argv[4])
+            inp.elliptic_parabola_a = float(argv[5])
+            inp.elliptic_parabola_b = float(argv[6])
+
+         if (argv[2] == '-pyramid'): 
+            inp.gen_pyramid = True
+            inp.z_max = float(argv[4])
+            inp.side_length =  float(argv[5])
+
+         if (argv[2] == '-microscope'): 
+            inp.gen_microscope = True
+            inp.z_max_paraboloid = float(argv[4])
+            inp.elliptic_parabola_a = float(argv[5])
+            inp.elliptic_parabola_b = float(argv[6])
+            inp.z_max_pyramid = float(argv[7])                                              
+            inp.side_length =  float(argv[8])
+
+         if (argv[2] == '-cone'): 
+            inp.gen_cone = True
+            inp.z_max = float(argv[4])
+            inp.radius = float(argv[5])
 
 
    elif argv[1] == '-merge':

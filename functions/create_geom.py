@@ -16,10 +16,36 @@ def select_case(inp):
    """
    #
 
+   if (inp.gen_graphene):   graphene(inp)
    if (inp.gen_tip):        tip(inp)
    if (inp.gen_pyramid):    pyramid(inp)
    if (inp.gen_microscope): microscope(inp)
    if (inp.gen_cone):       cone(inp)
+# -------------------------------------------------------------------------------------
+def graphene(inp):
+   #
+   """ 
+   Generate graphene geometry (ribbon) 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+ 
+   # Initialize bulk "molecule" and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file,False)
+
+   # Pick only atoms within the defined paraboloid
+   #mol.filter_xyz_in_elliptic_paraboloid(inp)
+
+   # Save filtered geometry
+   #file_geom_filtered = f'elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
+   output.print_geom(mol, 'geom_file')
 # -------------------------------------------------------------------------------------
 def tip(inp):
    #
