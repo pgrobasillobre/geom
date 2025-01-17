@@ -143,6 +143,48 @@ class molecule:
        return self
 
    # ---------------------------------------------- #
+   # ------- Filter XYZ within a disk shape ------- #
+    
+   def filter_xyz_graphene_to_disk(self, inp):
+       """
+       Filter the graphene sheet to create a disk of specified radius centered at (0.0, 0.0, 0.0).
+       
+       :inp: input class
+       """
+   
+       x = self.xyz[0, :]
+       y = self.xyz[1, :]
+       z = self.xyz[2, :]
+   
+       # Condition for points to be within the disk
+       condition = (x**2 + y**2 <= inp.radius**2)
+   
+       # Filter coordinates based on condition
+       x_filtered = x[condition]
+       y_filtered = y[condition]
+       z_filtered = z[condition]
+   
+       # Update the atom list and geometry based on filtered data
+       self.nAtoms = len(x_filtered)
+       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+   
+       self.xyz_center = np.zeros(3)
+       self.xyz_min    = np.zeros(3)
+       self.xyz_max    = np.zeros(3)
+   
+       self.xyz = np.zeros((3, self.nAtoms))
+       self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+   
+       # Calculate geometrical center
+       self.xyz_center = np.mean(self.xyz, axis=1)
+   
+       # Save maximum/minimum coordinate limits
+       self.xyz_max = np.max(self.xyz, axis=1)
+       self.xyz_min = np.min(self.xyz, axis=1)
+   
+       return self
+
+   # ---------------------------------------------- #
    # ------- Remove graphene dangling bonds ------- #
 
    def remove_dangling_bonds_graphene(self, inp):

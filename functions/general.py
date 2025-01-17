@@ -176,11 +176,14 @@ def read_command_line(argv,inp):
          inp.geom_file = os.path.join(base_dir, 'data/bulk-graphene/graphene.xyz')
 
          if inp.graphene_structure not in inp.graphene_structures: 
-            output.error(f'Requested graphene structure "{graphene_structure}" not recognised') 
+            output.error(f'Requested graphene structure "{inp.graphene_structure}" not recognised') 
 
          elif inp.graphene_structure == "rib":
             inp.X_length = float(argv[4])
             inp.Y_length = float(argv[5])
+
+         elif inp.graphene_structure == 'disk':
+            inp.radius = float(argv[4])
 
       else:
          inp.atomtype = argv[3].lower()
