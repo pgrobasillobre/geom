@@ -67,7 +67,7 @@ class input_class:
       self.Y_length = 0.0
 
       self.atomtype = ''
-      self.graphene_structures = ["rib"]
+      self.graphene_structures = ["rib","disk"]
       self.graphene_structure  = ""
 
       # -- Merge geometries
