@@ -93,7 +93,7 @@ class molecule:
    
       return(self)
 
-   # ----------------------------------------------------- #
+   # ------------------------------------------------ #
    # ------- Filter XYZ within a ribbon shape ------- #
    
    def filter_xyz_graphene_to_ribbon(self, inp):
@@ -139,6 +139,65 @@ class molecule:
        # Save maximum/minimum coordinate limits
        self.xyz_max = np.max(self.xyz, axis=1)
        self.xyz_min = np.min(self.xyz, axis=1)
+   
+       return self
+
+   # ---------------------------------------------- #
+   # ------- Remove graphene dangling bonds ------- #
+
+   def remove_dangling_bonds_graphene(self, inp):
+       """
+       Remove dangling bonds from generated graphene structure by eliminating atoms with fewer than 2 neighbors.
+       Perform up to 3 iterations to ensure no dangling bonds remain.
+   
+       :inp: input class
+       """
+
+       print("  Removing dangling C atoms on generated structure...")
+       print("")
+   
+       def get_neighbors(atom_index, cutoff=1.5):
+           """Find neighbors of an atom within a distance cutoff."""
+           distances = np.linalg.norm(self.xyz.T - self.xyz.T[atom_index], axis=1)
+           neighbors = np.where((distances > 0) & (distances <= cutoff))[0]
+           return neighbors
+   
+       max_iterations = 3
+       for iteration in range(max_iterations):
+           dangling_atoms = []
+           for i in range(self.nAtoms):
+               neighbors = get_neighbors(i)
+               if len(neighbors) < 2:  # Dangling bond if fewer than 2 neighbors
+                   dangling_atoms.append(i)
+   
+           # If no dangling atoms are found, exit the loop
+           if not dangling_atoms:
+               print("")
+               print(f"  --> All dangling bonds removed after {iteration + 1} iteration(s).")
+               return self
+   
+           # Remove dangling atoms
+           keep_atoms = np.setdiff1d(np.arange(self.nAtoms), dangling_atoms)
+           self.xyz = self.xyz[:, keep_atoms]
+           self.nAtoms = len(keep_atoms)
+           self.atoms = [self.atoms[i] for i in keep_atoms]
+   
+           # Recalculate geometry
+           self.xyz_center = np.mean(self.xyz, axis=1)
+           self.xyz_max = np.max(self.xyz, axis=1)
+           self.xyz_min = np.min(self.xyz, axis=1)
+   
+           print(f"  - Iteration {iteration + 1}: Removed {len(dangling_atoms)} dangling atom(s).")
+   
+       # If dangling bonds remain after 3 iterations, raise an error
+       dangling_atoms = []
+       for i in range(self.nAtoms):
+           neighbors = get_neighbors(i)
+           if len(neighbors) < 2:
+               dangling_atoms.append(i)
+   
+       if dangling_atoms:
+           output.error(f"{len(dangling_atoms)} dangling bonds on generated graphene sheet could not be eliminated after {max_iterations} iterations.")
    
        return self
 
