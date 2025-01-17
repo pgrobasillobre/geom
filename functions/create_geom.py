@@ -41,11 +41,11 @@ def graphene(inp):
    mol.read_geom(inp.geom_file,False)
 
    # Pick only atoms within the defined paraboloid
-   #mol.filter_xyz_in_elliptic_paraboloid(inp)
+   mol.filter_xyz_graphene_to_ribbon(inp)
 
    # Save filtered geometry
-   #file_geom_filtered = f'elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
-   output.print_geom(mol, 'geom_file')
+   file_geom_filtered = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
+   output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def tip(inp):
    #
