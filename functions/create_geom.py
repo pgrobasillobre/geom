@@ -40,14 +40,17 @@ def graphene(inp):
    mol = molecule.molecule()
    mol.read_geom(inp.geom_file,False)
 
-   # Pick only atoms within the defined paraboloid
-   mol.filter_xyz_graphene_to_ribbon(inp)
+   # Pick only atoms within the defined graphene geometry 
+   if inp.graphene_structure=='rib':  mol.filter_xyz_graphene_to_ribbon(inp)
+   if inp.graphene_structure=='disk': mol.filter_xyz_graphene_to_disk(inp)
 
    # Remove dangling bonds
    mol.remove_dangling_bonds_graphene(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
+   if inp.graphene_structure=='rib':  file_geom_filtered = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
+   if inp.graphene_structure=='disk': file_geom_filtered = f'graphene_disk_{inp.radius}'
+
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def tip(inp):
