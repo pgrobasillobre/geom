@@ -43,6 +43,9 @@ def graphene(inp):
    # Pick only atoms within the defined paraboloid
    mol.filter_xyz_graphene_to_ribbon(inp)
 
+   # Remove dangling bonds
+   mol.remove_dangling_bonds_graphene(inp)
+
    # Save filtered geometry
    file_geom_filtered = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
    output.print_geom(mol, file_geom_filtered)
