@@ -78,6 +78,8 @@ def read_command_line(argv,inp):
       print ('')
       print ('       Disk: python3 geom -create -graphene disk radius')
       print ('')
+      print ('       Ring: python3 geom -create -graphene ring radius_out radius_in')
+      print ('')
       print ('       Triangle: python3 geom -create -graphene triangle edge_type{armchair/zigzag} side_length')
       print ('')
       print ('     Nanoparticles (Ag/Au):')
@@ -187,6 +189,11 @@ def read_command_line(argv,inp):
 
          elif inp.graphene_structure == 'disk':
             inp.radius = float(argv[4])
+
+         elif inp.graphene_structure == 'ring':
+            inp.radius_out = float(argv[4])
+            inp.radius_in  = float(argv[5])
+            if (inp.radius_in >= inp.radius_out): output.error(f'Inner radius must be smaller than Outter radius.')
 
          elif inp.graphene_structure == 'triangle':
             inp.graphene_edge_type = argv[4]
