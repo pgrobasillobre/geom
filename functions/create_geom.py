@@ -48,6 +48,9 @@ def graphene(inp):
    # Remove dangling bonds
    mol.remove_dangling_bonds_graphene(inp)
 
+   # Translate geometrical center to 000 
+   mol.trans_geom_center_to_000()
+
    # Save filtered geometry
    if inp.graphene_structure=='rib':      file_geom_filtered = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
    if inp.graphene_structure=='disk':     file_geom_filtered = f'graphene_disk_{inp.radius}'
