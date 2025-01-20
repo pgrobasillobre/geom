@@ -78,7 +78,7 @@ def read_command_line(argv,inp):
       print ('')
       print ('       Disk: python3 geom -create -graphene disk radius')
       print ('')
-      print ('       Triangle: python3 geom -create -triangle edge_type{armchair/zigzag} side_length')
+      print ('       Triangle: python3 geom -create -graphene triangle edge_type{armchair/zigzag} side_length')
       print ('')
       print ('     Nanoparticles (Ag/Au):')
       print ('')
