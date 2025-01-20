@@ -16,6 +16,19 @@ class molecule:
       self.xyz_min    = np.zeros(3)
       self.xyz_max    = np.zeros(3)
 
+   # ----------------------------------------- #
+   # ------- Translate geometry to 000 ------- #
+   
+   def trans_geom_center_to_000(self):
+      # 
+      """
+      Translate geometrical center to 000
+      """
+      for i in range(self.nAtoms):
+         self.xyz[0][i] = self.xyz[0][i] - self.xyz_center[0] 
+         self.xyz[1][i] = self.xyz[1][i] - self.xyz_center[1]
+         self.xyz[2][i] = self.xyz[2][i] - self.xyz_center[2]
+
    # ----------------------------- #
    # ------- Read geometry ------- #
    
@@ -54,13 +67,9 @@ class molecule:
       self.xyz_center[1] = np.mean(self.xyz[1,:]) 
       self.xyz_center[2] = np.mean(self.xyz[2,:]) 
 
-      # Translate to geometrical center and save, if requested  
+      # Translate geometrical center to 000 and save, if requested  
       if (translate_geom_to_000):
-         for i in range(self.nAtoms):
-            self.xyz[0][i] = self.xyz[0][i] - self.xyz_center[0] 
-            self.xyz[1][i] = self.xyz[1][i] - self.xyz_center[1]
-            self.xyz[2][i] = self.xyz[2][i] - self.xyz_center[2]
-
+         self.trans_geom_center_to_000()
          output.print_geom(self,geom_file[:-4]+'_000')
 
       # Save maximun/minimum coordinates limits
