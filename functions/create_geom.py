@@ -43,6 +43,7 @@ def graphene(inp):
    # Pick only atoms within the defined graphene geometry 
    if inp.graphene_structure=='rib':      mol.filter_xyz_graphene_to_ribbon(inp)
    if inp.graphene_structure=='disk':     mol.filter_xyz_graphene_to_disk(inp)
+   if inp.graphene_structure=='ring':     mol.filter_xyz_graphene_to_ring(inp)
    if inp.graphene_structure=='triangle': mol.filter_xyz_graphene_to_triangle(inp)
 
    # Remove dangling bonds
@@ -54,6 +55,7 @@ def graphene(inp):
    # Save filtered geometry
    if inp.graphene_structure=='rib':      file_geom_filtered = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
    if inp.graphene_structure=='disk':     file_geom_filtered = f'graphene_disk_{inp.radius}'
+   if inp.graphene_structure=='ring':     file_geom_filtered = f'graphene_ring_Out_{inp.radius_out}_In_{inp.radius_in}'
    if inp.graphene_structure=='triangle': file_geom_filtered = f'graphene_triangle_{inp.graphene_edge_type}_{inp.side_length}'
 
    output.print_geom(mol, file_geom_filtered)

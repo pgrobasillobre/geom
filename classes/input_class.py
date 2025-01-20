@@ -62,12 +62,14 @@ class input_class:
       self.z_max_paraboloid = 0.0
       self.z_max_pyramid = 0.0 
       self.side_length = 0.0
-      self.radius = 0.0
+      self.radius     = 0.0
+      self.radius_in  = 0.0
+      self.radius_out = 0.0
       self.X_length = 0.0
       self.Y_length = 0.0
 
       self.atomtype = ''
-      self.graphene_structures  = ["rib","disk","triangle"]
+      self.graphene_structures  = ["rib","disk","ring","triangle"]
       self.graphene_structure   = ""
       self.graphene_edge_types  = ["armchair","zigzag"]
       self.graphene_edge_type   = ""

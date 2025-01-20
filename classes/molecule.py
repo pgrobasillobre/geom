@@ -193,6 +193,47 @@ class molecule:
    
        return self
 
+   # ---------------------------------------------- #
+   # ------- Filter XYZ within a ring shape ------- #
+
+   def filter_xyz_graphene_to_ring(self, inp):
+       """
+       Filter the graphene sheet to create a ring of specified inner and outer radii.
+       
+       :inp: input class
+       """
+       x = self.xyz[0, :]
+       y = self.xyz[1, :]
+       z = self.xyz[2, :]
+   
+       # Condition for points to be within the ring (between radius_in and radius_out)
+       condition = (inp.radius_in**2 <= x**2 + y**2) & (x**2 + y**2 <= inp.radius_out**2)
+   
+       # Filter coordinates based on condition
+       x_filtered = x[condition]
+       y_filtered = y[condition]
+       z_filtered = z[condition]
+   
+       # Update the atom list and geometry based on filtered data
+       self.nAtoms = len(x_filtered)
+       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+   
+       self.xyz_center = np.zeros(3)
+       self.xyz_min    = np.zeros(3)
+       self.xyz_max    = np.zeros(3)
+   
+       self.xyz = np.zeros((3, self.nAtoms))
+       self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+   
+       # Calculate geometrical center
+       self.xyz_center = np.mean(self.xyz, axis=1)
+   
+       # Save maximum/minimum coordinate limits
+       self.xyz_max = np.max(self.xyz, axis=1)
+       self.xyz_min = np.min(self.xyz, axis=1)
+   
+       return self 
+
    # -------------------------------------------------- #
    # ------- Filter XYZ within a triangle shape ------- #
 
