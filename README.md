@@ -12,8 +12,8 @@
 
 Manage XYZ geometry files:
 
-   1. Create XYZ nanoparticles geometries (tip, pyramid, etc.)
-   2. Create graphene structures (ribbons, disks, triangles, etc.)
+   1. Create nanoparticles geometries (tip, pyramid, etc.)
+   2. Create graphene structures (ribbons, triangles, etc.)
    3. Translate/rotate single XYZ files.
    4. Set two geometries at a controlled distance.
    5. Calculate minimum distance between two XYZ files.
