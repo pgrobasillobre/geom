@@ -369,7 +369,7 @@ class molecule:
       y = self.xyz[1, :]
       z = self.xyz[2, :]
       
-      # Condition for points to be within the paraboloid 
+      # Condition for points to be within the sphere 
       condition = ((x-inp.sphere_center[0])**2 + 
                    (y-inp.sphere_center[1])**2 + 
                    (z-inp.sphere_center[2])**2 <= (inp.radius)**2)
@@ -401,50 +401,73 @@ class molecule:
       return(self)
 
 
-   # ---------------------------------------- #
-   # ------- Filter XYZ within rod ------- #
+   # ------------------------------------------ #
+   # ------- Filter XYZ within cylinder ------- #
    
-   def filter_xyz_in_rod(self,inp):
+   def filter_xyz_in_cylinder(self,inp):
       #
       """
-      Consider xyz points within an rod 
+      Consider xyz points within an cylinder
    
       :inp: input class
       """ 
       #
 
-      ##x = self.xyz[0, :]
-      ##y = self.xyz[1, :]
-      ##z = self.xyz[2, :]
-      ##
-      ### Condition for points to be within the paraboloid 
-      ##condition = ((x-inp.sphere_center[0])**2 + 
-      ##             (y-inp.sphere_center[1])**2 + 
-      ##             (z-inp.sphere_center[2])**2 <= (inp.radius)**2)
+      x = self.xyz[0, :]
+      y = self.xyz[1, :]
+      z = self.xyz[2, :]
+       
+      # Compute base radius from the rod width
+      # and length subtracting the radius of the spheres at the extremes
+      radius = inp.rod_width / 2.0
+      length = inp.rod_length - inp.rod_width 
 
-      ##x_filtered = self.xyz[0, condition]
-      ##y_filtered = self.xyz[1, condition]
-      ##z_filtered = self.xyz[2, condition]
+      # Condition for points to be within the cylinder 
+      if inp.main_axis == "x":
+        condition = (
+            ((y - inp.sphere_center[1])**2 + (z - inp.sphere_center[2])**2 <= radius**2) &
+            (x >= inp.sphere_center[0]) &
+            (x <= inp.sphere_center[0] + length)
+        )
 
-      ### Fill previous geometry with current structure
-      ##self.nAtoms = len(x_filtered)
+      elif inp.main_axis == "y":
+          condition = (
+              ((x - inp.sphere_center[0])**2 + (z - inp.sphere_center[2])**2 <= radius**2) &
+              (y >= inp.sphere_center[1]) &
+              (y <= inp.sphere_center[1] + length)
+          )
 
-      ##self.atoms = []
-      ##self.atoms = [inp.atomtype] * self.nAtoms
+      elif inp.main_axis == "z":
+          condition = (
+              ((x - inp.sphere_center[0])**2 + (y - inp.sphere_center[1])**2 <= radius**2) &
+              (z >= inp.sphere_center[2]) &
+              (z <= inp.sphere_center[2] + length)
+          )
 
-      ##self.xyz_center = np.zeros(3)
-      ##self.xyz_min    = np.zeros(3)
-      ##self.xyz_max    = np.zeros(3)
+      x_filtered = self.xyz[0, condition]
+      y_filtered = self.xyz[1, condition]
+      z_filtered = self.xyz[2, condition]
 
-      ##self.xyz = np.zeros((3,self.nAtoms))
-      ##self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+      # Fill previous geometry with current structure
+      self.nAtoms = len(x_filtered)
 
-      ### Calculate geometrical center
-      ##self.xyz_center = np.mean(self.xyz, axis=1)
+      self.atoms = []
+      self.atoms = [inp.atomtype] * self.nAtoms
 
-      ### Save maximum/minimum coordinates limits
-      ##self.xyz_max = np.max(self.xyz, axis=1)
-      ##self.xyz_min = np.min(self.xyz, axis=1)
+      self.xyz_center = np.zeros(3)
+      self.xyz_min    = np.zeros(3)
+      self.xyz_max    = np.zeros(3)
+
+      self.xyz = np.zeros((3,self.nAtoms))
+      self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+      # Calculate geometrical center ans translate to 000
+      self.xyz_center = np.mean(self.xyz, axis=1)
+      self.trans_geom_center_to_000()
+
+      # Save maximum/minimum coordinates limits
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
 
       return(self)
 

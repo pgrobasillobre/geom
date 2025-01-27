@@ -104,11 +104,11 @@ def rod(inp):
    # Initialize bulk "molecule" and read geometry
    mol_sphere_1 = molecule.molecule()
    mol_sphere_2 = molecule.molecule()
-   #mol_cylinder = molecule.molecule()
+   mol_cylinder = molecule.molecule()
 
    mol_sphere_1.read_geom(inp.geom_file,False)
    mol_sphere_2.read_geom(inp.geom_file,False)
-   #mol_cylinder.read_geom(inp.geom_file,False)
+   mol_cylinder.read_geom(inp.geom_file,False)
 
    # Create individual sphere at the extremes of the rods 
    tools.determine_sphere_center(inp,'+')
@@ -117,16 +117,20 @@ def rod(inp):
    tools.determine_sphere_center(inp,'-')
    mol_sphere_2.filter_xyz_in_sphere(inp)
 
+   # Create cylinder
+   mol_cylinder.filter_xyz_in_cylinder(inp)
+
+   # -------------------------------------
+   # Merge cylinder and spheres geometries
+   # -------------------------------------
+
+   mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
+   mol_rod = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
+
    # Save filtered geometry
-   #file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}'
-   #output.print_geom(mol, file_geom_filtered)
-
-#### check
-   output.print_geom(mol_sphere_1, 'sphere_1')
-   output.print_geom(mol_sphere_2, 'sphere_2')
-
+   file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}'
+   output.print_geom(mol_rod, file_geom_filtered)
 # -------------------------------------------------------------------------------------
-
 def tip(inp):
    #
    """ 
