@@ -419,6 +419,7 @@ class molecule:
        
       # Compute base radius from the rod width
       # and length subtracting the radius of the spheres at the extremes
+      inp.sphere_center = [0.0,0.0,0.0]
       radius = inp.rod_width / 2.0
       length = inp.rod_length - inp.rod_width 
 
@@ -426,22 +427,22 @@ class molecule:
       if inp.main_axis == "x":
         condition = (
             ((y - inp.sphere_center[1])**2 + (z - inp.sphere_center[2])**2 <= radius**2) &
-            (x >= inp.sphere_center[0]) &
-            (x <= inp.sphere_center[0] + length)
+            (x >= inp.sphere_center[0] - length/2.0) &
+            (x <= inp.sphere_center[0] + length/2.0)
         )
 
       elif inp.main_axis == "y":
           condition = (
               ((x - inp.sphere_center[0])**2 + (z - inp.sphere_center[2])**2 <= radius**2) &
-              (y >= inp.sphere_center[1]) &
-              (y <= inp.sphere_center[1] + length)
+              (y >= inp.sphere_center[1] - length/2.0) &
+              (y <= inp.sphere_center[1] + length/2.0)
           )
 
       elif inp.main_axis == "z":
           condition = (
               ((x - inp.sphere_center[0])**2 + (y - inp.sphere_center[1])**2 <= radius**2) &
-              (z >= inp.sphere_center[2]) &
-              (z <= inp.sphere_center[2] + length)
+              (z >= inp.sphere_center[2] - length/2.0) &
+              (z <= inp.sphere_center[2] + length/2.0)
           )
 
       x_filtered = self.xyz[0, condition]
@@ -461,9 +462,8 @@ class molecule:
       self.xyz = np.zeros((3,self.nAtoms))
       self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
 
-      # Calculate geometrical center ans translate to 000
+      # Calculate geometrical center
       self.xyz_center = np.mean(self.xyz, axis=1)
-      self.trans_geom_center_to_000()
 
       # Save maximum/minimum coordinates limits
       self.xyz_max = np.max(self.xyz, axis=1)
