@@ -220,7 +220,7 @@ def read_command_line(argv,inp):
 
          if (argv[2] == '-rod'): 
             inp.gen_rod = True
-            inp.rod_lenght = float(argv[4])
+            inp.rod_length = float(argv[4])
             inp.rod_width = float(argv[5])
             inp.main_axis = argv[6].lower()
             if inp.main_axis not in inp.axes: output.error(f"Axis {inp.main_axis} not recognized.") 

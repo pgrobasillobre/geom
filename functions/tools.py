@@ -145,3 +145,29 @@ def merge_geoms(inp, geom1, geom2):
     geom3.xyz_min = np.min(geom3.xyz, axis=1)
 
     return geom3
+
+# ---------------------------------------------------- #
+# ------- Determine sphere's center within rod ------- #
+
+def determine_sphere_center(inp,sense):
+   #
+   """
+   Calculate sphere center within a rod
+
+   :inp  : input class
+   :sense: + or - direction
+
+   :return: inp.sphere_center: center of the sphere updated
+   """ 
+   #
+   inp.sphere_center = [0.0,0.0,0.0]
+   inp.radius = inp.rod_width/2.0
+   #
+   axis_map = {'x': 0, 'y': 1, 'z': 2}
+   #
+   index = axis_map[inp.main_axis]
+   if sense == '+':
+       inp.sphere_center[index] = +((inp.rod_length - inp.rod_width)/2.0)
+   elif sense == '-':
+       inp.sphere_center[index] = -((inp.rod_length - inp.rod_width)/2.0)
+
