@@ -51,6 +51,7 @@ class input_class:
       self.create_geom = False
       self.gen_graphene = False
       self.gen_sphere = False
+      self.gen_rod = False
       self.gen_tip = False
       self.gen_cone = False
       self.gen_pyramid = False
@@ -62,14 +63,18 @@ class input_class:
       self.z_max = 0.0 
       self.z_max_paraboloid = 0.0
       self.z_max_pyramid = 0.0 
+      self.rod_length = 0.0
+      self.rod_witdh = 0.0
       self.side_length = 0.0
       self.radius     = 0.0
       self.radius_in  = 0.0
       self.radius_out = 0.0
       self.X_length = 0.0
       self.Y_length = 0.0
+      self.sphere_center = [0.0,0.0,0.0]
 
       self.atomtype = ''
+      self.axes = ["x","y","z"]
       self.graphene_structures  = ["rib","disk","ring","triangle"]
       self.graphene_structure   = ""
       self.graphene_edge_types  = ["armchair","zigzag"]
@@ -151,6 +156,7 @@ class input_class:
       elif (self.create_geom):
          if (not self.gen_graphene and
              not self.gen_sphere   and
+             not self.gen_rod      and
              not self.gen_tip      and 
              not self.gen_pyramid  and
              not self.gen_cone     and

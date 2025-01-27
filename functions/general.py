@@ -84,7 +84,9 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Nanoparticles (Ag/Au):')
       print ('')
-      print ('       Sphere: geom -create -sphere atom_type{Ag/Au} radius')
+      print ('       Sphere: geom -create -sphere atom_type{Ag/Au} radius center_x center_y center_z')
+      print ('')
+      print ('       Rod: geom -create -rod atom_type{Ag/Au} length width main_axis{X/Y/Z}')
       print ('')
       print ('       Tip (elliptic paraboloid): python3 geom -create -tip atom_type{Ag/Au} z_max a b')
       print ('')
@@ -214,6 +216,14 @@ def read_command_line(argv,inp):
          if (argv[2] == '-sphere'): 
             inp.gen_sphere = True
             inp.radius = float(argv[4])
+            for i in range(3): inp.sphere_center[i] = float(argv[5+i])
+
+         if (argv[2] == '-rod'): 
+            inp.gen_rod = True
+            inp.rod_lenght = float(argv[4])
+            inp.rod_width = float(argv[5])
+            inp.main_axis = argv[6].lower()
+            if inp.main_axis not in inp.axes: output.error(f"Axis {inp.main_axis} not recognized.") 
 
          if (argv[2] == '-tip'): 
             inp.gen_tip = True
