@@ -18,6 +18,7 @@ def select_case(inp):
 
    if (inp.gen_graphene):   graphene(inp)
    if (inp.gen_sphere):     sphere(inp)
+   if (inp.gen_rod):        rod(inp)
    if (inp.gen_tip):        tip(inp)
    if (inp.gen_pyramid):    pyramid(inp)
    if (inp.gen_microscope): microscope(inp)
@@ -83,9 +84,35 @@ def sphere(inp):
    mol.filter_xyz_in_sphere(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'sphere_r_{inp.radius}'
+   file_geom_filtered = f'sphere_r_{inp.radius}_center_{inp.sphere_center[0]}_{inp.sphere_center[1]}_{inp.sphere_center[2]}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
+def rod(inp):
+   #
+   """ 
+   Generate rod geometry 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+ 
+   # Initialize bulk "molecule" and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file,False)
+
+   # Pick only atoms within the defined sphere 
+   mol.filter_xyz_in_rod(inp)
+
+   # Save filtered geometry
+   file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}'
+   output.print_geom(mol, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+
 def tip(inp):
    #
    """ 

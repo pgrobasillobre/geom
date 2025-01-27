@@ -370,7 +370,9 @@ class molecule:
       z = self.xyz[2, :]
       
       # Condition for points to be within the paraboloid 
-      condition = (x**2 + y**2 + z**2 <= (inp.radius)**2)
+      condition = ((x-inp.sphere_center[0])**2 + 
+                   (y-inp.sphere_center[1])**2 + 
+                   (z-inp.sphere_center[2])**2 <= (inp.radius)**2)
 
       x_filtered = self.xyz[0, condition]
       y_filtered = self.xyz[1, condition]
