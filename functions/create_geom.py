@@ -102,15 +102,29 @@ def rod(inp):
    out_log = output.logfile_init()
  
    # Initialize bulk "molecule" and read geometry
-   mol = molecule.molecule()
-   mol.read_geom(inp.geom_file,False)
+   mol_sphere_1 = molecule.molecule()
+   mol_sphere_2 = molecule.molecule()
+   #mol_cylinder = molecule.molecule()
 
-   # Pick only atoms within the defined sphere 
-   mol.filter_xyz_in_rod(inp)
+   mol_sphere_1.read_geom(inp.geom_file,False)
+   mol_sphere_2.read_geom(inp.geom_file,False)
+   #mol_cylinder.read_geom(inp.geom_file,False)
+
+   # Create individual sphere at the extremes of the rods 
+   tools.determine_sphere_center(inp,'+')
+   mol_sphere_1.filter_xyz_in_sphere(inp)
+
+   tools.determine_sphere_center(inp,'-')
+   mol_sphere_2.filter_xyz_in_sphere(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}'
-   output.print_geom(mol, file_geom_filtered)
+   #file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}'
+   #output.print_geom(mol, file_geom_filtered)
+
+#### check
+   output.print_geom(mol_sphere_1, 'sphere_1')
+   output.print_geom(mol_sphere_2, 'sphere_2')
+
 # -------------------------------------------------------------------------------------
 
 def tip(inp):
