@@ -84,6 +84,8 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Nanoparticles (Ag/Au):')
       print ('')
+      print ('       Sphere: geom -create -sphere atom_type{Ag/Au} radius')
+      print ('')
       print ('       Tip (elliptic paraboloid): python3 geom -create -tip atom_type{Ag/Au} z_max a b')
       print ('')
       print ('       Pyramid (square base): python3 geom -create -pyramid atom_type{Ag/Au} z_max base_side_length')
@@ -209,6 +211,9 @@ def read_command_line(argv,inp):
          if inp.atomtype=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
          if inp.atomtype=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
 
+         if (argv[2] == '-sphere'): 
+            inp.gen_sphere = True
+            inp.radius = float(argv[4])
 
          if (argv[2] == '-tip'): 
             inp.gen_tip = True
