@@ -352,6 +352,53 @@ class molecule:
    
        return self
 
+
+   # ---------------------------------------- #
+   # ------- Filter XYZ within sphere ------- #
+   
+   def filter_xyz_in_sphere(self,inp):
+      #
+      """
+      Consider xyz points within an sphere 
+   
+      :inp: input class
+      """ 
+      #
+
+      x = self.xyz[0, :]
+      y = self.xyz[1, :]
+      z = self.xyz[2, :]
+      
+      # Condition for points to be within the paraboloid 
+      condition = (x**2 + y**2 + z**2 <= (inp.radius)**2)
+
+      x_filtered = self.xyz[0, condition]
+      y_filtered = self.xyz[1, condition]
+      z_filtered = self.xyz[2, condition]
+
+      # Fill previous geometry with current structure
+      self.nAtoms = len(x_filtered)
+
+      self.atoms = []
+      self.atoms = [inp.atomtype] * self.nAtoms
+
+      self.xyz_center = np.zeros(3)
+      self.xyz_min    = np.zeros(3)
+      self.xyz_max    = np.zeros(3)
+
+      self.xyz = np.zeros((3,self.nAtoms))
+      self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+      # Calculate geometrical center
+      self.xyz_center = np.mean(self.xyz, axis=1)
+
+      # Save maximum/minimum coordinates limits
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
+
+      return(self)
+
+
    # ----------------------------------------------------- #
    # ------- Filter XYZ within elliptic paraboloid ------- #
    

@@ -17,6 +17,7 @@ def select_case(inp):
    #
 
    if (inp.gen_graphene):   graphene(inp)
+   if (inp.gen_sphere):     sphere(inp)
    if (inp.gen_tip):        tip(inp)
    if (inp.gen_pyramid):    pyramid(inp)
    if (inp.gen_microscope): microscope(inp)
@@ -58,6 +59,31 @@ def graphene(inp):
    if inp.graphene_structure=='ring':     file_geom_filtered = f'graphene_ring_Out_{inp.radius_out}_In_{inp.radius_in}'
    if inp.graphene_structure=='triangle': file_geom_filtered = f'graphene_triangle_{inp.graphene_edge_type}_{inp.side_length}'
 
+   output.print_geom(mol, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+def sphere(inp):
+   #
+   """ 
+   Generate sphere geometry 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+ 
+   # Initialize bulk "molecule" and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file,False)
+
+   # Pick only atoms within the defined sphere 
+   mol.filter_xyz_in_sphere(inp)
+
+   # Save filtered geometry
+   file_geom_filtered = f'sphere_r_{inp.radius}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def tip(inp):

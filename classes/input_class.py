@@ -50,6 +50,7 @@ class input_class:
       # -- Generate structure geometry
       self.create_geom = False
       self.gen_graphene = False
+      self.gen_sphere = False
       self.gen_tip = False
       self.gen_cone = False
       self.gen_pyramid = False
@@ -149,6 +150,7 @@ class input_class:
 
       elif (self.create_geom):
          if (not self.gen_graphene and
+             not self.gen_sphere   and
              not self.gen_tip      and 
              not self.gen_pyramid  and
              not self.gen_cone     and
