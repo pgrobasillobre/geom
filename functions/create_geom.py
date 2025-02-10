@@ -83,7 +83,7 @@ def sphere(inp):
    # Pick only atoms within the defined sphere 
    mol.filter_xyz_in_sphere(inp)
 
-   # Alloy case
+   # Alloy
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
@@ -130,8 +130,11 @@ def rod(inp):
    mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
    mol_rod = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
 
+   # Alloy
+   if inp.alloy: mol_rod.create_alloy(inp)
+
    # Save filtered geometry
-   file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}'
+   file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}'
    output.print_geom(mol_rod, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def tip(inp):
@@ -155,8 +158,11 @@ def tip(inp):
    # Pick only atoms within the defined paraboloid
    mol.filter_xyz_in_elliptic_paraboloid(inp)
 
+   # Alloy
+   if inp.alloy: mol.create_alloy(inp)
+
    # Save filtered geometry
-   file_geom_filtered = f'elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
+   file_geom_filtered = f'elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def pyramid(inp):
