@@ -56,6 +56,9 @@ class input_class:
       self.gen_cone = False
       self.gen_pyramid = False
       self.gen_microscope = False
+      self.alloy = False
+
+      self.alloy_perc = 0.0
       self.elliptic_parabola_a = 1.0 # Modifies stepness along x
       self.elliptic_parabola_b = 1.0 # Modifies stepness along y
       self.elliptic_parabola_c = 0.0 # Fixed for xy parabolloid
@@ -73,7 +76,9 @@ class input_class:
       self.Y_length = 0.0
       self.sphere_center = [0.0,0.0,0.0]
 
+      self.alloy_string = ''
       self.atomtype = ''
+      self.metal_atomtypes = ['ag','au']
       self.axes = ["x","y","z"]
       self.graphene_structures  = ["rib","disk","ring","triangle"]
       self.graphene_structure   = ""

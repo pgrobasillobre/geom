@@ -7,7 +7,7 @@ class parameters:
        
       # -- Convergence options
       self.convergence      = 0.010
-      self.convergence_step = 0.010
+      self.convergence_step = 0.001
       
       # -- General parameters
       self.zero = 0.0

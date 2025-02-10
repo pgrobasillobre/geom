@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 from functions import output
 
@@ -624,4 +625,33 @@ class molecule:
       self.xyz_min = np.min(self.xyz, axis=1)
 
       return(self)
+
+
+   # ----------------------------------- #
+   # ------- Create random alloy ------- #
+
+   def create_alloy(self,inp):
+      """
+      Modify the molecule by randomly replacing a percentage of specified atoms with the alloy type.
+
+      :inp: input class
+
+      """
+      # Number of atoms to replace 
+      replace_indices = [i for i, atom in enumerate(self.atoms)]
+      n_replace = int(self.nAtoms * (inp.alloy_perc / 100.0))
+
+      if n_replace > 0:
+         # Randomly select indices to replace
+         selected_indices = random.sample(replace_indices, n_replace)
+
+         # Replace the selected atoms with the alloy type
+         for idx in selected_indices:
+             self.atoms[idx] = inp.atomtype_alloy.lower()
+
+         print(f"Replaced {n_replace} {inp.atomtype} atoms with {inp.atomtype_alloy}")
+
+      else:
+         output.error('number of atoms to replace in alloy creation n_replace{}')
+
 
