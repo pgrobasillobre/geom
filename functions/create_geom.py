@@ -83,8 +83,11 @@ def sphere(inp):
    # Pick only atoms within the defined sphere 
    mol.filter_xyz_in_sphere(inp)
 
+   # Alloy case
+   if inp.alloy: mol.create_alloy(inp)
+
    # Save filtered geometry
-   file_geom_filtered = f'sphere_r_{inp.radius}_center_{inp.sphere_center[0]}_{inp.sphere_center[1]}_{inp.sphere_center[2]}'
+   file_geom_filtered = f'sphere_r_{inp.radius}_center_{inp.sphere_center[0]}_{inp.sphere_center[1]}_{inp.sphere_center[2]}{inp.alloy_string}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def rod(inp):

@@ -84,17 +84,17 @@ def read_command_line(argv,inp):
       print ('')
       print ('     Nanoparticles (Ag/Au):')
       print ('')
-      print ('       Sphere: geom -create -sphere atom_type{Ag/Au} radius center_x center_y center_z')
+      print ('       Sphere: geom -create -sphere atom_type{Ag/Au} radius center_x center_y center_z [optional: -alloy atom_type -percentual float]')
       print ('')
-      print ('       Rod: geom -create -rod atom_type{Ag/Au} length width main_axis{X/Y/Z}')
+      print ('       Rod: geom -create -rod atom_type{Ag/Au} length width main_axis{X/Y/Z} [optional: -alloy atom_type -percentual float]')
       print ('')
-      print ('       Tip (elliptic paraboloid): python3 geom -create -tip atom_type{Ag/Au} z_max a b')
+      print ('       Tip (elliptic paraboloid): python3 geom -create -tip atom_type{Ag/Au} z_max a b [optional: -alloy atom_type -percentual float]')
       print ('')
-      print ('       Pyramid (square base): python3 geom -create -pyramid atom_type{Ag/Au} z_max base_side_length')
+      print ('       Pyramid (square base): python3 geom -create -pyramid atom_type{Ag/Au} z_max base_side_length [optional: -alloy atom_type -percentual float]')
       print ('')
-      print ('       Cone: python3 geom -create -cone atom_type{Ag/Au} z_max base_radius')
+      print ('       Cone: python3 geom -create -cone atom_type{Ag/Au} z_max base_radius [optional: -alloy atom_type -percentual float]')
       print ('')
-      print ('       Microscope: python3 geom -create -microscope atom_type{Ag/Au} z_max_paraboloid a b z_max_pyramid base_side_length')
+      print ('       Microscope: python3 geom -create -microscope atom_type{Ag/Au} z_max_paraboloid a b z_max_pyramid base_side_length [optional: -alloy atom_type -percentual float]')
       print ('')
       print ('     ----------------')
       print ('     Merge Geometries')
@@ -218,25 +218,25 @@ def read_command_line(argv,inp):
             inp.radius = float(argv[4])
             for i in range(3): inp.sphere_center[i] = float(argv[5+i])
 
-         if (argv[2] == '-rod'): 
+         elif (argv[2] == '-rod'): 
             inp.gen_rod = True
             inp.rod_length = float(argv[4])
             inp.rod_width = float(argv[5])
             inp.main_axis = argv[6].lower()
             if inp.main_axis not in inp.axes: output.error(f"Axis {inp.main_axis} not recognized.") 
 
-         if (argv[2] == '-tip'): 
+         elif (argv[2] == '-tip'): 
             inp.gen_tip = True
             inp.z_max = float(argv[4])
             inp.elliptic_parabola_a = float(argv[5])
             inp.elliptic_parabola_b = float(argv[6])
 
-         if (argv[2] == '-pyramid'): 
+         elif (argv[2] == '-pyramid'): 
             inp.gen_pyramid = True
             inp.z_max = float(argv[4])
             inp.side_length =  float(argv[5])
 
-         if (argv[2] == '-microscope'): 
+         elif (argv[2] == '-microscope'): 
             inp.gen_microscope = True
             inp.z_max_paraboloid = float(argv[4])
             inp.elliptic_parabola_a = float(argv[5])
@@ -244,10 +244,25 @@ def read_command_line(argv,inp):
             inp.z_max_pyramid = float(argv[7])                                              
             inp.side_length =  float(argv[8])
 
-         if (argv[2] == '-cone'): 
+         elif (argv[2] == '-cone'): 
             inp.gen_cone = True
             inp.z_max = float(argv[4])
             inp.radius = float(argv[5])
+
+         # Alloy case
+         if (argv[-4] == '-alloy'):
+            inp.alloy = True
+            inp.atomtype_alloy = argv[-3].lower()
+            if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f"Alloy atom type {inp.atomtype_alloy} not supported.")
+            if inp.atomtype_alloy == inp.atomtype: output.error(f"Alloy atom type coincides with original geometry atom type.")
+
+            inp.alloy_perc = float(argv[-1])
+            if (inp.alloy_perc == 0.0   or 
+                inp.alloy_perc == 100.0 or 
+                inp.alloy_perc  < 0.0   or
+                inp.alloy_perc  > 100.0): output.error(f'Alloy percentual requested {inp.alloy_perc} %. It must be greater than 0 and lower than 100')
+
+            inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
 
 
    elif argv[1] == '-merge':
