@@ -221,8 +221,11 @@ def pyramid(inp):
    # Pick only atoms within the defined pyramid
    mol.filter_xyz_in_pyramid(inp,centers, planes)
 
+   # Alloy
+   if inp.alloy: mol.create_alloy(inp)
+
    # Save filtered geometry
-   file_geom_filtered = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}'
+   file_geom_filtered = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def cone(inp):
@@ -246,8 +249,11 @@ def cone(inp):
    # Pick only atoms within the defined cone
    mol.filter_xyz_in_cone(inp)
 
+   # Alloy
+   if inp.alloy: mol.create_alloy(inp)
+
    # Save filtered geometry
-   file_geom_filtered = f'cone_radius-{inp.radius}_zmin-{inp.z_min}_zmax-{inp.z_max}'
+   file_geom_filtered = f'cone_radius-{inp.radius}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def microscope(inp):
@@ -332,7 +338,10 @@ def microscope(inp):
 
    mol_microscope = tools.merge_geoms(inp,mol_paraboloid,mol_pyramid_rot)
 
-   file_geom_microscope = f'microscope_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}'
+   # Alloy
+   if inp.alloy: mol_microscope.create_alloy(inp)
+
+   file_geom_microscope = f'microscope_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}{inp.alloy_string}'
    output.print_geom(mol_microscope, file_geom_microscope)
 # -------------------------------------------------------------------------------------
 
