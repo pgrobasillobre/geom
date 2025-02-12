@@ -1,45 +1,46 @@
-# GEOM
+# 🚀 GEOM – XYZ Geometry File Management
 
-## Table of Contents
+## 📌 Table of Contents
 
-- [About](#about)
-- [Prerequisites](#prerequisites)
-- [How to Use](#howtouse)
-- [License](#license)
-- [Contact](#contact)
+- About
+- Prerequisites
+- Installation
+- Usage
+- License
+- Contact
 
-## About
+## ✨ About
 
-Manage XYZ geometry files:
+GEOM is a command-line tool designed for managing XYZ geometry files with various operations, including:
 
-   1. Create nanoparticles geometries (tip, pyramid, etc.)
-   2. Create graphene structures (ribbons, triangles, etc.)
-   3. Translate/rotate single XYZ files.
-   4. Set two geometries at a controlled distance.
-   5. Calculate minimum distance between two XYZ files.
-   6. Calculate geometrical center of XYZ file.
-   7. Merge geometries.
-   8. Create specular geometry.
-   
+- 🏗️ **Nanoparticle geometry creation** (e.g., tips, pyramids)
+- 🧪 **Graphene structure generation** (e.g., ribbons, triangles)
+- 🔄 **Transformation operations** (translation, rotation)
+- 📏 **Distance control** between two geometries
+- 🔬 **Minimum distance calculation** between XYZ files
+- 🎯 **Geometrical center computation**
+- 🛠️ **Geometry merging**
+- 🔍 **Specular (mirror) geometry creation**
 
+## ⚙️ Prerequisites
 
-### Prerequisites
+- Python **3.8.10** or later
 
-   - Python 3.8.10 or later
+## 📖 Usage
 
+To view available commands, run:
 
-## How to use
-
-   python3 geom -h
-
-
-## License 
-
-   This project is licensed under the GNU General Public License v3.0
+```
+python3 geom -h
+```
 
 
-## Contact
+## 📜 License
 
-   For any issue contact pgrobasillobre@gmail.com
-   
+This project is licensed under the **GNU General Public License v3.0**.
 
+## 📬 Contact
+
+For inquiries or issues, please contact:
+
+📧 **pgrobasillobre@gmail.com**
