@@ -12,9 +12,11 @@ from functions import general, create_geom
 
 # -------------------------------------------------------------------------------------
 def move_created_geom(folder):
+
    """
    Move created geometry to folder and remove results_geom folder
    """
+
    file_path_results = os.path.join(os.path.dirname(__file__), "results_geom")
    file_path_results_xyz  = os.path.join(file_path_results, "*xyz")
 
@@ -194,4 +196,149 @@ def test_create_microscope(monkeypatch):
    
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
-# -
+# -------------------------------------------------------------------------------------
+def test_create_graphene_ribbon(monkeypatch):
+
+   """
+   Test if the generated graphene ribbon geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'graphene_ribbon'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-graphene", "rib", "40.0", "20.0"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "graphene_ribbon_40.0_20.0.xyz")
+   generated_file = f"{test_folder}/graphene_ribbon_{inp.X_length}_{inp.Y_length}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_graphene_disk(monkeypatch):
+
+   """
+   Test if the generated graphene disk geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'graphene_disk'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-graphene", "disk", "30.0"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "graphene_disk_30.0.xyz")
+   generated_file = f"{test_folder}/graphene_disk_{inp.radius}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_graphene_ring(monkeypatch):
+
+   """
+   Test if the generated graphene ring geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'graphene_ring'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-graphene", "ring", "60.0", "30.0"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "graphene_ring_Out_60.0_In_30.0.xyz")
+   generated_file = f"{test_folder}/graphene_ring_Out_{inp.radius_out}_In_{inp.radius_in}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_graphene_triangle_armchair(monkeypatch):
+
+   """
+   Test if the generated graphene triangle armchair geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'graphene_triangle_armchair'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-graphene", "triangle", "armchair", "50.0"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "graphene_triangle_armchair_50.0.xyz")
+   generated_file = f"{test_folder}/graphene_triangle_{inp.graphene_edge_type}_{inp.side_length}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_graphene_triangle_zigzag(monkeypatch):
+
+   """
+   Test if the generated graphene triangle zigzag geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'graphene_triangle_zigzag'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-graphene", "triangle", "zigzag", "50.0"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "graphene_triangle_zigzag_50.0.xyz")
+   generated_file = f"{test_folder}/graphene_triangle_{inp.graphene_edge_type}_{inp.side_length}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+
