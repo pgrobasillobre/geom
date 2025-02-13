@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 test_folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 from classes import input_class
-from functions import general, various, translate, create_geom
+from functions import general, various, translate, rotate, create_geom
 
 # -------------------------------------------------------------------------------------
 def move_input_geom(folder,xyz_file,optional_file=None):
@@ -430,21 +430,48 @@ def test_controlled_distance(monkeypatch):
    move_input_geom(test_folder,xyz_input_file_1, optional_file = distances_input)
    move_input_geom(test_folder,xyz_input_file_2)
 
-   print("Before calling translate_controlled_distance, files:", os.listdir("."))
-
    # Translate controlled distance
    translate.translate_controlled_distance(inp)
 
-   print("After calling translate_controlled_distance, files:", os.listdir("."))
-   print("After calling translate_controlled_distance, files:", os.listdir("./results_geom"))
-
-   
    # Define the expected and actual output files
    expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_r_10.0_center_0.0_0.0_0.0_+x_d_10.00.xyz")
    generated_file = f"{test_folder}/sphere_r_10.0_center_0.0_0.0_0.0_+x_d_10.00.xyz"
 
    move_managed_geom(test_folder, remove_optional_file = distances_input)
    
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_r1_rotation(monkeypatch):
+
+   """
+   Test r1 rotation
+   """
+
+   # Test folder
+   test_folder    = 'r1_rotation'
+   xyz_input_file = 'doxorubicin.xyz'
+
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-r1", "30.0", "doxorubicin.xyz", "no", "-y"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+
+   # Temporaly move input file
+   move_input_geom(test_folder,xyz_input_file)
+
+   # Translate controlled distance
+   rotate.rotate_1(inp)
+
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "doxorubicin_-y_degree_30.0.xyz")
+   generated_file = f"{test_folder}/doxorubicin_-y_degree_30.0.xyz"
+
+   move_managed_geom(test_folder)
+ 
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
