@@ -79,7 +79,7 @@ class input_class:
       self.tmp_folder = ''
       self.alloy_string = ''
       self.atomtype = ''
-      self.metal_atomtypes = ['ag','au']
+      self.metal_atomtypes = ['ag','au','na']
       self.axes = ["x","y","z"]
       self.graphene_structures  = ["rib","disk","ring","triangle"]
       self.graphene_structure   = ""

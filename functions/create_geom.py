@@ -28,7 +28,7 @@ def select_case(inp):
    if (inp.gen_cone):       cone(inp)
 
    # Eliminate tmp folder containing bulk structure
-   shutil.rmtree(inp.tmp_folder)
+   if not inp.gen_graphene: shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
 def graphene(inp):
    #
@@ -330,7 +330,6 @@ def microscope(inp):
    mol_pyramid_rot = tools.rotate(mol_pyramid,180.0,'+x',mol_pyramid_rot)
 
    # Move 1/2*reticular_distance (lc) up in the z axis
-   #shift = round((inp.z_max_pyramid/2.0)/inp.lc) * inp.lc
    shift = math.ceil((inp.z_max_pyramid/2.0)/inp.lc) * inp.lc
 
    mol_pyramid_rot.translate_geom(shift,[0.0,0.0, 1.0])
@@ -389,43 +388,57 @@ def get_layers(inp, lattice_constant):
    """
    #
 
+   # Scaling factor to ensure enough layers are considered, independently of FCC of BCC structure
+   structure_scaling = 2.0
+
    if inp.gen_sphere:
 
        # Find the maximum distance from the origin + sphere radius
        max_shift = max(abs(inp.sphere_center[0]), abs(inp.sphere_center[1]), abs(inp.sphere_center[2]))
        R = inp.radius + max_shift
 
-       return [int(2 * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
+       return [int(structure_scaling * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
 
    elif inp.gen_rod:
-       R = inp.rod_width / 2.0  # Rod width is diameter, so divide by 2
-       L = inp.rod_length
-       axis = inp.main_axis
-       layers = [int(2 * R / lattice_constant) + 2] * 3  # Default layers for all
+       axis = inp.main_axis.lower()
 
-       # Increase the number of layers along the rod's main axis
+       R = inp.rod_width / 2.0
+       L = 2.0 * structure_scaling * inp.rod_length
+
+       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
+
        axis_index = {"x": 0, "y": 1, "z": 2}[axis]
-       layers[axis_index] = int(L / lattice_constant) + 2  # More layers along the rod axis
+       layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
+
        return layers
 
    elif inp.gen_tip:
-       H = inp.z_max  # Tip height
-       return [int(H / lattice_constant) + 2] * 3  # Tip grows mostly in z-axis
+      H = structure_scaling * inp.z_max  # Tip height
+      return [int(H / lattice_constant) + 2] * 3  # Tip grows mostly in z-axis
 
-   elif gen_pyramid:
-       H = inp.z_max  # Pyramid height
-       L = inp.side_length  # Base side length
-       return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int(H / lattice_constant) + 2]
-
-   elif gen_microscope:
-       H_paraboloid = inp.z_max_paraboloid
-       H_pyramid = inp.z_max_pyramid
-       L = inp.side_length
-       return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int((H_paraboloid + H_pyramid) / lattice_constant) + 2]
-
-   elif gen_cone:
+   elif inp.gen_cone:
        H = inp.z_max
-       R = inp.radius
+       R = structure_scaling * inp.radius
        return [int(2 * R / lattice_constant) + 2, int(2 * R / lattice_constant) + 2, int(H / lattice_constant) + 2]
+
+   elif inp.gen_pyramid:
+      if inp.z_max > inp.side_length:
+          H = 1.5 * structure_scaling * inp.z_max  
+          L = inp.side_length  
+      elif inp.side_length > inp.z_max:
+          H = inp.z_max  
+          L = 1.5 * structure_scaling * inp.side_length  
+      else:
+          # If both are equal, apply scaling to L
+          H = inp.z_max
+          L = 1.5 * structure_scaling * inp.side_length
+
+      return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int(H / lattice_constant) + 2]
+
+   elif inp.gen_microscope:
+       H_paraboloid = 1.5 * structure_scaling * inp.z_max_paraboloid
+       H_pyramid    = 1.5 * structure_scaling * inp.z_max_pyramid
+       L            = 1.5 * structure_scaling * inp.side_length
+       return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int((H_paraboloid + H_pyramid) / lattice_constant) + 2]
 # -------------------------------------------------------------------------------------
 

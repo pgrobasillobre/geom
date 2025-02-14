@@ -116,7 +116,7 @@ def merge_geoms(inp, geom1, geom2):
         
         # Add atom if it is not within cutoff distance and not already added
         if keep_atom and (geom2.xyz[0][i], geom2.xyz[1][i], geom2.xyz[2][i]) not in added_atoms:
-            merged_atoms.append(geom1.atoms[i])
+            merged_atoms.append(geom2.atoms[i])
 
             merged_xyz[0].append(geom2.xyz[0][i])
             merged_xyz[1].append(geom2.xyz[1][i])
