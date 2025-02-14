@@ -2,10 +2,13 @@ import sys
 import numpy as np
 import math
 import copy
+import os
+import shutil
 
-from classes import molecule
+from classes import molecule, parameters
 from functions import general, output, tools
-
+from ase.cluster.cubic import FaceCenteredCubic
+from ase.io import write
 # -------------------------------------------------------------------------------------
 def select_case(inp):
    #
@@ -23,6 +26,9 @@ def select_case(inp):
    if (inp.gen_pyramid):    pyramid(inp)
    if (inp.gen_microscope): microscope(inp)
    if (inp.gen_cone):       cone(inp)
+
+   # Eliminate tmp folder containing bulk structure
+   shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
 def graphene(inp):
    #
@@ -343,5 +349,83 @@ def microscope(inp):
 
    file_geom_microscope = f'microscope_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}{inp.alloy_string}'
    output.print_geom(mol_microscope, file_geom_microscope)
+# -------------------------------------------------------------------------------------
+def create_ase_bulk_metal(inp, base_dir):
+   """
+   Create temporary bulk metal XYZ file with ASE
+
+   :inp: input class
+   :base_dir: absolute path to folder
+   """
+   #
+
+   # Extract lattice constant from parameters dictionary
+   param = parameters.parameters()
+   lattice_constant = param.lattice_constant.get(inp.atomtype)
+
+   # Create tmp folder
+   inp.tmp_folder = os.path.join(base_dir,'tmp')
+   if os.path.exists(inp.tmp_folder): shutil.rmtree(inp.tmp_folder)
+   os.mkdir(inp.tmp_folder)
+
+   # Determine minimum layers required by ASE
+   layers = get_layers(inp,lattice_constant)
+
+   # Create tmp/atomtype.xyz 
+   surfaces = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+   atoms = FaceCenteredCubic(inp.atomtype.capitalize(), surfaces, layers, latticeconstant=lattice_constant)
+
+   # Write on tmp/tmp_bulk.xyz
+   inp.geom_file = os.path.join(inp.tmp_folder,'tmp_bulk.xyz')
+   write(inp.geom_file, atoms)
+# -------------------------------------------------------------------------------------
+def get_layers(inp, lattice_constant):
+   """
+   Dynamically calculate the required number of ASE layers for creating bulk structures
+   as a function of the structural shapes.
+
+   :inp: input class
+   :lattice constant: lattice_constant parameter
+   """
+   #
+
+   if inp.gen_sphere:
+
+       # Find the maximum distance from the origin + sphere radius
+       max_shift = max(abs(inp.sphere_center[0]), abs(inp.sphere_center[1]), abs(inp.sphere_center[2]))
+       R = inp.radius + max_shift
+
+       return [int(2 * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
+
+   elif inp.gen_rod:
+       R = inp.rod_width / 2.0  # Rod width is diameter, so divide by 2
+       L = inp.rod_length
+       axis = inp.main_axis
+       layers = [int(2 * R / lattice_constant) + 2] * 3  # Default layers for all
+
+       # Increase the number of layers along the rod's main axis
+       axis_index = {"x": 0, "y": 1, "z": 2}[axis]
+       layers[axis_index] = int(L / lattice_constant) + 2  # More layers along the rod axis
+       return layers
+
+   elif inp.gen_tip:
+       H = inp.z_max  # Tip height
+       return [int(H / lattice_constant) + 2] * 3  # Tip grows mostly in z-axis
+
+   elif gen_pyramid:
+       H = inp.z_max  # Pyramid height
+       L = inp.side_length  # Base side length
+       return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int(H / lattice_constant) + 2]
+
+   elif gen_microscope:
+       H_paraboloid = inp.z_max_paraboloid
+       H_pyramid = inp.z_max_pyramid
+       L = inp.side_length
+       return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int((H_paraboloid + H_pyramid) / lattice_constant) + 2]
+
+   elif gen_cone:
+       H = inp.z_max
+       R = inp.radius
+       return [int(2 * R / lattice_constant) + 2, int(2 * R / lattice_constant) + 2, int(H / lattice_constant) + 2]
 # -------------------------------------------------------------------------------------
 
