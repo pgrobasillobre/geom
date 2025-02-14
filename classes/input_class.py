@@ -76,6 +76,7 @@ class input_class:
       self.Y_length = 0.0
       self.sphere_center = [0.0,0.0,0.0]
 
+      self.tmp_folder = ''
       self.alloy_string = ''
       self.atomtype = ''
       self.metal_atomtypes = ['ag','au']

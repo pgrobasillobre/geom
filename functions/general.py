@@ -1,7 +1,7 @@
 import sys
 import os
 
-from functions import output
+from functions import output, create_geom
 
 # -------------------------------------------------------------------------------------
 def read_command_line(argv,inp):
@@ -209,10 +209,6 @@ def read_command_line(argv,inp):
          inp.atomtype = argv[3].lower()
          if inp.atomtype!='ag' and inp.atomtype!='au': output.error(f'Atom Type "{argv[2]}" not recognised') 
 
-         # Determine the base directory from the script's location to access data-repository
-         if inp.atomtype=='ag': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/ag.xyz') 
-         if inp.atomtype=='au': inp.geom_file = os.path.join(base_dir, 'data/bulk-metals/au.xyz')
-
          if (argv[2] == '-sphere'): 
             inp.gen_sphere = True
             inp.radius = float(argv[4])
@@ -248,6 +244,9 @@ def read_command_line(argv,inp):
             inp.gen_cone = True
             inp.z_max = float(argv[4])
             inp.radius = float(argv[5])
+
+         # Create ASE bulk metal dynamically
+         create_geom.create_ase_bulk_metal(inp, base_dir)
 
          # Alloy case
          if (argv[-4] == '-alloy'):
