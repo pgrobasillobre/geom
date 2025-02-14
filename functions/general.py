@@ -207,7 +207,7 @@ def read_command_line(argv,inp):
 
       else:
          inp.atomtype = argv[3].lower()
-         if inp.atomtype!='ag' and inp.atomtype!='au': output.error(f'Atom Type "{argv[2]}" not recognised') 
+         if inp.atomtype not in inp.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
 
          if (argv[2] == '-sphere'): 
             inp.gen_sphere = True
@@ -245,7 +245,7 @@ def read_command_line(argv,inp):
             inp.z_max = float(argv[4])
             inp.radius = float(argv[5])
 
-         # Create ASE bulk metal dynamically
+         # Create bulk metal dynamically
          create_geom.create_ase_bulk_metal(inp, base_dir)
 
          # Alloy case
