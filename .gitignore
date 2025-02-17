@@ -4,6 +4,8 @@ __pycache__
 
 .__main__*
 
+tmp/
+
 tests/cone/*xyz
 tests/graphene*/*xyz
 tests/microscope/*xyz
