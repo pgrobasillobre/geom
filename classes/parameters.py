@@ -13,7 +13,7 @@ class parameters:
       self.lattice_constant = {
       "ag": 4.09000,
       "au": 4.09000,
-      "na": 4.2906,
+      "na": 4.22500,
       "c" : 2.46 # Graphene
       }
  
