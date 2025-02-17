@@ -462,10 +462,19 @@ def create_ase_bulk_graphene(inp, base_dir):
    os.mkdir(inp.tmp_folder)
 
    # Create initial graphene structure with ASE
-   if inp.graphene_structure == "rib":
+   if inp.graphene_structure == "rib" or inp.graphene_structure == "triangle":
+      # Increase size of bulk structure by a factor to ensure correct geometry creation
+      geom_scale = 1.5
+
+      # If triangle, create side_length X side_length ribbon to cut
+      if inp.graphene_structure == "triangle":
+         inp.X_length = inp.side_length 
+         inp.Y_length = inp.side_length
+         geom_scale = 2.0
+
       # Oversize by 1.5x
-      scaled_width  = 1.5 * inp.X_length
-      scaled_length = 1.5 * inp.Y_length
+      scaled_width  = geom_scale * inp.X_length
+      scaled_length = geom_scale * inp.Y_length
 
       # Convert dimensions to graphene_nanoribbon parameters
       n = int(scaled_width / 2.13)   # Number of dimer rows for width
