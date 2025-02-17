@@ -134,7 +134,7 @@ class molecule:
    
        # Update the atom list and geometry based on filtered data
        self.nAtoms = len(x_filtered)
-       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+       self.atoms = [inp.atomtype] * self.nAtoms  # Atom types remain consistent
    
        self.xyz_center = np.zeros(3)
        self.xyz_min    = np.zeros(3)
@@ -176,7 +176,7 @@ class molecule:
    
        # Update the atom list and geometry based on filtered data
        self.nAtoms = len(x_filtered)
-       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+       self.atoms = [inp.atomtype] * self.nAtoms  # Atom types remain consistent
    
        self.xyz_center = np.zeros(3)
        self.xyz_min    = np.zeros(3)
@@ -217,7 +217,7 @@ class molecule:
    
        # Update the atom list and geometry based on filtered data
        self.nAtoms = len(x_filtered)
-       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+       self.atoms = [inp.atomtype] * self.nAtoms  # Atom types remain consistent
    
        self.xyz_center = np.zeros(3)
        self.xyz_min    = np.zeros(3)
@@ -276,7 +276,7 @@ class molecule:
    
        # Update the atom list and geometry based on filtered data
        self.nAtoms = len(x_filtered)
-       self.atoms = ["C"] * self.nAtoms  # Atom types remain consistent
+       self.atoms = [inp.atomtype] * self.nAtoms  # Atom types remain consistent
    
        self.xyz_center = np.zeros(3)
        self.xyz_min    = np.zeros(3)
