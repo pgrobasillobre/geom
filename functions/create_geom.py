@@ -8,6 +8,7 @@ import shutil
 from classes import molecule, parameters
 from functions import general, output, tools
 from ase.cluster.cubic import FaceCenteredCubic
+from ase.build import graphene_nanoribbon
 from ase.io import write
 # -------------------------------------------------------------------------------------
 def select_case(inp):
@@ -441,4 +442,41 @@ def get_layers(inp, lattice_constant):
        L            = 1.5 * structure_scaling * inp.side_length
        return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int((H_paraboloid + H_pyramid) / lattice_constant) + 2]
 # -------------------------------------------------------------------------------------
+def create_ase_bulk_graphene(inp, base_dir):
+   """
+   Create temporary bulk graphene XYZ file with ASE
 
+   :inp: input class
+   :base_dir: absolute path to folder
+   """
+   #
+
+   # Create tmp folder
+   inp.tmp_folder = os.path.join(base_dir,'tmp')
+   if os.path.exists(inp.tmp_folder): shutil.rmtree(inp.tmp_folder)
+   os.mkdir(inp.tmp_folder)
+
+   # Create initial graphene structure with ASE
+   if inp.graphene_structure == "rib":
+
+      # Oversize by 1.5x
+      scaled_width  = 1.5 * inp.X_length
+      scaled_length = 1.5 * inp.Y_length
+
+      # Convert dimensions to graphene_nanoribbon parameters
+      n = int(scaled_width / 2.13)   # Number of dimer rows for width
+      m = int(scaled_length / 4.26)  # Number of unit cells for length
+
+      # Create flat armchair nanoribbon in XY plane
+      # Armchair structure will then be managed
+      graphene = graphene_nanoribbon(n=n, m=m, type='armchair')
+      graphene.set_pbc(False)
+      graphene.rotate(90, 'x', rotate_cell=True)
+
+      # Center the graphene at (0,0,0)
+      graphene.translate(-graphene.get_center_of_mass())  # Moves CoM to (0,0,0)
+
+      # Write on tmp/tmp_bulk.xyz
+      inp.geom_file = os.path.join(inp.tmp_folder,'tmp_bulk.xyz')
+      write(inp.geom_file, graphene)
+# -------------------------------------------------------------------------------------
