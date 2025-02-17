@@ -476,9 +476,12 @@ def create_ase_bulk_graphene(inp, base_dir):
       graphene_xyz = graphene_nanoribbon(n=n, m=m, type='armchair')
       graphene_xyz.rotate(90, 'x', rotate_cell=True)
 
-   elif inp.graphene_structure == "disk":
+   elif inp.graphene_structure == "disk" or inp.graphene_structure == "ring":
+      # Select radius to define structure. Both inp.radius and inp.radius_out are initialized to zero  
+      radius_selected = max(inp.radius, inp.radius_out)
+
       # Create a large graphene sheet in XY plane
-      radius_int = math.ceil(inp.radius) # Round to upper integer for function compatibility
+      radius_int = math.ceil(radius_selected) # Round to upper integer for function compatibility
       graphene_xyz = graphene_general_ase(a=lattice_constant, size=(2*radius_int, 2*radius_int, 1))  # Large enough to extract disk
 
    # Center the graphene at (0,0,0) and write on tmp/tmp_bulk.xyz
