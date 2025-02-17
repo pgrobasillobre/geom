@@ -19,7 +19,8 @@ from functions import general, output, translate, rotate, various, create_geom
 # ============================================================================================================ #
 
 # -----------------------------------------------------------
-# PURPOSE: Managing xyz files to translate, rotate, and more.
+# PURPOSE: Create and manage XYZ files of metal nanoparticles 
+#          and graphene structures
 #
 # EXECUTION details: python3 geom.py -h 
 # -----------------------------------------------------------
