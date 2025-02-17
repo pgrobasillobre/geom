@@ -9,6 +9,7 @@ from classes import molecule, parameters
 from functions import general, output, tools
 from ase.cluster.cubic import FaceCenteredCubic
 from ase.build import graphene_nanoribbon
+from ase.build import graphene as graphene_general_ase
 from ase.io import write
 # -------------------------------------------------------------------------------------
 def select_case(inp):
@@ -29,7 +30,7 @@ def select_case(inp):
    if (inp.gen_cone):       cone(inp)
 
    # Eliminate tmp folder containing bulk structure
-   if not inp.gen_graphene: shutil.rmtree(inp.tmp_folder)
+   shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
 def graphene(inp):
    #
@@ -451,6 +452,10 @@ def create_ase_bulk_graphene(inp, base_dir):
    """
    #
 
+   # Extract lattice constant from parameters dictionary
+   param = parameters.parameters()
+   lattice_constant = param.lattice_constant.get(inp.atomtype)
+
    # Create tmp folder
    inp.tmp_folder = os.path.join(base_dir,'tmp')
    if os.path.exists(inp.tmp_folder): shutil.rmtree(inp.tmp_folder)
@@ -458,7 +463,6 @@ def create_ase_bulk_graphene(inp, base_dir):
 
    # Create initial graphene structure with ASE
    if inp.graphene_structure == "rib":
-
       # Oversize by 1.5x
       scaled_width  = 1.5 * inp.X_length
       scaled_length = 1.5 * inp.Y_length
@@ -469,14 +473,16 @@ def create_ase_bulk_graphene(inp, base_dir):
 
       # Create flat armchair nanoribbon in XY plane
       # Armchair structure will then be managed
-      graphene = graphene_nanoribbon(n=n, m=m, type='armchair')
-      graphene.set_pbc(False)
-      graphene.rotate(90, 'x', rotate_cell=True)
+      graphene_xyz = graphene_nanoribbon(n=n, m=m, type='armchair')
+      graphene_xyz.rotate(90, 'x', rotate_cell=True)
 
-      # Center the graphene at (0,0,0)
-      graphene.translate(-graphene.get_center_of_mass())  # Moves CoM to (0,0,0)
+   elif inp.graphene_structure == "disk":
+      # Create a large graphene sheet in XY plane
+      radius_int = math.ceil(inp.radius) # Round to upper integer for function compatibility
+      graphene_xyz = graphene_general_ase(a=lattice_constant, size=(2*radius_int, 2*radius_int, 1))  # Large enough to extract disk
 
-      # Write on tmp/tmp_bulk.xyz
-      inp.geom_file = os.path.join(inp.tmp_folder,'tmp_bulk.xyz')
-      write(inp.geom_file, graphene)
+   # Center the graphene at (0,0,0) and write on tmp/tmp_bulk.xyz
+   graphene_xyz.translate(-graphene_xyz.get_center_of_mass())
+   inp.geom_file = os.path.join(inp.tmp_folder,'tmp_bulk.xyz')
+   write(inp.geom_file, graphene_xyz)
 # -------------------------------------------------------------------------------------

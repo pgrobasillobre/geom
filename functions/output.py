@@ -69,7 +69,7 @@ def print_geom(molecule,output_file):
 
        for i in range(molecule.nAtoms):
            atom, x, y, z = molecule.atoms[i], *molecule.xyz[:, i]
-           out_f.write(f'{atom:2} {x:20.8f} {y:20.8f} {z:20.8f}\n')
+           out_f.write(f'{atom.capitalize():2} {x:20.8f} {y:20.8f} {z:20.8f}\n')
 # -------------------------------------------------------------------------------------
 def print_optimization_starts():
    #
@@ -173,7 +173,3 @@ def print_geom_center(inp,xyz_c):
    print('  ------------------------------------------')
    print('')
 # -------------------------------------------------------------------------------------
-
-
-
-

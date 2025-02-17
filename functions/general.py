@@ -179,6 +179,7 @@ def read_command_line(argv,inp):
       
       if (argv[2] == '-graphene'):
          inp.gen_graphene = True
+         inp.atomtype = "c"
          inp.graphene_structure = argv[3] 
 
          if inp.graphene_structure not in inp.graphene_structures: 
