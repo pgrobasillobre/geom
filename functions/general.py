@@ -181,9 +181,6 @@ def read_command_line(argv,inp):
          inp.gen_graphene = True
          inp.graphene_structure = argv[3] 
 
-         # Determine the base directory from the script's location to access data-repository
-         inp.geom_file = os.path.join(base_dir, 'data/bulk-graphene/graphene.xyz')
-
          if inp.graphene_structure not in inp.graphene_structures: 
             output.error(f'Requested graphene structure "{inp.graphene_structure}" not recognised') 
 
@@ -204,6 +201,9 @@ def read_command_line(argv,inp):
             inp.side_length = float(argv[5])
             if inp.graphene_edge_type not in inp.graphene_edge_types:
                output.error(f'Requested edge type "{inp.graphene_edge_type}" not recognised')
+
+         # Create bulk graphene dynamically
+         create_geom.create_ase_bulk_graphene(inp, base_dir)
 
       else:
          inp.atomtype = argv[3].lower()
