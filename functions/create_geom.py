@@ -7,7 +7,7 @@ import shutil
 
 from classes import molecule, parameters
 from functions import general, output, tools
-from ase.cluster.cubic import FaceCenteredCubic
+from ase.cluster.cubic import FaceCenteredCubic, BodyCenteredCubic
 from ase.build import graphene_nanoribbon
 from ase.build import graphene as graphene_general_ase
 from ase.io import write
@@ -363,6 +363,7 @@ def create_ase_bulk_metal(inp, base_dir):
    # Extract lattice constant from parameters dictionary
    param = parameters.parameters()
    lattice_constant = param.lattice_constant.get(inp.atomtype)
+   atomic_arrangement = param.atomic_arrangement.get(inp.atomtype)
 
    # Create tmp folder
    inp.tmp_folder = os.path.join(base_dir,'tmp')
@@ -372,11 +373,13 @@ def create_ase_bulk_metal(inp, base_dir):
    # Determine minimum layers required by ASE
    layers = get_layers(inp,lattice_constant)
 
-   # Create tmp/atomtype.xyz 
+   # Create atomic structure and write on tmp/tmp_bulk.xyz
    surfaces = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
-   atoms = FaceCenteredCubic(inp.atomtype.capitalize(), surfaces, layers, latticeconstant=lattice_constant)
+   if atomic_arrangement=='FCC': 
+      atoms = FaceCenteredCubic(inp.atomtype.capitalize(), surfaces, layers, latticeconstant=lattice_constant)
+   elif atomic_arrangement=='BCC':
+      atoms = BodyCenteredCubic(inp.atomtype.capitalize(), surfaces, layers, latticeconstant=lattice_constant)
 
-   # Write on tmp/tmp_bulk.xyz
    inp.geom_file = os.path.join(inp.tmp_folder,'tmp_bulk.xyz')
    write(inp.geom_file, atoms)
 # -------------------------------------------------------------------------------------
