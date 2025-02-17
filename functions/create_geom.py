@@ -360,7 +360,7 @@ def create_ase_bulk_metal(inp, base_dir):
    """
    #
 
-   # Extract lattice constant from parameters dictionary
+   # Extract lattice constant and atomic arrangement from parameters dictionary
    param = parameters.parameters()
    lattice_constant = param.lattice_constant.get(inp.atomtype)
    atomic_arrangement = param.atomic_arrangement.get(inp.atomtype)
