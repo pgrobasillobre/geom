@@ -111,6 +111,10 @@ def rod(inp):
    inp.check_input_case()   
    general.create_results_geom()
    out_log = output.logfile_init()
+
+   # Extract merge cutoff 
+   param = parameters.parameters()
+   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
  
    # Initialize bulk "molecule" and read geometry
    mol_sphere_1 = molecule.molecule()
@@ -277,6 +281,11 @@ def microscope(inp):
    inp.check_input_case()   
    general.create_results_geom()
    out_log = output.logfile_init()
+
+   # Extract lattice constant and merge cutoff
+   param = parameters.parameters()
+   lattice_constant = param.lattice_constant.get(inp.atomtype)
+   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
  
    # ---------------------------------------------
    # Create paraboloid from bulk metallic geometry
@@ -332,7 +341,7 @@ def microscope(inp):
    mol_pyramid_rot = tools.rotate(mol_pyramid,180.0,'+x',mol_pyramid_rot)
 
    # Move 1/2*reticular_distance (lc) up in the z axis
-   shift = math.ceil((inp.z_max_pyramid/2.0)/inp.lc) * inp.lc
+   shift = math.ceil((inp.z_max_pyramid/2.0)/lattice_constant) * lattice_constant
 
    mol_pyramid_rot.translate_geom(shift,[0.0,0.0, 1.0])
 
