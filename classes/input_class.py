@@ -88,8 +88,7 @@ class input_class:
 
       # -- Merge geometries
       self.merge = False
-      self.merge_cutoff = 2.88 # Defaul for Ag/Au
-      self.lc = 4.09 # Default reticular distance Ag/Au
+      self.merge_cutoff = 0.0 
 
       # -- Verbose
       self.verbose = False

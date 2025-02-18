@@ -9,14 +9,23 @@ class parameters:
       self.convergence      = 0.010
       self.convergence_step = 0.001
 
-      # -- Lattice parameters of metals / graphene
+      # -- Lattice parameters of metals / graphene (units = Angstroms)
       self.lattice_constant = {
       "ag": 4.09000,
       "au": 4.09000,
       "na": 4.22500,
       "c" : 2.46 # Graphene
       }
+
+      # -- Merge cutoff as minimum interatomic distance given the lattice constants above (units = Angstroms)
+      self.merge_cutoff = {
+      "ag": 2.88,
+      "au": 2.88,
+      "na": 3.66,
+      "c" : 1.42 
+      }
  
+      # -- Atomic packing of metals
       self.atomic_arrangement = {
       "ag": "FCC",
       "au": "FCC",
@@ -24,10 +33,6 @@ class parameters:
       }
       
       # -- General parameters
-      self.zero = 0.0
-      self.one  = 1.0
-      self.two  = 2.0
-      
       self.min_dist = 1.0
 
 
