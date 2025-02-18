@@ -32,7 +32,7 @@ class parameters:
       "na": "BCC"
       }
       
-      # -- General parameters
+      # -- General parameters (units = Angstroms)
       self.min_dist = 1.0
 
 

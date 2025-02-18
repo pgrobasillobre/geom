@@ -83,59 +83,34 @@ def merge_geoms(inp, geom1, geom2):
     :return: geom3: merged geometry 
     """
     #
-    merged_atoms = []
-    merged_xyz   = [[], [], []]
-    added_atoms  = set()  # Set to keep track of already added atoms
 
-    # Add all atoms from geom1 to geom3
-    for j in range(geom1.nAtoms):
-        merged_atoms.append(geom1.atoms[j])
+    # Convert lists to NumPy arrays for efficiency
+    geom1_xyz = np.array(geom1.xyz)  # (3, N1)
+    geom2_xyz = np.array(geom2.xyz)  # (3, N2)
 
-        x = geom1.xyz[0][j]
-        y = geom1.xyz[1][j]
-        z = geom1.xyz[2][j]
-        merged_xyz[0].append(x)
-        merged_xyz[1].append(y)
-        merged_xyz[2].append(z)
-        added_atoms.add((x, y, z))  # Add atom to the set
+    # Compute pairwise distances efficiently using broadcasting
+    diff = geom2_xyz[:, :, None] - geom1_xyz[:, None, :]
+    dist_matrix = np.linalg.norm(diff, axis=0)  # Shape: (N2, N1)
 
-    # Add atoms from geom2 to geom3 if they are not within the cutoff distance from any atom in geom1
-    for i in range(geom2.nAtoms):
-        keep_atom = True
-        
-        for j in range(geom1.nAtoms):
-            x_IJ = geom2.xyz[0][i] - geom1.xyz[0][j]
-            y_IJ = geom2.xyz[1][i] - geom1.xyz[1][j]
-            z_IJ = geom2.xyz[2][i] - geom1.xyz[2][j]
+    # Find atoms in geom2 that are farther than the cutoff from all atoms in geom1
+    keep_atoms = np.all(dist_matrix >= inp.merge_cutoff, axis=1)
 
-            distIJ = math.sqrt(x_IJ**2.0 + y_IJ**2.0 + z_IJ**2.0)
+    # Merge atoms that are not overlapping
+    merged_atoms = geom1.atoms + [geom2.atoms[i] for i in range(geom2.nAtoms) if keep_atoms[i]]
 
-            if distIJ + 0.0001 < inp.merge_cutoff:
-                keep_atom = False
-                break
-        
-        # Add atom if it is not within cutoff distance and not already added
-        if keep_atom and (geom2.xyz[0][i], geom2.xyz[1][i], geom2.xyz[2][i]) not in added_atoms:
-            merged_atoms.append(geom2.atoms[i])
+    # Merge XYZ coordinates
+    merged_xyz = np.concatenate((geom1_xyz, geom2_xyz[:, keep_atoms]), axis=1)
 
-            merged_xyz[0].append(geom2.xyz[0][i])
-            merged_xyz[1].append(geom2.xyz[1][i])
-            merged_xyz[2].append(geom2.xyz[2][i])
-            added_atoms.add((geom2.xyz[0][i], geom2.xyz[1][i], geom2.xyz[2][i]))  # Add atom to the set
-
-    # Fill merged geometry
+    # Create new molecule
     geom3 = molecule.molecule()
+    geom3.nAtoms = merged_xyz.shape[1]
+    geom3.atoms = copy.deepcopy(merged_atoms)
 
-    geom3.nAtoms = len(merged_xyz[0])
-
-    geom3.atoms = copy.deepcopy(merged_atoms) 
-
-    geom3.xyz_center = np.zeros(3)
-    geom3.xyz_min    = np.zeros(3)
-    geom3.xyz_max    = np.zeros(3)
-
-    geom3.xyz = np.zeros((3,geom3.nAtoms))
-    geom3.xyz = np.vstack(merged_xyz)
+    # Calculate geometrical properties
+    geom3.xyz = merged_xyz
+    geom3.xyz_center = np.mean(merged_xyz, axis=1)
+    geom3.xyz_max = np.max(merged_xyz, axis=1)
+    geom3.xyz_min = np.min(merged_xyz, axis=1)
 
     # Calculate geometrical center
     geom3.xyz_center = np.mean(geom3.xyz, axis=1)
