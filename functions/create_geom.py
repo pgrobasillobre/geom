@@ -296,8 +296,8 @@ def microscope(inp):
    mol_paraboloid.read_geom(inp.geom_file,False)
    mol_paraboloid.filter_xyz_in_elliptic_paraboloid(inp)
 
-   file_geom_paraboloid = f'elliptic_paraboloid_{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
-   output.print_geom(mol_paraboloid, file_geom_paraboloid)
+   #file_geom_paraboloid = f'elliptic_paraboloid_{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
+   #output.print_geom(mol_paraboloid, file_geom_paraboloid)
 
 
    # ------------------------------------------
@@ -345,8 +345,8 @@ def microscope(inp):
 
    mol_pyramid_rot.translate_geom(shift,[0.0,0.0, 1.0])
 
-   file_geom_pyramid = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}'
-   output.print_geom(mol_pyramid_rot, file_geom_pyramid)
+   #file_geom_pyramid = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}'
+   #output.print_geom(mol_pyramid_rot, file_geom_pyramid)
 
    # -----------------------------------------
    # Merge paraboloid and pyramidal geometries
@@ -387,6 +387,7 @@ def create_ase_bulk_metal(inp, base_dir):
    if atomic_arrangement=='FCC': 
       atoms = FaceCenteredCubic(inp.atomtype.capitalize(), surfaces, layers, latticeconstant=lattice_constant)
    elif atomic_arrangement=='BCC':
+      layers = [int(x * 1.5) for x in layers] # Extra layers required for BCC
       atoms = BodyCenteredCubic(inp.atomtype.capitalize(), surfaces, layers, latticeconstant=lattice_constant)
 
    inp.geom_file = os.path.join(inp.tmp_folder,'tmp_bulk.xyz')

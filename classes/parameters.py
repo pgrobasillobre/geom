@@ -21,7 +21,7 @@ class parameters:
       self.merge_cutoff = {
       "ag": 2.88,
       "au": 2.88,
-      "na": 3.66,
+      "na": 3.65,
       "c" : 1.42 
       }
  
