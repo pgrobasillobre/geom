@@ -14,7 +14,7 @@ tests/rod*/*xyz
 tests/sphere*/*xyz
 tests/tip/*xyz
 
-tests/specular/doxorubicin_000_mirror.xyz
+tests/specular/*000_mirror.xyz
 tests/control_distance/sphere_r_10.0_center_0.0_0.0_0.0_+x_d_10.00.xyz
 tests/t1_distance/doxorubicin_-y_d_15.20.xyz
 tests/r1_rotation/reference/doxorubicin_-y_degree_30.0.xyz
