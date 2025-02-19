@@ -302,9 +302,9 @@ def parse_create(argv, inp):
             inp.sphere_center = [0.0, 0.0, 0.0]
 
             if (inp.atomtype_in not in inp.atomtypes_core_shell):
-               output.error(f"Core atom type {inp.atomtype_in} not supported.")
+               output.error(f'Core atom type "{inp.atomtype_in}" not supported.')
             elif (inp.atomtype_out not in inp.atomtypes_core_shell):
-               output.error(f"Shell atom type {inp.atomtype_out} not supported.")
+               output.error(f'Shell atom type "{inp.atomtype_out}" not supported.')
             elif (inp.atomtype_in == inp.atomtype_out):
                output.error(f"Core and shell atom types coincide.")
 

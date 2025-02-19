@@ -83,6 +83,36 @@ def test_create_sphere(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
+def test_create_sphere_core_shell(monkeypatch):
+
+   """
+   Test if the generated sphere core-shell geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'sphere_core_shell'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-sphere", "-core", "20.0", "au", "-shell", "30", "ag"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_core_au_r_20.0_shell_ag_r_30.0.xyz")
+   generated_file = f"{test_folder}/sphere_core_{inp.atomtype_in}_r_{inp.radius_in}_shell_{inp.atomtype_out}_r_{inp.radius_out}{inp.alloy_string}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+
 def test_create_rod(monkeypatch):
 
    """
