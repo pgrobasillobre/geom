@@ -116,7 +116,7 @@ def sphere_core_shell(inp):
 
    # Extract merge cutoff 
    param = parameters.parameters()
-   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
  
    # Initialize bulk "molecule" and read geometry
    mol_out = molecule.molecule()
@@ -175,7 +175,7 @@ def rod(inp):
 
    # Extract merge cutoff 
    param = parameters.parameters()
-   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
  
    # Initialize bulk "molecule" and read geometry
    mol_sphere_1 = molecule.molecule()
@@ -226,7 +226,7 @@ def rod_core_shell(inp):
 
    # Extract merge cutoff 
    param = parameters.parameters()
-   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
  
    # Initialize bulk "molecule" and read geometry
    mol_sphere_1 = molecule.molecule()
@@ -453,7 +453,7 @@ def microscope(inp):
    # Extract lattice constant and merge cutoff
    param = parameters.parameters()
    lattice_constant = param.lattice_constant.get(inp.atomtype)
-   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
  
    # ---------------------------------------------
    # Create paraboloid from bulk metallic geometry

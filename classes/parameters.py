@@ -18,7 +18,7 @@ class parameters:
       }
 
       # -- Merge cutoff as minimum interatomic distance given the lattice constants above (units = Angstroms)
-      self.merge_cutoff = {
+      self.min_dist = {
       "ag": 2.88,
       "au": 2.88,
       "na": 3.65,
@@ -33,6 +33,6 @@ class parameters:
       }
       
       # -- General parameters (units = Angstroms)
-      self.min_dist = 1.0
+      self.min_dist_translate = 1.0
 
 

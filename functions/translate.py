@@ -50,7 +50,7 @@ def translate_controlled_distance(inp):
    # 1.2 Check if dist_opt < min_dist to evaluate dir_axis sense (-->  or <--)
    dist_ini = tools.calc_min_distance(mol_1,mol_2)
    
-   shift = dist_ini - param.min_dist + 0.1
+   shift = dist_ini - param.min_dist_translate + 0.1
    mol_2.translate_geom(shift, inp.dir_factor)
 
    dist_opt = tools.calc_min_distance(mol_1,mol_2)
@@ -61,7 +61,7 @@ def translate_controlled_distance(inp):
       # Modify translation sense
       inp.change_trans_sense()
 
-      shift = dist_opt - param.min_dist + 0.5
+      shift = dist_opt - param.min_dist_translate + 0.5
       mol_2.translate_geom(shift, inp.dir_factor)
 
       # Calculate new distance
