@@ -50,7 +50,9 @@ class input_class:
       # -- Generate structure geometry
       self.create_geom = False
       self.gen_graphene = False
+      self.gen_core_shell = False
       self.gen_sphere = False
+      self.gen_sphere_core_shell = False
       self.gen_rod = False
       self.gen_tip = False
       self.gen_cone = False
@@ -79,6 +81,9 @@ class input_class:
       self.tmp_folder = ''
       self.alloy_string = ''
       self.atomtype = ''
+      self.atomtype_in = ''
+      self.atomtype_out = ''
+      self.atomtypes_core_shell = ['ag','au']
       self.metal_atomtypes = ['ag','au','na']
       self.axes = ["x","y","z"]
       self.graphene_structures  = ["rib","disk","ring","triangle"]
@@ -159,12 +164,13 @@ class input_class:
          general.check_file_extension(self.geom_file,'.xyz')
 
       elif (self.create_geom):
-         if (not self.gen_graphene and
-             not self.gen_sphere   and
-             not self.gen_rod      and
-             not self.gen_tip      and 
-             not self.gen_pyramid  and
-             not self.gen_cone     and
+         if (not self.gen_graphene          and
+             not self.gen_sphere            and
+             not self.gen_sphere_core_shell and
+             not self.gen_rod               and
+             not self.gen_tip               and 
+             not self.gen_pyramid           and
+             not self.gen_cone              and
              not self.gen_microscope): output.error("Create geom option not recognised.")
 
          general.check_file_exists(self.geom_file)

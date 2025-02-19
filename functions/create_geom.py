@@ -21,13 +21,14 @@ def select_case(inp):
    """
    #
 
-   if (inp.gen_graphene):   graphene(inp)
-   if (inp.gen_sphere):     sphere(inp)
-   if (inp.gen_rod):        rod(inp)
-   if (inp.gen_tip):        tip(inp)
-   if (inp.gen_pyramid):    pyramid(inp)
-   if (inp.gen_microscope): microscope(inp)
-   if (inp.gen_cone):       cone(inp)
+   if (inp.gen_graphene):          graphene(inp)
+   if (inp.gen_sphere):            sphere(inp)
+   if (inp.gen_sphere_core_shell): sphere_core_shell(inp)
+   if (inp.gen_rod):               rod(inp)
+   if (inp.gen_tip):               tip(inp)
+   if (inp.gen_pyramid):           pyramid(inp)
+   if (inp.gen_microscope):        microscope(inp)
+   if (inp.gen_cone):              cone(inp)
 
    # Eliminate tmp folder containing bulk structure
    shutil.rmtree(inp.tmp_folder)
@@ -97,6 +98,53 @@ def sphere(inp):
    # Save filtered geometry
    file_geom_filtered = f'sphere_r_{inp.radius}_center_{inp.sphere_center[0]}_{inp.sphere_center[1]}_{inp.sphere_center[2]}{inp.alloy_string}'
    output.print_geom(mol, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+def sphere_core_shell(inp):
+   #
+   """ 
+   Generate sphere core shell geometry 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+
+   # Extract merge cutoff 
+   param = parameters.parameters()
+   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
+ 
+   # Initialize bulk "molecule" and read geometry
+   mol_out = molecule.molecule()
+   mol_out = mol_out.read_geom(inp.geom_file,False)
+
+   # Pick only atoms within the defined sphere 
+   inp.radius   = inp.radius_out
+   inp.atomtype = inp.atomtype_out
+
+   mol_out.filter_xyz_in_sphere(inp)
+
+   # Copy mol_out as initial guess, change atomtype, and create smaller sphere
+   mol_in = copy.deepcopy(mol_out)
+   mol_in.change_atomtype(inp.atomtype_in)
+
+   inp.radius   = inp.radius_in
+   inp.atomtype = inp.atomtype_in
+
+   mol_in.filter_xyz_in_sphere(inp)
+
+   ## Alloy
+   #if inp.alloy: mol.create_alloy(inp)
+
+   # Merge to create core-shell
+   mol_core_shell = tools.merge_geoms(inp,mol_in,mol_out)
+
+   # Save filtered geometry
+   file_geom_filtered = f'sphere_core_{inp.atomtype_in}_r_{inp.radius_in}_shell_{inp.atomtype_out}_r_{inp.radius_out}{inp.alloy_string}'
+   output.print_geom(mol_core_shell, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def rod(inp):
    #
@@ -406,7 +454,7 @@ def get_layers(inp, lattice_constant):
    # Scaling factor to ensure enough layers are considered, independently of FCC of BCC structure
    structure_scaling = 2.0
 
-   if inp.gen_sphere:
+   if inp.gen_sphere or inp.gen_sphere_core_shell:
 
        # Find the maximum distance from the origin + sphere radius
        max_shift = max(abs(inp.sphere_center[0]), abs(inp.sphere_center[1]), abs(inp.sphere_center[2]))

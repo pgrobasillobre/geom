@@ -105,6 +105,8 @@ def print_help():
          Nanoparticles (Ag/Au/Na):
 
            Sphere: -create -sphere atom_type radius center_x center_y center_z [optional: -alloy atom_type -percentual float]
+ 
+           Spherical core-shell (Au/Ag): -create -sphere -core r_core atom_type -shell r_shell atom_type [optional: -alloy -percentual float]
 
            Rod: -create -rod atom_type length width main_axis{X/Y/Z} [optional: -alloy atom_type -percentual float]
 
@@ -115,6 +117,7 @@ def print_help():
            Cone: -create -cone atom_type z_max base_radius [optional: -alloy atom_type -percentual float]
 
            Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length [optional: -alloy atom_type -percentual float]
+
 
          ----------------
          Merge Geometries
@@ -281,13 +284,38 @@ def parse_create(argv, inp):
       create_geom.create_ase_bulk_graphene(inp, base_dir)
 
    else:
-      inp.atomtype = argv[3].lower()
-      if inp.atomtype not in inp.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
+      if ('-core' and '-shell') in argv: 
+         inp.gen_core_shell = True
+
+      else:
+         inp.atomtype = argv[3].lower()
+         if inp.atomtype not in inp.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
 
       if (argv[2] == '-sphere'): 
-         inp.gen_sphere = True
-         inp.radius = float(argv[4])
-         for i in range(3): inp.sphere_center[i] = float(argv[5+i])
+         if (inp.gen_core_shell): 
+            inp.gen_sphere_core_shell = True
+            inp.radius_in    = float(argv[4])
+            inp.atomtype_in  = argv[5]
+            inp.radius_out   = float(argv[7])
+            inp.atomtype_out = argv[8]
+
+            inp.sphere_center = [0.0, 0.0, 0.0]
+
+            if (inp.atomtype_in not in inp.atomtypes_core_shell):
+               output.error(f"Core atom type {inp.atomtype_in} not supported.")
+            elif (inp.atomtype_out not in inp.atomtypes_core_shell):
+               output.error(f"Shell atom type {inp.atomtype_out} not supported.")
+            elif (inp.atomtype_in == inp.atomtype_out):
+               output.error(f"Core and shell atom types coincide.")
+
+            # Set to create bulk ase geometry                                                                                      
+            inp.atomtype = inp.atomtype_out
+            inp.radius = inp.radius_out
+
+         else:
+            inp.gen_sphere = True
+            inp.radius = float(argv[4])
+            for i in range(3): inp.sphere_center[i] = float(argv[5+i])
 
       elif (argv[2] == '-rod'): 
          inp.gen_rod = True
@@ -324,11 +352,13 @@ def parse_create(argv, inp):
       create_geom.create_ase_bulk_metal(inp, base_dir)
 
       # Alloy case
-      if (argv[-4] == '-alloy'):
-         inp.alloy = True
-         inp.atomtype_alloy = argv[-3].lower()
-         if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f"Alloy atom type {inp.atomtype_alloy} not supported.")
-         if inp.atomtype_alloy == inp.atomtype: output.error(f"Alloy atom type coincides with original geometry atom type.")
+      if ('-alloy' in argv): inp.alloy = True
+    
+      if (inp.alloy):
+         if not inp.gen_core_shell:
+            inp.atomtype_alloy = argv[-3].lower()
+            if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f"Alloy atom type {inp.atomtype_alloy} not supported.")
+            if inp.atomtype_alloy == inp.atomtype: output.error(f"Alloy atom type coincides with original geometry atom type.")
 
          inp.alloy_perc = float(argv[-1])
          if (inp.alloy_perc == 0.0   or 
