@@ -12,7 +12,6 @@ from functions import general, various, translate, rotate, create_geom
 
 # -------------------------------------------------------------------------------------
 def move_input_geom(folder,xyz_file,optional_file=None):
-
    """
    Move input geometry into scratch folder 
    If an optional file is provided, it is also copied
@@ -27,7 +26,6 @@ def move_input_geom(folder,xyz_file,optional_file=None):
       os.system(f'cp {file_path_optional} .')
 # -------------------------------------------------------------------------------------
 def move_managed_geom(folder, remove_optional_file = None):
-
    """
    Move created geometry to folder and remove results_geom folder
    If an optional file is provided, it is removed
@@ -43,7 +41,6 @@ def move_managed_geom(folder, remove_optional_file = None):
    if remove_optional_file: os.system(f'rm -rf {remove_optional_file}')
 # -------------------------------------------------------------------------------------
 def move_created_geom(folder):
-
    """
    Move created geometry to folder and remove results_geom folder
    """
@@ -55,7 +52,6 @@ def move_created_geom(folder):
    os.system(f'rm -rf {file_path_results}')
 # -------------------------------------------------------------------------------------
 def test_create_sphere(monkeypatch):
-
    """
    Test if the generated sphere geometry matches the expected XYZ file.
    """
@@ -84,7 +80,6 @@ def test_create_sphere(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_sphere_core_shell(monkeypatch):
-
    """
    Test if the generated sphere core-shell geometry matches the expected XYZ file.
    """
@@ -112,9 +107,7 @@ def test_create_sphere_core_shell(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
-
 def test_create_rod(monkeypatch):
-
    """
    Test if the generated rod geometry matches the expected XYZ file.
    """
@@ -142,8 +135,35 @@ def test_create_rod(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
-def test_create_tip(monkeypatch):
+def test_create_rod_core_shell(monkeypatch):
+   """
+   Test if the generated rod core-shell geometry matches the expected XYZ file.
+   """
 
+   # Test folder
+   test_folder = 'rod_core_shell'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-rod", 'x', '-core', 'au', '20.0', '10.0', '-shell', 'ag', '50.0', '20.0']
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_core_au_L_20.0_R_10.0_shell_ag_L_50.0_R_20.0_shell_ag.xyz")
+   generated_file = f"{test_folder}/rod_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_tip(monkeypatch):
    """
    Test if the generated tip geometry matches the expected XYZ file.
    """
@@ -172,7 +192,6 @@ def test_create_tip(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_pyramid(monkeypatch):
-
    """
    Test if the generated pyramid geometry matches the expected XYZ file.
    """
@@ -201,7 +220,6 @@ def test_create_pyramid(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_cone(monkeypatch):
-
    """
    Test if the generated cone geometry matches the expected XYZ file.
    """
@@ -230,7 +248,6 @@ def test_create_cone(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_microscope(monkeypatch):
-
    """
    Test if the generated microscope geometry matches the expected XYZ file.
    """
@@ -259,7 +276,6 @@ def test_create_microscope(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_graphene_ribbon(monkeypatch):
-
    """
    Test if the generated graphene ribbon geometry matches the expected XYZ file.
    """
@@ -288,7 +304,6 @@ def test_create_graphene_ribbon(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_graphene_disk(monkeypatch):
-
    """
    Test if the generated graphene disk geometry matches the expected XYZ file.
    """
@@ -317,7 +332,6 @@ def test_create_graphene_disk(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_graphene_ring(monkeypatch):
-
    """
    Test if the generated graphene ring geometry matches the expected XYZ file.
    """
@@ -346,7 +360,6 @@ def test_create_graphene_ring(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_graphene_triangle_armchair(monkeypatch):
-
    """
    Test if the generated graphene triangle armchair geometry matches the expected XYZ file.
    """
@@ -375,7 +388,6 @@ def test_create_graphene_triangle_armchair(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_graphene_triangle_zigzag(monkeypatch):
-
    """
    Test if the generated graphene triangle zigzag geometry matches the expected XYZ file.
    """
@@ -404,7 +416,6 @@ def test_create_graphene_triangle_zigzag(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_specular_geometry(monkeypatch):
-
    """
    Test creation of specular geometry.
    """
@@ -437,7 +448,6 @@ def test_specular_geometry(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_controlled_distance(monkeypatch):
-
    """
    Test controlled distance.
    """
@@ -473,7 +483,6 @@ def test_controlled_distance(monkeypatch):
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_r1_rotation(monkeypatch):
-
    """
    Test r1 rotation
    """

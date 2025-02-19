@@ -308,7 +308,7 @@ def rod_core_shell(inp):
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
    # Save filtered geometry
-   file_geom_filtered = f'rod_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}_{inp.alloy_string}'
+   file_geom_filtered = f'rod_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}'
    output.print_geom(mol_core_shell, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def tip(inp):
