@@ -110,6 +110,8 @@ def print_help():
 
            Rod: -create -rod atom_type length width main_axis{X/Y/Z} [optional: -alloy atom_type -percentual float]
 
+           Rod core-shell (Au/Ag): -create -rod main_axis{X/Y/Z} -core atom_type length width -shell atom_type length width [optional: -alloy atom_type -percentual float]
+
            Tip (elliptic paraboloid): -create -tip atom_type z_max a b [optional: -alloy atom_type -percentual float]
 
            Pyramid (square base): -create -pyramid atom_type z_max base_side_length [optional: -alloy atom_type -percentual float]
@@ -318,10 +320,36 @@ def parse_create(argv, inp):
             for i in range(3): inp.sphere_center[i] = float(argv[5+i])
 
       elif (argv[2] == '-rod'): 
-         inp.gen_rod = True
-         inp.rod_length = float(argv[4])
-         inp.rod_width = float(argv[5])
-         inp.main_axis = argv[6].lower()
+         if (inp.gen_core_shell):
+            inp.gen_rod_core_shell = True
+            inp.main_axis = argv[3].lower()
+
+            inp.atomtype_in = argv[5]
+            inp.rod_length_in = float(argv[6])
+            inp.rod_width_in = float(argv[7])
+
+            inp.atomtype_out = argv[9]
+            inp.rod_length_out = float(argv[10])
+            inp.rod_width_out = float(argv[11])
+
+            if (inp.atomtype_in not in inp.atomtypes_core_shell):
+               output.error(f'Core atom type "{inp.atomtype_in}" not supported.')
+            elif (inp.atomtype_out not in inp.atomtypes_core_shell):
+               output.error(f'Shell atom type "{inp.atomtype_out}" not supported.')
+            elif (inp.atomtype_in == inp.atomtype_out):
+               output.error(f"Core and shell atom types coincide.")
+
+            # Set to create bulk ase geometry                                                                                      
+            inp.atomtype = inp.atomtype_out
+            inp.rod_length = inp.rod_length_out
+            inp.rod_width = inp.rod_width_out
+  
+         else:
+            inp.gen_rod = True
+            inp.rod_length = float(argv[4])
+            inp.rod_width = float(argv[5])
+            inp.main_axis = argv[6].lower()
+
          if inp.main_axis not in inp.axes: output.error(f"Axis {inp.main_axis} not recognized.") 
 
       elif (argv[2] == '-tip'): 

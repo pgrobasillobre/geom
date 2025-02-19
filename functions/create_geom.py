@@ -25,6 +25,7 @@ def select_case(inp):
    if (inp.gen_sphere):            sphere(inp)
    if (inp.gen_sphere_core_shell): sphere_core_shell(inp)
    if (inp.gen_rod):               rod(inp)
+   if (inp.gen_rod_core_shell):    rod_core_shell(inp)
    if (inp.gen_tip):               tip(inp)
    if (inp.gen_pyramid):           pyramid(inp)
    if (inp.gen_microscope):        microscope(inp)
@@ -126,7 +127,6 @@ def sphere_core_shell(inp):
    inp.atomtype = inp.atomtype_out
 
    mol_out.filter_xyz_in_sphere(inp)
-   output.print_geom(mol_out,'core')
 
    # Copy mol_out as initial guess, change atomtype, and create smaller sphere
    mol_in = copy.deepcopy(mol_out)
@@ -136,7 +136,6 @@ def sphere_core_shell(inp):
    inp.atomtype = inp.atomtype_in
 
    mol_in.filter_xyz_in_sphere(inp)
-   output.print_geom(mol_in,'shell')
 
    # Create shell by subtracting core geometry
    mol_shell = tools.subtract_geoms(inp,mol_in,mol_out)
@@ -152,7 +151,6 @@ def sphere_core_shell(inp):
       inp.atomtype = inp.atomtype_in
       inp.atomtype_alloy = inp.atomtype_out
       mol_in.create_alloy(inp)
-
 
    # Merge to create core-shell
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
@@ -211,6 +209,107 @@ def rod(inp):
    # Save filtered geometry
    file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}'
    output.print_geom(mol_rod, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+def rod_core_shell(inp):
+   #
+   """ 
+   Generate rod core shell geometry 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+
+   # Extract merge cutoff 
+   param = parameters.parameters()
+   inp.merge_cutoff = param.merge_cutoff.get(inp.atomtype)
+ 
+   # Initialize bulk "molecule" and read geometry
+   mol_sphere_1 = molecule.molecule()
+   mol_sphere_2 = molecule.molecule()
+   mol_cylinder = molecule.molecule()
+
+   mol_sphere_1.read_geom(inp.geom_file,False)
+   mol_sphere_2.read_geom(inp.geom_file,False)
+   mol_cylinder.read_geom(inp.geom_file,False)
+
+   # ----------------------- #
+   # --------- Out --------- #
+
+   # Populate input class
+   inp.rod_length = inp.rod_length_out
+   inp.rod_width = inp.rod_width_out
+
+   inp.atomtype = inp.atomtype_out
+
+   # Create individual sphere at the extremes of the rods 
+   tools.determine_sphere_center(inp,'+')
+   mol_sphere_1.filter_xyz_in_sphere(inp)
+
+   tools.determine_sphere_center(inp,'-')
+   mol_sphere_2.filter_xyz_in_sphere(inp)
+
+   # Create cylinder
+   mol_cylinder.filter_xyz_in_cylinder(inp)
+
+   # Merge cylinder and spheres geometries
+   mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
+   mol_out = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
+
+   # ---------------------- #
+   # --------- In --------- #
+
+   # Copy mol_out as initial guess, change atomtype, and populate input class
+   mol_sphere_1 = copy.deepcopy(mol_out)
+   mol_sphere_1.change_atomtype(inp.atomtype_in)
+
+   mol_sphere_2 = copy.deepcopy(mol_out)
+   mol_sphere_2.change_atomtype(inp.atomtype_in)
+
+   inp.rod_length = inp.rod_length_in
+   inp.rod_width = inp.rod_width_in
+
+   inp.atomtype = inp.atomtype_in
+
+   # Create individual sphere at the extremes of the rods 
+   tools.determine_sphere_center(inp,'+')
+   mol_sphere_1.filter_xyz_in_sphere(inp)
+
+   tools.determine_sphere_center(inp,'-')
+   mol_sphere_2.filter_xyz_in_sphere(inp)
+
+   # Create cylinder
+   mol_cylinder.filter_xyz_in_cylinder(inp)
+
+   # Merge cylinder and spheres geometries
+   mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
+   mol_in = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
+
+   # Create shell by subtracting core geometry
+   mol_shell = tools.subtract_geoms(inp,mol_in,mol_out)
+
+#   ## Alloy core and shell
+#   #if inp.alloy: 
+#   #   inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
+#
+#   #   inp.atomtype = inp.atomtype_out
+#   #   inp.atomtype_alloy = inp.atomtype_in
+#   #   mol_shell.create_alloy(inp)
+#
+#   #   inp.atomtype = inp.atomtype_in
+#   #   inp.atomtype_alloy = inp.atomtype_out
+#   #   mol_in.create_alloy(inp)
+#
+   # Merge to create core-shell
+   mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
+
+   # Save filtered geometry
+   file_geom_filtered = f'rod_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}_{inp.alloy_string}'
+   output.print_geom(mol_core_shell, file_geom_filtered)
 # -------------------------------------------------------------------------------------
 def tip(inp):
    #
@@ -477,7 +576,8 @@ def get_layers(inp, lattice_constant):
 
        return [int(structure_scaling * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
 
-   elif inp.gen_rod:
+   elif inp.gen_rod or inp.gen_rod_core_shell:
+
        axis = inp.main_axis.lower()
 
        R = inp.rod_width / 2.0
