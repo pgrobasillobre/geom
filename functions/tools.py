@@ -95,7 +95,6 @@ def merge_geoms(inp, geom1, geom2):
 
     # Find atoms in geom2 that are farther than the cutoff from all atoms in geom1
     keep_atoms = np.all(dist_matrix >= inp.merge_cutoff, axis=1)
-    print(len(keep_atoms))
 
     # Merge atoms that are not overlapping
     merged_atoms = geom1.atoms + [geom2.atoms[i] for i in range(geom2.nAtoms) if keep_atoms[i]]

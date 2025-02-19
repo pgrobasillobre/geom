@@ -11,7 +11,7 @@ tests/graphene*/*xyz
 tests/microscope/*xyz
 tests/pyramid/*xyz
 tests/rod/*xyz
-tests/sphere/*xyz
+tests/sphere*/*xyz
 tests/tip/*xyz
 
 tests/specular/doxorubicin_000_mirror.xyz
