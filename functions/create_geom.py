@@ -292,18 +292,24 @@ def rod_core_shell(inp):
    # Create shell by subtracting core geometry
    mol_shell = tools.subtract_geoms(inp,mol_in,mol_out)
 
-#   ## Alloy core and shell
-#   #if inp.alloy: 
-#   #   inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
-#
-#   #   inp.atomtype = inp.atomtype_out
-#   #   inp.atomtype_alloy = inp.atomtype_in
-#   #   mol_shell.create_alloy(inp)
-#
-#   #   inp.atomtype = inp.atomtype_in
-#   #   inp.atomtype_alloy = inp.atomtype_out
-#   #   mol_in.create_alloy(inp)
-#
+   # debug
+   output.print_geom(mol_shell, 'shell')
+
+   # debug
+   output.print_geom(mol_in, 'core')
+
+   # Alloy core and shell
+   if inp.alloy: 
+      inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
+
+      inp.atomtype = inp.atomtype_out
+      inp.atomtype_alloy = inp.atomtype_in
+      mol_shell.create_alloy(inp)
+
+      inp.atomtype = inp.atomtype_in
+      inp.atomtype_alloy = inp.atomtype_out
+      mol_in.create_alloy(inp)
+
    # Merge to create core-shell
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
