@@ -84,6 +84,23 @@ class molecule:
 
       return(self)
 
+
+   # -------------------------------------------- #
+   # ------- Change atom types of geometry------- #
+   
+   def change_atomtype(self,new_atomtype):
+      #
+      """
+      Change atom type of geometry for core-shell creation
+   
+      :new_atomtype: new atom type 
+      """ 
+      #
+      self.atoms = [new_atomtype] * self.nAtoms
+       
+      return(self)
+
+
    # ------------------------------------------------- #
    # ------- Translate geometry along dir_axis ------- #
    
