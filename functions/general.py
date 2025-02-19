@@ -355,18 +355,18 @@ def parse_create(argv, inp):
       if ('-alloy' in argv): inp.alloy = True
     
       if (inp.alloy):
-         if not inp.gen_core_shell:
-            inp.atomtype_alloy = argv[-3].lower()
-            if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f"Alloy atom type {inp.atomtype_alloy} not supported.")
-            if inp.atomtype_alloy == inp.atomtype: output.error(f"Alloy atom type coincides with original geometry atom type.")
-
          inp.alloy_perc = float(argv[-1])
          if (inp.alloy_perc == 0.0   or 
              inp.alloy_perc == 100.0 or 
              inp.alloy_perc  < 0.0   or
              inp.alloy_perc  > 100.0): output.error(f'Alloy percentual requested {inp.alloy_perc} %. It must be greater than 0 and lower than 100')
 
-         inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
+         if not inp.gen_core_shell:
+            inp.atomtype_alloy = argv[-3].lower()
+            if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f"Alloy atom type {inp.atomtype_alloy} not supported.")
+            if inp.atomtype_alloy == inp.atomtype: output.error(f"Alloy atom type coincides with original geometry atom type.")
+
+            inp.gen_core_shell: inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
 # -------------------------------------------------------------------------------------
 def check_file_exists(infile):
    #
@@ -417,32 +417,32 @@ def create_results_geom():
    Create results folder
    """
    #
-   if (os.path.exists('results_geom')):
-      print(' ')
-      print(' ------------------------------------------------')
-      print(f'  WARNING: "results_geom" folder already exists"')
-      print(' ------------------------------------------------')
-      print(' ')
-      erase_results = input('  Do you want to delete it and continue? (y/n)  ')
-      if(erase_results == "y" or erase_results == "yes"):
-         os.system(f'rm -rf results_geom')
-         print(' ')
-      elif(erase_results == 'n' or erase_results == 'no'):
-         print(' ')
-         continue_ = input('  Type "stop" to kill the job, \n' + 
-                           '  otherwise type any key to continue  ')
-         print(' ')
-         if continue_.lower() == 'stop':
-            print('  Program stopped.')
-            print(' ')
-            sys.exit()
-      else:
-         print(' ')
-         print('  I did not understand what you mean by "' + erase_results + '"')
-         print(' ')
-         print('  Program stopped.')
-         print(' ')
-         sys.exit()
+   #if (os.path.exists('results_geom')):
+   #   print(' ')
+   #   print(' ------------------------------------------------')
+   #   print(f'  WARNING: "results_geom" folder already exists"')
+   #   print(' ------------------------------------------------')
+   #   print(' ')
+   #   erase_results = input('  Do you want to delete it and continue? (y/n)  ')
+   #   if(erase_results == "y" or erase_results == "yes"):
+   #      os.system(f'rm -rf results_geom')
+   #      print(' ')
+   #   elif(erase_results == 'n' or erase_results == 'no'):
+   #      print(' ')
+   #      continue_ = input('  Type "stop" to kill the job, \n' + 
+   #                        '  otherwise type any key to continue  ')
+   #      print(' ')
+   #      if continue_.lower() == 'stop':
+   #         print('  Program stopped.')
+   #         print(' ')
+   #         sys.exit()
+   #   else:
+   #      print(' ')
+   #      print('  I did not understand what you mean by "' + erase_results + '"')
+   #      print(' ')
+   #      print('  Program stopped.')
+   #      print(' ')
+   #      sys.exit()
 
    if (not(os.path.exists('results_geom'))): os.system('mkdir results_geom')
 # -------------------------------------------------------------------------------------

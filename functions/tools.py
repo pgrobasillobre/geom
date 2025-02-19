@@ -4,10 +4,7 @@ import copy
 import sys # debug
 
 from classes import molecule
-
-# ------------------------------------------ #
-# ------- Calculate minimum distance ------- #
-
+# -------------------------------------------------------------------------------------
 def calc_min_distance(geom1,geom2):
    #
    """
@@ -32,10 +29,7 @@ def calc_min_distance(geom1,geom2):
          if(distIJ < distIJ_min): distIJ_min = distIJ
  
    return (distIJ_min)
-
-# ------------------------------- #
-# ------- Rotate geometry ------- #
-
+# -------------------------------------------------------------------------------------
 def rotate(mol,angle,dir_axis_input,mol_rot):
    #
    """
@@ -68,10 +62,7 @@ def rotate(mol,angle,dir_axis_input,mol_rot):
       mol_rot.xyz[1, :] =  mol.xyz[0, :] * sin_theta + mol.xyz[1, :] * cos_theta
 
    return(mol_rot)
-
-# -------------------------------- #
-# ------- Merge geometries ------- #
-
+# -------------------------------------------------------------------------------------
 def merge_geoms(inp, geom1, geom2):
     #
     """
@@ -106,25 +97,58 @@ def merge_geoms(inp, geom1, geom2):
     geom3 = molecule.molecule()
     geom3.nAtoms = merged_xyz.shape[1]
     geom3.atoms = copy.deepcopy(merged_atoms)
+    geom3.xyz = merged_xyz
 
     # Calculate geometrical properties
-    geom3.xyz = merged_xyz
-    geom3.xyz_center = np.mean(merged_xyz, axis=1)
-    geom3.xyz_max = np.max(merged_xyz, axis=1)
-    geom3.xyz_min = np.min(merged_xyz, axis=1)
-
-    # Calculate geometrical center
     geom3.xyz_center = np.mean(geom3.xyz, axis=1)
-
-    # Save maximum/minimum coordinates limits
     geom3.xyz_max = np.max(geom3.xyz, axis=1)
     geom3.xyz_min = np.min(geom3.xyz, axis=1)
 
     return geom3
+# -------------------------------------------------------------------------------------
+def subtract_geoms(inp, geom1, geom2):
+    #
+    """
+    Subtract two geometries based on a cutoff distance.
 
-# ---------------------------------------------------- #
-# ------- Determine sphere's center within rod ------- #
+    :inp  : input class with cutoff distance
+    :geom1: molecule class 1 
+    :geom2: molecule class 2
+    
+    :return: geom3: geom2 - geom1
+    """
+    #
 
+    # Convert lists to NumPy arrays for efficiency
+    geom1_xyz = np.array(geom1.xyz)  # (3, N1)
+    geom2_xyz = np.array(geom2.xyz)  # (3, N2)
+
+    # Compute pairwise distances efficiently using broadcasting
+    diff = geom2_xyz[:, :, None] - geom1_xyz[:, None, :]
+    dist_matrix = np.linalg.norm(diff, axis=0)  # Shape: (N2, N1)
+
+    # Find atoms in geom2 that are farther than the cutoff from all atoms in geom1
+    keep_atoms = np.all(dist_matrix >= inp.merge_cutoff, axis=1)
+
+    # Merge atoms that are not overlapping
+    merged_atoms = [geom2.atoms[i] for i in range(geom2.nAtoms) if keep_atoms[i]]
+
+    # Merge XYZ coordinates
+    merged_xyz = geom2_xyz[:, keep_atoms]
+
+    # Create new molecule
+    geom3 = molecule.molecule()
+    geom3.nAtoms = merged_xyz.shape[1]
+    geom3.atoms = copy.deepcopy(merged_atoms)
+    geom3.xyz = merged_xyz
+
+    # Calculate geometrical properties
+    geom3.xyz_center = np.mean(merged_xyz, axis=1)
+    geom3.xyz_max = np.max(merged_xyz, axis=1)
+    geom3.xyz_min = np.min(merged_xyz, axis=1)
+
+    return geom3
+# -------------------------------------------------------------------------------------
 def determine_sphere_center(inp,sense):
    #
    """
@@ -146,4 +170,4 @@ def determine_sphere_center(inp,sense):
        inp.sphere_center[index] = +((inp.rod_length - inp.rod_width)/2.0)
    elif sense == '-':
        inp.sphere_center[index] = -((inp.rod_length - inp.rod_width)/2.0)
-
+# -------------------------------------------------------------------------------------

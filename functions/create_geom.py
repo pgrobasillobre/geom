@@ -126,6 +126,7 @@ def sphere_core_shell(inp):
    inp.atomtype = inp.atomtype_out
 
    mol_out.filter_xyz_in_sphere(inp)
+   output.print_geom(mol_out,'core')
 
    # Copy mol_out as initial guess, change atomtype, and create smaller sphere
    mol_in = copy.deepcopy(mol_out)
@@ -135,12 +136,26 @@ def sphere_core_shell(inp):
    inp.atomtype = inp.atomtype_in
 
    mol_in.filter_xyz_in_sphere(inp)
+   output.print_geom(mol_in,'shell')
 
-   ## Alloy
-   #if inp.alloy: mol.create_alloy(inp)
+   # Create shell by subtracting core geometry
+   mol_shell = tools.subtract_geoms(inp,mol_in,mol_out)
+
+   # Alloy core and shell
+   if inp.alloy: 
+      inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
+
+      inp.atomtype = inp.atomtype_out
+      inp.atomtype_alloy = inp.atomtype_in
+      mol_shell.create_alloy(inp)
+
+      inp.atomtype = inp.atomtype_in
+      inp.atomtype_alloy = inp.atomtype_out
+      mol_in.create_alloy(inp)
+
 
    # Merge to create core-shell
-   mol_core_shell = tools.merge_geoms(inp,mol_in,mol_out)
+   mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
    # Save filtered geometry
    file_geom_filtered = f'sphere_core_{inp.atomtype_in}_r_{inp.radius_in}_shell_{inp.atomtype_out}_r_{inp.radius_out}{inp.alloy_string}'
