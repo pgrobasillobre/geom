@@ -16,19 +16,12 @@ def calc_min_distance(geom1,geom2):
    :return: dist: minimum distance between the two geometries
    """ 
    #
-   distIJ_min = 999999999999.9 # Initialize
- 
-   for i in range(geom2.nAtoms):
-      for j in range(geom1.nAtoms):
-         x_IJ =  geom2.xyz[0][i] - geom1.xyz[0][j] 
-         y_IJ =  geom2.xyz[1][i] - geom1.xyz[1][j]
-         z_IJ =  geom2.xyz[2][i] - geom1.xyz[2][j]
- 
-         distIJ = math.sqrt(x_IJ**2.0 + y_IJ**2.0 + z_IJ**2.0)
- 
-         if(distIJ < distIJ_min): distIJ_min = distIJ
- 
-   return (distIJ_min)
+   # Compute pairwise distance matrix using broadcasting
+   diffs = geom2.xyz[:, :, np.newaxis] - geom1.xyz[:, np.newaxis, :]
+   dist_matrix = np.sqrt(np.sum(diffs**2, axis=0))
+
+   # Return the minimum distance
+   return np.min(dist_matrix)
 # -------------------------------------------------------------------------------------
 def rotate(mol,angle,dir_axis_input,mol_rot):
    #
