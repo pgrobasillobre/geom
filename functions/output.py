@@ -11,7 +11,7 @@ def error(error_message):
    #
    print("")
    print("")
-   print("   " + error_message)
+   print("   ERROR: " + error_message)
    print("")
    print("")
    sys.exit()

@@ -1,6 +1,7 @@
 import sys
 import os
 
+from classes import parameters
 from functions import output, create_geom
 
 # -------------------------------------------------------------------------------------
@@ -25,7 +26,7 @@ def read_command_line(argv, inp):
     elif command == '-merge':
         parse_merge(argv,inp)
     else:
-        output.error("ERROR: Option not recognized. Try python3 geom -h")
+        output.error("Option not recognized. Try python3 geom -h")
 # -------------------------------------------------------------------------------------
 def print_help():
     """ 
@@ -290,6 +291,9 @@ def parse_create(argv, inp):
          if inp.graphene_edge_type not in inp.graphene_edge_types:
             output.error(f'Requested edge type "{inp.graphene_edge_type}" not recognised')
 
+      else:
+         output.error("Create graphene option not recognized. Try python3 geom -h")
+
       # Create bulk graphene dynamically
       create_geom.create_ase_bulk_graphene(inp, base_dir)
 
@@ -408,6 +412,10 @@ def parse_create(argv, inp):
          inp.gen_idh = True
          inp.radius = float(argv[4])
 
+      else:
+         output.error("Create nanoparticle option not recognized. Try python3 geom -h")
+
+
       # Create bulk metal dynamically
       if inp.create_ase_bulk: create_geom.create_ase_bulk_metal(inp, base_dir)
 
@@ -437,6 +445,21 @@ def check_file_exists(infile):
    """
    #
    if (not os.path.exists(infile)): output.error('STOP: file "' + infile + '" not found')
+# -------------------------------------------------------------------------------------
+def check_FCC(atomtype,string):
+   #
+   """ 
+   Check FCC arrangement in selected metal
+
+   :atomtype        : Metallic atom type
+   :string          : Structure to create
+   """
+   #
+   param = parameters.parameters()
+
+   arrangement = param.atomic_arrangement.get(atomtype)
+
+   if arrangement != 'FCC': output.error(f'"{atomtype.capitalize()}" presents {arrangement} arrangement. FCC is required to create {string}.')
 # -------------------------------------------------------------------------------------
 def check_file_extension(infile,extension):
    #
