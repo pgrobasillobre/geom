@@ -60,6 +60,7 @@ class input_class:
       self.gen_cone = False
       self.gen_icosahedra = False
       self.gen_cto = False
+      self.gen_idh = False
       self.gen_pyramid = False
       self.gen_microscope = False
       self.alloy = False
@@ -182,7 +183,8 @@ class input_class:
              not self.gen_cone              and
              not self.gen_microscope        and
              not self.gen_icosahedra        and
-             not self.gen_cto): output.error("Create geom option not recognised.")
+             not self.gen_cto               and
+             not self.gen_idh               ): output.error("Create geom option not recognised.")
 
          if self.create_ase_bulk:
             general.check_file_exists(self.geom_file)
