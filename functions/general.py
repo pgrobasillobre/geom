@@ -112,7 +112,7 @@ def print_help():
 
          Nanoparticles (Ag/Au/Na):
 
-           Sphere: -create -sphere atom_type radius center_x center_y center_z [optional: -alloy atom_type -percentual float]
+           Sphere: -create -sphere atom_type radius [optional: -alloy atom_type -percentual float]
  
            Spherical core-shell (Au/Ag): -create -sphere -core r_core atom_type -shell r_shell atom_type [optional: -alloy -percentual float]
 
@@ -315,8 +315,6 @@ def parse_create(argv, inp):
             inp.radius_out   = float(argv[7])
             inp.atomtype_out = argv[8]
 
-            inp.sphere_center = [0.0, 0.0, 0.0]
-
             if (inp.atomtype_in not in inp.atomtypes_core_shell):
                output.error(f'Core atom type "{inp.atomtype_in}" not supported.')
             elif (inp.atomtype_out not in inp.atomtypes_core_shell):
@@ -333,7 +331,6 @@ def parse_create(argv, inp):
             inp.create_ase_bulk = True
 
             inp.radius = float(argv[4])
-            for i in range(3): inp.sphere_center[i] = float(argv[5+i])
 
       elif (argv[2] == '-rod'): 
          if (inp.gen_core_shell):
