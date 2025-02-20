@@ -28,11 +28,12 @@ def select_case(inp):
    if (inp.gen_rod_core_shell):    rod_core_shell(inp)
    if (inp.gen_tip):               tip(inp)
    if (inp.gen_pyramid):           pyramid(inp)
-   if (inp.gen_microscope):        microscope(inp)
    if (inp.gen_cone):              cone(inp)
+   if (inp.gen_microscope):        microscope(inp)
+   if (inp.gen_icosahedra):        icosahedra(inp)
 
    # Eliminate tmp folder containing bulk structure
-   shutil.rmtree(inp.tmp_folder)
+   if inp.create_ase_bulk: shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
 def graphene(inp):
    #
@@ -528,6 +529,31 @@ def microscope(inp):
    file_geom_microscope = f'microscope_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}{inp.alloy_string}'
    output.print_geom(mol_microscope, file_geom_microscope)
 # -------------------------------------------------------------------------------------
+def icosahedra(inp):
+   #
+   """ 
+   Generate icosahedral geometry 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+ 
+   # Initialize bulk "molecule" and create icosahedra with ASE
+   mol = molecule.molecule()
+   mol.filter_xyz_in_icosahedra(inp)
+
+#  # Alloy
+#  if inp.alloy: mol.create_alloy(inp)
+
+   # Save filtered geometry
+   file_geom_filtered = f'icosahedra_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
+   output.print_geom(mol, file_geom_filtered)
+# -------------------------------------------------------------------------------------
 def create_ase_bulk_metal(inp, base_dir):
    """
    Create temporary bulk metal XYZ file with ASE
@@ -576,7 +602,7 @@ def get_layers(inp, lattice_constant):
 
    if inp.gen_sphere or inp.gen_sphere_core_shell:
 
-       # Find the maximum distance from the origin + sphere radius
+       # Find the maximum distance from the origin + radius
        max_shift = max(abs(inp.sphere_center[0]), abs(inp.sphere_center[1]), abs(inp.sphere_center[2]))
        R = inp.radius + max_shift
 

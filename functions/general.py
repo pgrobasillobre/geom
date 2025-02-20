@@ -88,6 +88,13 @@ def print_help():
          -mirror geom.xyz
 
 
+         ----------------
+         Merge Geometries
+         ----------------
+
+         -merge geom1.xyz geom2.xyz cutoff(Å)
+
+
          -----------------
          Generate Geometry
          -----------------
@@ -120,12 +127,7 @@ def print_help():
 
            Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length [optional: -alloy atom_type -percentual float]
 
-
-         ----------------
-         Merge Geometries
-         ----------------
-
-         -merge geom1.xyz geom2.xyz cutoff(Å)
+           Icosahedral: -create -ico atom_type radius
 
     '''
     print(help_text)
@@ -258,6 +260,8 @@ def parse_create(argv, inp):
    
    if (argv[2] == '-graphene'):
       inp.gen_graphene = True
+      inp.create_ase_bulk = True
+
       inp.atomtype = "c"
       inp.graphene_structure = argv[3] 
 
@@ -296,6 +300,8 @@ def parse_create(argv, inp):
       if (argv[2] == '-sphere'): 
          if (inp.gen_core_shell): 
             inp.gen_sphere_core_shell = True
+            inp.create_ase_bulk = True
+
             inp.radius_in    = float(argv[4])
             inp.atomtype_in  = argv[5]
             inp.radius_out   = float(argv[7])
@@ -316,14 +322,17 @@ def parse_create(argv, inp):
 
          else:
             inp.gen_sphere = True
+            inp.create_ase_bulk = True
+
             inp.radius = float(argv[4])
             for i in range(3): inp.sphere_center[i] = float(argv[5+i])
 
       elif (argv[2] == '-rod'): 
          if (inp.gen_core_shell):
             inp.gen_rod_core_shell = True
-            inp.main_axis = argv[3].lower()
+            inp.create_ase_bulk = True
 
+            inp.main_axis = argv[3].lower()
             inp.atomtype_in = argv[5]
             inp.rod_length_in = float(argv[6])
             inp.rod_width_in = float(argv[7])
@@ -346,6 +355,8 @@ def parse_create(argv, inp):
   
          else:
             inp.gen_rod = True
+            inp.create_ase_bulk = True
+
             inp.rod_length = float(argv[4])
             inp.rod_width = float(argv[5])
             inp.main_axis = argv[6].lower()
@@ -354,17 +365,21 @@ def parse_create(argv, inp):
 
       elif (argv[2] == '-tip'): 
          inp.gen_tip = True
+         inp.create_ase_bulk = True
+
          inp.z_max = float(argv[4])
          inp.elliptic_parabola_a = float(argv[5])
          inp.elliptic_parabola_b = float(argv[6])
 
       elif (argv[2] == '-pyramid'): 
          inp.gen_pyramid = True
+         inp.create_ase_bulk = True
          inp.z_max = float(argv[4])
          inp.side_length =  float(argv[5])
 
       elif (argv[2] == '-microscope'): 
          inp.gen_microscope = True
+         inp.create_ase_bulk = True
          inp.z_max_paraboloid = float(argv[4])
          inp.elliptic_parabola_a = float(argv[5])
          inp.elliptic_parabola_b = float(argv[6])
@@ -373,11 +388,18 @@ def parse_create(argv, inp):
 
       elif (argv[2] == '-cone'): 
          inp.gen_cone = True
+         inp.create_ase_bulk = True
          inp.z_max = float(argv[4])
          inp.radius = float(argv[5])
 
+      elif (argv[2] == '-ico'): 
+
+         inp.gen_icosahedra = True
+         inp.radius = float(argv[4])
+
+
       # Create bulk metal dynamically
-      create_geom.create_ase_bulk_metal(inp, base_dir)
+      if inp.create_ase_bulk: create_geom.create_ase_bulk_metal(inp, base_dir)
 
       # Alloy case
       if ('-alloy' in argv): inp.alloy = True

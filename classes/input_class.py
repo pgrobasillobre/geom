@@ -49,6 +49,7 @@ class input_class:
 
       # -- Generate structure geometry
       self.create_geom = False
+      self.create_ase_bulk = False
       self.gen_graphene = False
       self.gen_core_shell = False
       self.gen_sphere = False
@@ -57,6 +58,7 @@ class input_class:
       self.gen_rod_core_shell = False
       self.gen_tip = False
       self.gen_cone = False
+      self.gen_icosahedra = False
       self.gen_pyramid = False
       self.gen_microscope = False
       self.alloy = False
@@ -177,10 +179,12 @@ class input_class:
              not self.gen_tip               and 
              not self.gen_pyramid           and
              not self.gen_cone              and
-             not self.gen_microscope): output.error("Create geom option not recognised.")
+             not self.gen_microscope        and
+             not self.gen_icosahedra): output.error("Create geom option not recognised.")
 
-         general.check_file_exists(self.geom_file)
-         general.check_file_extension(self.geom_file,'.xyz')
+         if self.create_ase_bulk:
+            general.check_file_exists(self.geom_file)
+            general.check_file_extension(self.geom_file,'.xyz')
 
 
    # ------------------------------------------- #
