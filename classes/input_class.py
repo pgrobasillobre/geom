@@ -50,6 +50,8 @@ class input_class:
       # -- Generate structure geometry
       self.create_geom = False
       self.create_ase_bulk = False
+      self.gen_3d_mesh = False
+      self.gen_3d_mesh_sphere = False
       self.gen_graphene = False
       self.gen_core_shell = False
       self.gen_sphere = False
@@ -65,6 +67,7 @@ class input_class:
       self.gen_microscope = False
       self.alloy = False
 
+      self.mesh_size = 1.0
       self.alloy_perc = 0.0
       self.elliptic_parabola_a = 1.0 # Modifies stepness along x
       self.elliptic_parabola_b = 1.0 # Modifies stepness along y
@@ -87,6 +90,7 @@ class input_class:
       self.Y_length = 0.0
       self.sphere_center = [0.0,0.0,0.0]
 
+      self.mesh_output = ''
       self.tmp_folder = ''
       self.alloy_string = ''
       self.atomtype = ''
@@ -184,7 +188,8 @@ class input_class:
              not self.gen_microscope        and
              not self.gen_icosahedra        and
              not self.gen_cto               and
-             not self.gen_idh               ): output.error("Create geom option not recognised.")
+             not self.gen_idh               and 
+             not self.gen_3d_mesh_sphere): output.error("Create geom option not recognised.")
 
          if self.create_ase_bulk:
             general.check_file_exists(self.geom_file)

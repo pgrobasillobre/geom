@@ -4,6 +4,7 @@ import math
 import copy
 import os
 import shutil
+import gmsh
 
 from classes import molecule, parameters
 from functions import general, output, tools
@@ -24,6 +25,7 @@ def select_case(inp):
    if (inp.gen_graphene):          graphene(inp)
    if (inp.gen_sphere):            sphere(inp)
    if (inp.gen_sphere_core_shell): sphere_core_shell(inp)
+   if (inp.gen_3d_mesh_sphere):    sphere_3d_mesh(inp)
    if (inp.gen_rod):               rod(inp)
    if (inp.gen_rod_core_shell):    rod_core_shell(inp)
    if (inp.gen_tip):               tip(inp)
@@ -161,6 +163,43 @@ def sphere_core_shell(inp):
    # Save filtered geometry
    file_geom_filtered = f'sphere_core_{inp.atomtype_in}_r_{inp.radius_in}_shell_{inp.atomtype_out}_r_{inp.radius_out}{inp.alloy_string}'
    output.print_geom(mol_core_shell, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+def sphere_3d_mesh(inp):
+   #
+   """ 
+   Generate sphere 3D mesh geometry using Gmsh in MeshFormat 2.2 0 8 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Initialize Gmsh
+   gmsh.initialize([str(inp.radius), str(inp.mesh_size), str(inp.mesh_output)])
+   gmsh.model.add("sphere")
+
+   # Create a sphere centered at (0,0,0) with the given radius
+   sphere = gmsh.model.occ.addSphere(0, 0, 0, inp.radius)
+
+   # Synchronize the model with the OpenCASCADE representation
+   gmsh.model.occ.synchronize()
+
+   # Define mesh element size for the sphere
+   gmsh.model.mesh.setSize(gmsh.model.getEntities(0), inp.mesh_size)
+
+   # Generate 3D mesh (only surface)
+   gmsh.model.mesh.generate(2)
+
+   # Save in MeshFormat 2.2
+   gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
+   gmsh.write(inp.mesh_output)
+
+   # Finalize Gmsh
+   gmsh.finalize()
 # -------------------------------------------------------------------------------------
 def rod(inp):
    #

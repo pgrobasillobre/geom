@@ -116,6 +116,8 @@ def print_help():
  
            Spherical core-shell (Au/Ag): -create -sphere -core r_core atom_type -shell r_shell atom_type [optional: -alloy -percentual float]
 
+           Sphere (3D continuum mesh): -create -sphere -continuum radius mesh_size
+
            Rod: -create -rod atom_type length width main_axis{X/Y/Z} [optional: -alloy atom_type -percentual float]
 
            Rod core-shell (Au/Ag): -create -rod main_axis{X/Y/Z} -core atom_type length width -shell atom_type length width [optional: -alloy atom_type -percentual float]
@@ -301,6 +303,9 @@ def parse_create(argv, inp):
       if ('-core' and '-shell') in argv: 
          inp.gen_core_shell = True
 
+      elif ('-continuum') in argv:
+         inp.gen_3d_mesh = True
+
       else:
          inp.atomtype = argv[3].lower()
          if inp.atomtype not in inp.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
@@ -325,6 +330,14 @@ def parse_create(argv, inp):
             # Set to create bulk ase geometry                                                                                      
             inp.atomtype = inp.atomtype_out
             inp.radius = inp.radius_out
+
+         elif (inp.gen_3d_mesh):
+            inp.gen_3d_mesh_sphere = True
+            inp.create_ase_bulk = False
+
+            inp.radius = float(argv[4])
+            inp.mesh_size = float(argv[5])
+            inp.mesh_output = f"results_geom/sphere_r_{inp.radius}_mesh_size_{inp.mesh_size}.msh"
 
          else:
             inp.gen_sphere = True
