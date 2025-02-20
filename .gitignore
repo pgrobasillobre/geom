@@ -16,6 +16,7 @@ tests/tip/*xyz
 tests/cuboctahedron/*xyz
 tests/decahedron/*xyz
 tests/icosahedron/*xyz
+tests/sphere_continuum/*msh
 
 tests/specular/*000*.xyz
 tests/control_distance/sphere_r_10.0_center_0.0_0.0_0.0_+x_d_10.00.xyz

@@ -46,9 +46,9 @@ def move_created_geom(folder):
    """
 
    file_path_results = os.path.join(os.path.dirname(__file__), "results_geom")
-   file_path_results_xyz  = os.path.join(file_path_results, "*xyz")
+   file_path_results = os.path.join(file_path_results, "*")
 
-   os.system(f'mv {file_path_results_xyz} {folder}')
+   os.system(f'mv {file_path_results} {folder}')
    os.system(f'rm -rf {file_path_results}')
 # -------------------------------------------------------------------------------------
 def test_create_sphere(monkeypatch):
@@ -78,6 +78,34 @@ def test_create_sphere(monkeypatch):
    
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_sphere_continuum(monkeypatch):
+   """
+   Test if the generated sphere 3D continuum geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'sphere_continuum'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-sphere", "-continuum", "50.0", "10.0"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_r_50.0_mesh_size_10.0.msh")
+   generated_file = f"{test_folder}/sphere_r_{inp.radius}_mesh_size_{inp.mesh_size}.msh"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated Mesh file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_sphere_core_shell(monkeypatch):
    """
