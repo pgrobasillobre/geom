@@ -49,7 +49,7 @@ def graphene(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
  
    # Initialize bulk "molecule" and read geometry
    mol = molecule.molecule()
@@ -87,7 +87,7 @@ def sphere(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
  
    # Initialize bulk "molecule" and read geometry
    mol = molecule.molecule()
@@ -115,7 +115,7 @@ def sphere_core_shell(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Extract merge cutoff 
    param = parameters.parameters()
@@ -174,7 +174,7 @@ def rod(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Extract merge cutoff 
    param = parameters.parameters()
@@ -225,7 +225,7 @@ def rod_core_shell(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Extract merge cutoff 
    param = parameters.parameters()
@@ -332,7 +332,7 @@ def tip(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
  
    # Initialize bulk "molecule" and read geometry
    mol = molecule.molecule()
@@ -360,7 +360,7 @@ def pyramid(inp):
    # Check input
    inp.check_input_case()
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Initialize bulk "molecule" and read geometry
    mol = molecule.molecule()
@@ -423,7 +423,7 @@ def cone(inp):
    # Check input
    inp.check_input_case()
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Initialize bulk "molecule" and read geometry
    mol = molecule.molecule()
@@ -451,7 +451,7 @@ def microscope(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Extract lattice constant and merge cutoff
    param = parameters.parameters()
@@ -543,7 +543,7 @@ def icosahedra(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Check FCC lattice on selected atom type (requirement)
    general.check_FCC(inp.atomtype,'icosahedron')
@@ -571,7 +571,7 @@ def cto(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Check FCC lattice on selected atom type (requirement)
    general.check_FCC(inp.atomtype,'cuboctahedron')
@@ -599,7 +599,7 @@ def idh(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Check FCC lattice on selected atom type (requirement)
    general.check_FCC(inp.atomtype,'decahedron')

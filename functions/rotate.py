@@ -16,7 +16,7 @@ def rotate_angles(inp):
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Initialize molecules and read geometry
    mol = molecule.molecule()
@@ -39,7 +39,7 @@ def rotate_angles(inp):
       output.print_geom(mol_rot, rot_file)
 
       # Close and save logfile
-      output.logfile_close(out_log)
+      #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------
 def rotate_1(inp):
    #
@@ -52,7 +52,7 @@ def rotate_1(inp):
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Initialize molecules and read geometry
    mol = molecule.molecule()
@@ -73,5 +73,5 @@ def rotate_1(inp):
    output.print_geom(mol_rot, rot_file)
 
    # Close and save logfile
-   output.logfile_close(out_log)
+   #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------
