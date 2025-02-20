@@ -127,7 +127,7 @@ def print_help():
 
            Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length [optional: -alloy atom_type -percentual float]
 
-           Icosahedral: -create -ico atom_type radius
+           Icosahedral: -create -ico atom_type radius [optional: -alloy atom_type -percentual float]
 
     '''
     print(help_text)
@@ -413,10 +413,10 @@ def parse_create(argv, inp):
 
          if not inp.gen_core_shell:
             inp.atomtype_alloy = argv[-3].lower()
-            if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f"Alloy atom type {inp.atomtype_alloy} not supported.")
-            if inp.atomtype_alloy == inp.atomtype: output.error(f"Alloy atom type coincides with original geometry atom type.")
+            if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f'Alloy atom type "{inp.atomtype_alloy}" not supported.')
+            if inp.atomtype_alloy == inp.atomtype: output.error(f'Alloy atom type coincides with original geometry atom type.')
 
-            inp.gen_core_shell: inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
+            inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
 # -------------------------------------------------------------------------------------
 def check_file_exists(infile):
    #

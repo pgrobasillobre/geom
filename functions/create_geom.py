@@ -547,8 +547,8 @@ def icosahedra(inp):
    mol = molecule.molecule()
    mol.filter_xyz_in_icosahedra(inp)
 
-#  # Alloy
-#  if inp.alloy: mol.create_alloy(inp)
+   # Alloy
+   if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
    file_geom_filtered = f'icosahedra_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
