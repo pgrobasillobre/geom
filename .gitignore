@@ -13,6 +13,7 @@ tests/pyramid/*xyz
 tests/rod*/*xyz
 tests/sphere*/*xyz
 tests/tip/*xyz
+test/icosahedron/*xyz
 
 tests/specular/*000*.xyz
 tests/control_distance/sphere_r_10.0_center_0.0_0.0_0.0_+x_d_10.00.xyz
