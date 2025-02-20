@@ -155,8 +155,8 @@ def test_create_rod_core_shell(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_core_au_L_20.0_R_10.0_shell_ag_L_50.0_R_20.0_shell_ag.xyz")
-   generated_file = f"{test_folder}/rod_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_x_core_au_L_20.0_R_10.0_shell_ag_L_50.0_R_20.0_shell_ag.xyz")
+   generated_file = f"{test_folder}/rod_{inp.main_axis}_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    
