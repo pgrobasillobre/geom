@@ -131,6 +131,8 @@ def print_help():
 
            Cuboctahedron: -create -cto atom_type radius [optional: -alloy atom_type -percentual float]
 
+           Decahedron: -create -idh atom_type radius [optional: -alloy atom_type -percentual float]
+
     '''
     print(help_text)
     sys.exit()
@@ -400,6 +402,10 @@ def parse_create(argv, inp):
 
       elif (argv[2] == '-cto'): 
          inp.gen_cto = True
+         inp.radius = float(argv[4])
+
+      elif (argv[2] == '-idh'): 
+         inp.gen_idh = True
          inp.radius = float(argv[4])
 
       # Create bulk metal dynamically

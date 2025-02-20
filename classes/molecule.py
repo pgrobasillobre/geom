@@ -4,7 +4,7 @@ import random
 from classes import parameters
 
 from functions import output
-from ase.cluster import Icosahedron, Octahedron
+from ase.cluster import Icosahedron, Octahedron, Decahedron
 
 class molecule:
    # 
@@ -735,6 +735,48 @@ class molecule:
        return self  # Return updated object
 
 
+   # -------------------------------- #
+   # ------- Create decahedra ------- #
+
+   def create_decahedra(self, inp):
+       """
+       Generate an atomically perfect decahedral geometry ASE
+   
+       :inp: input class containing radius and lattice parameters
+       """
+
+       # Extract lattice constant
+       param = parameters.parameters()
+       lattice_constant = param.lattice_constant.get(inp.atomtype)
+
+       # Convert radius to ASE-compatible p, q, r values
+       p = q = round((2 * inp.radius) / (np.sqrt(2) * lattice_constant))  + 1 # Add a small buffer 
+       r = 0  # No Marks re-entrance (standard decahedron)
+
+       # Generate decahedral cluster using ASE
+       decahedron = Decahedron(symbol=inp.atomtype.capitalize(), p=p, q=q, r=r, latticeconstant=lattice_constant)
+
+       # Extract atom coordinates
+       positions = decahedron.get_positions()
+
+       # Store data inside self
+       self.nAtoms = len(positions)
+       self.atoms = [inp.atomtype] * self.nAtoms  # Assign atom type to all atoms
+
+       # Store positions
+       self.xyz = np.zeros((3, self.nAtoms))
+       self.xyz = positions.T  # Transpose so shape matches (3, nAtoms)
+
+       # Calculate geometrical center
+       self.xyz_center = np.mean(self.xyz, axis=1)
+
+       # Save max/min coordinate limits
+       self.xyz_max = np.max(self.xyz, axis=1)
+       self.xyz_min = np.min(self.xyz, axis=1)
+
+       return self  # Return updated object
+
+   
    # ----------------------------------- #
    # ------- Create random alloy ------- #
 

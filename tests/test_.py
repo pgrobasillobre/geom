@@ -303,6 +303,34 @@ def test_create_cuboctahedra(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
+def test_create_decahedra(monkeypatch):
+   """
+   Test if the generated decahedral geometry matches the expected XYZ file.
+   """
+
+   # Test folder
+   test_folder = 'decahedron'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", '-create', '-idh', 'ag', '50.0']
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "decahedron_ag_r_50.0.xyz")
+   generated_file = f"{test_folder}/decahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
 def test_create_microscope(monkeypatch):
    """
    Test if the generated microscope geometry matches the expected XYZ file.

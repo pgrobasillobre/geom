@@ -32,6 +32,7 @@ def select_case(inp):
    if (inp.gen_microscope):        microscope(inp)
    if (inp.gen_icosahedra):        icosahedra(inp)
    if (inp.gen_cto):               cto(inp)
+   if (inp.gen_idh):               idh(inp)
 
    # Eliminate tmp folder containing bulk structure
    if inp.create_ase_bulk: shutil.rmtree(inp.tmp_folder)
@@ -580,6 +581,32 @@ def cto(inp):
    file_geom_filtered = f'cuboctahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
+def idh(inp):
+   #
+   """ 
+   Generate decahedral geometry 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   out_log = output.logfile_init()
+ 
+   # Initialize bulk "molecule" and create decahedron with ASE
+   mol = molecule.molecule()
+   mol.create_decahedra(inp)
+
+   # Alloy
+   #if inp.alloy: mol.create_alloy(inp)
+
+   # Save filtered geometry
+   file_geom_filtered = f'decahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
+   output.print_geom(mol, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+
 def create_ase_bulk_metal(inp, base_dir):
    """
    Create temporary bulk metal XYZ file with ASE
