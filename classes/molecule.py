@@ -704,7 +704,7 @@ class molecule:
        lattice_constant = param.lattice_constant.get(inp.atomtype)
    
        # Calculate cutoff ang length based on radius
-       cutoff = ((inp.radius * 2) / (np.sqrt(2) * lattice_constant)) + 0.5  # Add a small buffer
+       cutoff = ((inp.radius * 2) / (np.sqrt(2) * lattice_constant)) + 1.00  # Add a small buffer
        length = int(2 * cutoff + 1)  # Convert to ASE-compatible parameter
 
        # Convert radius to ASE-compatible cutoff value
