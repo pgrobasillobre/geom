@@ -267,8 +267,8 @@ def test_create_icosahedra(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "icosahedra_au_r_50.0.xyz")
-   generated_file = f"{test_folder}/icosahedra_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "icosahedron_au_r_50.0.xyz")
+   generated_file = f"{test_folder}/icosahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    

@@ -4,7 +4,7 @@ import random
 from classes import parameters
 
 from functions import output
-from ase.cluster import Icosahedron
+from ase.cluster import Icosahedron, Octahedron
 
 class molecule:
    # 
@@ -647,12 +647,12 @@ class molecule:
       return(self)
 
 
-   # -------------------------------------------- #
-   # ------- Filter XYZ within icosahedra ------- #
+   # --------------------------------- #
+   # ------- Create icosahedra ------- #
 
-   def filter_xyz_in_icosahedra(self, inp):
+   def create_icosahedra(self, inp):
        """
-       Generate an atomically perfect icosahedral cluster using ASE's internal algorithm.
+       Generate an atomically perfect icosahedral geometry using ASE
 
        :inp: input class containing radius and lattice parameters
 
@@ -686,6 +686,52 @@ class molecule:
        self.xyz_min = np.min(self.xyz, axis=1)
 
        return self
+
+
+   # ----------------------------------- #
+   # ------- Create cuboctahedra ------- #
+
+   def create_cuboctahedra(self, inp):
+       """
+       Generate an atomically perfect cuboctahedral geometry ASE
+   
+       :inp: input class containing radius and lattice parameters
+       """
+   
+       # Extract lattice constant
+       param = parameters.parameters()
+       lattice_constant = param.lattice_constant.get(inp.atomtype)
+   
+       # Calculate cutoff ang length based on radius
+       cutoff = ((inp.radius * 2) / (np.sqrt(2) * lattice_constant)) + 0.5  # Add a small buffer
+       length = int(2 * cutoff + 1)  # Convert to ASE-compatible parameter
+
+       # Convert radius to ASE-compatible cutoff value
+       max_cutoff = (length - 1) / 2
+       cutoff = min(cutoff, max_cutoff)  # Ensure cutoff does not exceed the limit
+
+       # Generate cuboctahedral cluster using ASE
+       cuboctahedron = Octahedron(symbol=inp.atomtype.capitalize(), length=length, cutoff=cutoff, latticeconstant=lattice_constant)
+   
+       # Extract atom coordinates
+       positions = cuboctahedron.get_positions()
+   
+       # Store data inside self
+       self.nAtoms = len(positions)
+       self.atoms = [inp.atomtype] * self.nAtoms  # Assign atom type to all atoms
+   
+       # Store positions
+       self.xyz = np.zeros((3, self.nAtoms))
+       self.xyz = positions.T  # Transpose so shape matches (3, nAtoms)
+   
+       # Calculate geometrical center
+       self.xyz_center = np.mean(self.xyz, axis=1)
+   
+       # Save max/min coordinate limits
+       self.xyz_max = np.max(self.xyz, axis=1)
+       self.xyz_min = np.min(self.xyz, axis=1)
+   
+       return self  # Return updated object
 
 
    # ----------------------------------- #
