@@ -127,7 +127,9 @@ def print_help():
 
            Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length [optional: -alloy atom_type -percentual float]
 
-           Icosahedral: -create -ico atom_type radius [optional: -alloy atom_type -percentual float]
+           Icosahedron: -create -ico atom_type radius [optional: -alloy atom_type -percentual float]
+
+           Cuboctahedron: -create -cto atom_type radius [optional: -alloy atom_type -percentual float]
 
     '''
     print(help_text)
@@ -393,10 +395,12 @@ def parse_create(argv, inp):
          inp.radius = float(argv[5])
 
       elif (argv[2] == '-ico'): 
-
          inp.gen_icosahedra = True
          inp.radius = float(argv[4])
 
+      elif (argv[2] == '-cto'): 
+         inp.gen_cto = True
+         inp.radius = float(argv[4])
 
       # Create bulk metal dynamically
       if inp.create_ase_bulk: create_geom.create_ase_bulk_metal(inp, base_dir)
