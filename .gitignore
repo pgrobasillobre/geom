@@ -14,7 +14,7 @@ tests/rod*/*xyz
 tests/sphere*/*xyz
 tests/tip/*xyz
 test/decahedron/*xyz
-test/icosahedron/*xyz
+test/cuboctahedron/*xyz
 test/icosahedron/*xyz
 
 tests/specular/*000*.xyz
