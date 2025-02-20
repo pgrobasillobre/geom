@@ -574,13 +574,12 @@ def cto(inp):
    mol.create_cuboctahedra(inp)
 
    # Alloy
-   #if inp.alloy: mol.create_alloy(inp)
+   if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
    file_geom_filtered = f'cuboctahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
    output.print_geom(mol, file_geom_filtered)
 # -------------------------------------------------------------------------------------
-
 def create_ase_bulk_metal(inp, base_dir):
    """
    Create temporary bulk metal XYZ file with ASE
