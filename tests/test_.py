@@ -275,7 +275,6 @@ def test_create_icosahedra(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
-
 def test_create_microscope(monkeypatch):
    """
    Test if the generated microscope geometry matches the expected XYZ file.
