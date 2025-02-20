@@ -1,7 +1,10 @@
 import numpy as np
 import random
 
+from classes import parameters
+
 from functions import output
+from ase.cluster import Icosahedron
 
 class molecule:
    # 
@@ -642,6 +645,47 @@ class molecule:
       self.xyz_min = np.min(self.xyz, axis=1)
 
       return(self)
+
+
+   # -------------------------------------------- #
+   # ------- Filter XYZ within icosahedra ------- #
+
+   def filter_xyz_in_icosahedra(self, inp):
+       """
+       Generate an atomically perfect icosahedral cluster using ASE's internal algorithm.
+
+       :inp: input class containing radius and lattice parameters
+
+       """
+
+       # Extract lattice constant 
+       param = parameters.parameters()
+       lattice_constant = param.lattice_constant.get(inp.atomtype)
+
+       # Convert radius to number of shells
+       noshells = int(inp.radius / (lattice_constant / 2.0))  
+
+       # Generate icosahedral cluster using ASE
+       icosahedron = Icosahedron(symbol=inp.atomtype.capitalize(), noshells=noshells, latticeconstant=lattice_constant)
+
+       # Extract atom coordinates and store
+       positions = icosahedron.get_positions()
+
+       self.nAtoms = len(positions) 
+       self.atoms = [inp.atomtype] * self.nAtoms  # Assign atom type to all atoms
+
+       # Store positions
+       self.xyz = np.zeros((3, self.nAtoms))
+       self.xyz = positions.T  # Transpose so shape matches (3, nAtoms)
+
+       # Calculate geometrical center
+       self.xyz_center = np.mean(self.xyz, axis=1)
+
+       # Save max/min coordinate limits
+       self.xyz_max = np.max(self.xyz, axis=1)
+       self.xyz_min = np.min(self.xyz, axis=1)
+
+       return self
 
 
    # ----------------------------------- #
