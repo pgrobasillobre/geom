@@ -663,7 +663,8 @@ class molecule:
        lattice_constant = param.lattice_constant.get(inp.atomtype)
 
        # Convert radius to number of shells
-       noshells = int(inp.radius / (lattice_constant / 2.0))  
+       #noshells = round((2 * inp.radius) / (np.sqrt(2) * lattice_constant))  # Correct scaling for FCC growth
+       noshells = round((2 * inp.radius) / (np.sqrt(2) * lattice_constant)) + 1  # Ensure full layer growth
 
        # Generate icosahedral cluster using ASE
        icosahedron = Icosahedron(symbol=inp.atomtype.capitalize(), noshells=noshells, latticeconstant=lattice_constant)
