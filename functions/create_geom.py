@@ -600,7 +600,7 @@ def idh(inp):
    mol.create_decahedra(inp)
 
    # Alloy
-   #if inp.alloy: mol.create_alloy(inp)
+   if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
    file_geom_filtered = f'decahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
