@@ -544,6 +544,9 @@ def icosahedra(inp):
    inp.check_input_case()   
    general.create_results_geom()
    out_log = output.logfile_init()
+
+   # Check FCC lattice on selected atom type (requirement)
+   general.check_FCC(inp.atomtype,'icosahedron')
  
    # Initialize bulk "molecule" and create icosahedra with ASE
    mol = molecule.molecule()
@@ -569,6 +572,9 @@ def cto(inp):
    inp.check_input_case()   
    general.create_results_geom()
    out_log = output.logfile_init()
+
+   # Check FCC lattice on selected atom type (requirement)
+   general.check_FCC(inp.atomtype,'cuboctahedron')
  
    # Initialize bulk "molecule" and create cuboctahedron with ASE
    mol = molecule.molecule()
@@ -594,6 +600,9 @@ def idh(inp):
    inp.check_input_case()   
    general.create_results_geom()
    out_log = output.logfile_init()
+
+   # Check FCC lattice on selected atom type (requirement)
+   general.check_FCC(inp.atomtype,'decahedron')
  
    # Initialize bulk "molecule" and create decahedron with ASE
    mol = molecule.molecule()
