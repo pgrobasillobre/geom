@@ -19,7 +19,7 @@ def translate_controlled_distance(inp):
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Initialize molecules and read geometries
    mol_1 = molecule.molecule()
@@ -136,7 +136,7 @@ def translate_controlled_distance(inp):
          if(diff_dist < param.convergence): 
             output.print_convergence_achieved(dist_new)
 
-            output.save_distance_opt(out_log,distance,dist_new,inp.dir_axis_input) # Save to logfile
+            #output.save_distance_opt(out_log,distance,dist_new,inp.dir_axis_input) # Save to logfile
    
             # Save distance-optimized geometry
             dist_new_rounded = math.ceil(dist_new * 100) / 100
@@ -147,7 +147,7 @@ def translate_controlled_distance(inp):
       dist_pre = dist_new
    
    # Close and save logfile
-   output.logfile_close(out_log)
+   #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------
 def translate_1(inp):
    #
@@ -160,7 +160,7 @@ def translate_1(inp):
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
 
    # Initialize molecule and read geometry
    mol = molecule.molecule()
@@ -176,5 +176,5 @@ def translate_1(inp):
    output.print_geom(mol, file_geom_translated)
 
    # Close and save logfile
-   output.logfile_close(out_log)
+   #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------

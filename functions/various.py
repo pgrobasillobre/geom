@@ -60,7 +60,7 @@ def geom_specular(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
  
    # Initialize molecule and read geometry
    mol = molecule.molecule()
@@ -78,7 +78,7 @@ def geom_specular(inp):
    output.print_geom(mol, inp.geom_file[:-4]+'_000_mirror')
 
    # Close and save logfile
-   output.logfile_close(out_log)
+   #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------
 def merge_geoms(inp):
    #
@@ -92,7 +92,7 @@ def merge_geoms(inp):
    # Check input
    inp.check_input_case()   
    general.create_results_geom()
-   out_log = output.logfile_init()
+   #out_log = output.logfile_init()
  
    # Initialize molecules and read geometries
    mol_1 = molecule.molecule()
