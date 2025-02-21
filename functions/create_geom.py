@@ -28,6 +28,7 @@ def select_case(inp):
    if (inp.gen_3d_mesh_sphere):    sphere_3d_mesh(inp)
    if (inp.gen_rod):               rod(inp)
    if (inp.gen_rod_core_shell):    rod_core_shell(inp)
+   if (inp.gen_3d_mesh_rod):       rod_3d_mesh(inp)
    if (inp.gen_tip):               tip(inp)
    if (inp.gen_pyramid):           pyramid(inp)
    if (inp.gen_cone):              cone(inp)
@@ -358,6 +359,68 @@ def rod_core_shell(inp):
    # Save filtered geometry
    file_geom_filtered = f'rod_{inp.main_axis}_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}'
    output.print_geom(mol_core_shell, file_geom_filtered)
+# -------------------------------------------------------------------------------------
+def rod_3d_mesh(inp):
+   #
+   """ 
+   Generate rod 3D mesh geometry using Gmsh in MeshFormat 2.2 0 8 
+
+   :inp: input class
+   """
+   #
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Initialize Gmsh
+   gmsh.initialize([])
+   gmsh.model.add("continuum_rod_surface")
+
+   # Define rod parameters
+   radius = inp.rod_width / 2.0  # Radius of spheres and cylinder
+   length = inp.rod_length  # Total rod length
+
+   # Mapping for axes
+   axis_map = {'x': (length, 0, 0), 'y': (0, length, 0), 'z': (0, 0, length)}
+   axis = axis_map[inp.main_axis]  # Choose correct alignment
+
+   # Define sphere center positions at rod ends
+   sphere1_pos = tuple(-coord / 2 for coord in axis)
+   sphere2_pos = tuple(coord / 2 for coord in axis)
+
+   # Create spheres at the ends
+   sphere1 = gmsh.model.occ.addSphere(*sphere1_pos, radius)
+   sphere2 = gmsh.model.occ.addSphere(*sphere2_pos, radius)
+
+   # Create the connecting cylinder **starting from the first sphere center**
+   cylinder_start = sphere1_pos
+   cylinder_direction = tuple(coord for coord in axis)  # Direction of cylinder
+   cylinder = gmsh.model.occ.addCylinder(*cylinder_start, *cylinder_direction, radius)
+
+   # Synchronize before merging
+   gmsh.model.occ.synchronize()
+
+   # **Fuse all parts into a single surface representation**
+   rod, _ = gmsh.model.occ.fuse([(3, sphere1), (3, sphere2)], [(3, cylinder)])
+
+   # Synchronize after fusion
+   gmsh.model.occ.synchronize()
+
+   # **Remove any internal surfaces or duplicate points**
+   gmsh.model.occ.removeAllDuplicates()
+   gmsh.model.occ.synchronize()
+
+   # **Generate only a 2D surface mesh**
+   gmsh.model.mesh.generate(2)
+
+   # Save mesh in MeshFormat 2.2
+   gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
+   gmsh.write(inp.mesh_output)
+
+   # Finalize Gmsh
+   gmsh.finalize()
 # -------------------------------------------------------------------------------------
 def tip(inp):
    #

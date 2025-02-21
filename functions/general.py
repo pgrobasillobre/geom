@@ -122,6 +122,8 @@ def print_help():
 
            Rod core-shell (Au/Ag): -create -rod main_axis{X/Y/Z} -core atom_type length width -shell atom_type length width [optional: -alloy atom_type -percentual float]
 
+           Rod: (3D continuum mesh): -create -rod -continuum main_axis{X/Y/Z} length width mesh_size 
+
            Tip (elliptic paraboloid): -create -tip atom_type z_max a b [optional: -alloy atom_type -percentual float]
 
            Pyramid (square base): -create -pyramid atom_type z_max base_side_length [optional: -alloy atom_type -percentual float]
@@ -370,7 +372,18 @@ def parse_create(argv, inp):
             inp.atomtype = inp.atomtype_out
             inp.rod_length = inp.rod_length_out
             inp.rod_width = inp.rod_width_out
-  
+
+         elif (inp.gen_3d_mesh):
+            inp.gen_3d_mesh_rod = True
+            inp.create_ase_bulk = False
+
+            inp.main_axis = argv[4].lower()
+            inp.rod_length = float(argv[5])
+            inp.rod_width = float(argv[6])
+            inp.mesh_size = float(argv[7])
+
+            inp.mesh_output = f"results_geom/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
+
          else:
             inp.gen_rod = True
             inp.create_ase_bulk = True

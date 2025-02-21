@@ -52,6 +52,7 @@ class input_class:
       self.create_ase_bulk = False
       self.gen_3d_mesh = False
       self.gen_3d_mesh_sphere = False
+      self.gen_3d_mesh_rod = False
       self.gen_graphene = False
       self.gen_core_shell = False
       self.gen_sphere = False
@@ -189,7 +190,8 @@ class input_class:
              not self.gen_icosahedra        and
              not self.gen_cto               and
              not self.gen_idh               and 
-             not self.gen_3d_mesh_sphere): output.error("Create geom option not recognised.")
+             not self.gen_3d_mesh_sphere    and
+             not self.gen_3d_mesh_rod): output.error("Create geom option not recognised.")
 
          if self.create_ase_bulk:
             general.check_file_exists(self.geom_file)
