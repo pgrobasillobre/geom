@@ -2,7 +2,15 @@ from functions import general, output
 
 class input_class:
    #
-   """Input class"""
+   """
+   Input Class for Geometric Transformations and Structure Generation
+   
+   Manages user-defined parameters for structure creation and transformations.
+   
+   Dependencies:
+       - `functions.general`: Utility functions for file and input validation
+       - `functions.output`: Handles error messaging and logging
+   """
    #
    def __init__(self):
        
@@ -98,7 +106,6 @@ class input_class:
       self.atomtype_in = ''
       self.atomtype_out = ''
       self.atomtypes_core_shell = ['ag','au']
-      self.metal_atomtypes = ['ag','au','na']
       self.axes = ["x","y","z"]
       self.graphene_structures  = ["rib","disk","ring","triangle"]
       self.graphene_structure   = ""

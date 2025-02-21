@@ -8,7 +8,25 @@ from ase.cluster import Icosahedron, Octahedron, Decahedron
 
 class molecule:
    # 
-   """Molecule class"""
+   """
+   Molecule Class
+   
+   Handles atomic structure representation and geometric transformations.
+   
+   Includes:
+       - Reading and storing atomic coordinates from XYZ files.
+       - Geometrical transformations (translation, centering, filtering).
+       - Shape-based filtering (spheres, cylinders, ribbons, disks, pyramids, cones).
+       - Creation of nanostructures (icosahedra, cuboctahedra, decahedra) using ASE.
+       - Alloy generation by random atom substitution.
+   
+   Dependencies:
+       - NumPy: Numerical operations on atomic coordinates.
+       - ASE: Atomic structure creation (clusters and nanostructures).
+       - `functions.output`: Handles error messaging and output operations.
+       - `classes.parameters`: Provides lattice constants and structural parameters.
+   
+   """
    # 
    def __init__(self):
        
