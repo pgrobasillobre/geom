@@ -376,11 +376,11 @@ def rod_3d_mesh(inp):
 
    # Initialize Gmsh
    gmsh.initialize([])
-   gmsh.model.add("continuum_rod_surface")
+   gmsh.model.add("rod")
 
    # Define rod parameters
    radius = inp.rod_width / 2.0  # Radius of spheres and cylinder
-   length = inp.rod_length  # Total rod length
+   length = inp.rod_length - inp.rod_width  # Total rod length
 
    # Mapping for axes
    axis_map = {'x': (length, 0, 0), 'y': (0, length, 0), 'z': (0, 0, length)}
@@ -411,6 +411,9 @@ def rod_3d_mesh(inp):
    # **Remove any internal surfaces or duplicate points**
    gmsh.model.occ.removeAllDuplicates()
    gmsh.model.occ.synchronize()
+
+   # **Apply mesh size factor**
+   gmsh.model.mesh.setSize(gmsh.model.getEntities(0), inp.mesh_size)
 
    # **Generate only a 2D surface mesh**
    gmsh.model.mesh.generate(2)
