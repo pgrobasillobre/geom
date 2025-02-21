@@ -260,6 +260,9 @@ def parse_create(argv, inp):
    #
    inp.create_geom = True 
 
+   # Extract parameters
+   param = parameters.parameters()
+
    # Determine the script's location
    script_path = os.path.abspath(__file__)
    # Get the directory containing the script
@@ -310,7 +313,7 @@ def parse_create(argv, inp):
 
       else:
          inp.atomtype = argv[3].lower()
-         if inp.atomtype not in inp.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
+         if inp.atomtype not in param.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
 
       if (argv[2] == '-sphere'): 
          if (inp.gen_core_shell): 
@@ -454,7 +457,7 @@ def parse_create(argv, inp):
 
          if not inp.gen_core_shell:
             inp.atomtype_alloy = argv[-3].lower()
-            if inp.atomtype_alloy not in inp.metal_atomtypes: output.error(f'Alloy atom type "{inp.atomtype_alloy}" not supported.')
+            if inp.atomtype_alloy not in param.metal_atomtypes: output.error(f'Alloy atom type "{inp.atomtype_alloy}" not supported.')
             if inp.atomtype_alloy == inp.atomtype: output.error(f'Alloy atom type coincides with original geometry atom type.')
 
             inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
