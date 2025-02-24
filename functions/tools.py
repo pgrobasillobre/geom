@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import copy
-import sys # debug
 
 from classes import molecule
 # -------------------------------------------------------------------------------------

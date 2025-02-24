@@ -172,7 +172,7 @@ def test_create_rod(monkeypatch):
    test_folder = 'rod'
    
    # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", '-create', '-rod', 'Ag', '50.0', '20.0', 'X']
+   mock_args = ["dummy", '-create', '-rod', 'Ag', 'X', '50.0', '20.0']
    monkeypatch.setattr(sys, "argv", mock_args)
    
    # Manually create and populate the input class
@@ -183,8 +183,8 @@ def test_create_rod(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_X_l_50.0_w_20.0.xyz")
-   generated_file = f"{test_folder}/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_ag_X_l_50.0_w_20.0.xyz")
+   generated_file = f"{test_folder}/rod_{inp.atomtype}_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    
@@ -211,8 +211,8 @@ def test_create_rod_core_shell(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_x_core_au_L_20.0_R_10.0_shell_ag_L_50.0_R_20.0_shell_ag.xyz")
-   generated_file = f"{test_folder}/rod_{inp.main_axis}_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_X_core_au_l_20.0_r_10.0_shell_ag_l_50.0_r_20.0_shell_ag.xyz")
+   generated_file = f"{test_folder}/rod_{inp.main_axis.upper()}_core_{inp.atomtype_in}_l_{inp.rod_length_in}_r_{inp.rod_width_in}_shell_{inp.atomtype_out}_l_{inp.rod_length_out}_r_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    

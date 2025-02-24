@@ -250,7 +250,7 @@ def rod(inp):
    if inp.alloy: mol_rod.create_alloy(inp)
 
    # Save filtered geometry
-   inp.xyz_output = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}'
+   inp.xyz_output = f'rod_{inp.atomtype}_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}'
    output.print_geom(mol_rod, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def rod_core_shell(inp):
@@ -335,12 +335,6 @@ def rod_core_shell(inp):
    # Create shell by subtracting core geometry
    mol_shell = tools.subtract_geoms(inp,mol_in,mol_out)
 
-   # debug
-   output.print_geom(mol_shell, 'shell')
-
-   # debug
-   output.print_geom(mol_in, 'core')
-
    # Alloy core and shell
    if inp.alloy: 
       inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
@@ -357,7 +351,7 @@ def rod_core_shell(inp):
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
    # Save filtered geometry
-   inp.xyz_output = f'rod_{inp.main_axis}_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}'
+   inp.xyz_output = f'rod_{inp.main_axis.upper()}_core_{inp.atomtype_in}_l_{inp.rod_length_in}_r_{inp.rod_width_in}_shell_{inp.atomtype_out}_l_{inp.rod_length_out}_r_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}'
    output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def rod_3d_mesh(inp):
