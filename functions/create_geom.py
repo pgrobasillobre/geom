@@ -627,7 +627,7 @@ def microscope(inp):
    # Alloy
    if inp.alloy: mol_microscope.create_alloy(inp)
 
-   file_geom_microscope = f'microscope_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}{inp.alloy_string}'
+   file_geom_microscope = f'microscope_{inp.atomtype}_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}{inp.alloy_string}'
    output.print_geom(mol_microscope, file_geom_microscope)
 # -------------------------------------------------------------------------------------
 def icosahedra(inp):
