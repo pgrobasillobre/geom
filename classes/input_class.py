@@ -1,18 +1,35 @@
 from functions import general, output
 
 class input_class:
-   #
    """
-   Input Class for Geometric Transformations and Structure Generation
-   
-   Manages user-defined parameters for structure creation and transformations.
-   
-   Dependencies:
-       - `functions.general`: Utility functions for file and input validation
-       - `functions.output`: Handles error messaging and logging
+   Manages user-defined parameters for geometric transformations and structure generation.
+
+   This class stores user inputs related to translation, rotation, structure creation, 
+   and other transformations for metal nanoparticles and graphene structures.
+
+   Attributes:
+       - Transformation Flags: Enable operations such as translation, rotation, 
+         mirroring, and structure generation.
+       - Geometry Files: Stores input filenames for molecular structures.
+       - Translation & Rotation: Contains direction, distances, angles, and axis information.
+       - Structure Generation: Flags and parameters for generating different nanostructures.
+       - Miscellaneous: Handles alloy composition, verbosity settings, and file extensions.
+
+   Notes:
+       - The full list of attributes is initialized in `__init__()`.
+       - Methods validate inputs, read data, and apply transformations.
    """
-   #
+
    def __init__(self):
+      """
+      Initializes input parameters for geometric transformations and structure generation.
+  
+      Attributes Initialized:
+          - Flags for operations (translation, rotation, mirroring, geometry creation).
+          - File handling (input geometry, output file names, temporary directories).
+          - Geometric parameters (distances, angles, lattice properties).
+          - Structure-specific settings (graphene edge type, core-shell configuration, alloy composition).
+      """
 
       # -- Small tasks
       self.small_tasks = False
@@ -131,11 +148,19 @@ class input_class:
    # ------- Check input case ------- #
    
    def check_input_case(self):
-      #
       """
-      Check requirements for selected cases
+      Validates and checks input requirements for selected operations.
+
+      Returns:
+          None: Performs necessary checks and raises errors if conditions are not met.
+
+      Notes:
+          - Ensures input files exist before processing.
+          - Checks file extensions for validity.
+          - Validates direction axis input.
+          - Ensures selected operations are correctly configured.
       """
-      #
+
       if (self.translate_controlled_distance):
          general.check_file_exists(self.distances_input)
          self.read_input(what='distances')
@@ -216,11 +241,23 @@ class input_class:
    # ------- Read distances/angles input ------- #
 
    def read_input(self,what):
-      #
       """
-      Read input file containing distances/angles in each line
+      Reads an input file containing distances or angles.
+  
+      Args:
+          what (str): Specifies whether to read 'distances' or 'angles'.
+  
+      Returns:
+          None: Populates the respective list attribute (`self.distances` or `self.angles`).
+  
+      Raises:
+          RuntimeError: If a blank line or multiple values are found in a single line.
+  
+      Notes:
+          - Reads a file line by line and converts values to floats.
+          - Ensures valid input formatting before processing.
       """
-      #
+
       if (what=='distances'):
          with open(self.distances_input) as infile:
             for line in infile:
@@ -241,11 +278,17 @@ class input_class:
    # ------- Change translation sense ------- #
    
    def change_trans_sense(self):
-      #
       """
-      Change translation sanse
+      Reverses the direction factor for translations.
+
+      Returns:
+          input_class: The modified `input_class` instance with updated `dir_factor`.
+
+      Notes:
+          - Multiplies all direction factors by -1.
+          - Used to invert translation direction dynamically.
       """
-      #
+
       self.dir_factor = [-x for x in self.dir_factor] 
 
       return(self)

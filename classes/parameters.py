@@ -1,31 +1,57 @@
 
 class parameters:
-   #
    """
-   Parameters Class
-   
-   Includes:
-       - Lattice constants and atomic arrangements for FCC, BCC, and HCP metals.
-       - Graphene lattice constant and nearest neighbor distance.
-       - Minimum interatomic distances based on lattice parameters.
-   
-   Description:
-       This dataset provides lattice constants (in Ångströms) and atomic arrangements 
-       for various metals with FCC, BCC, and HCP crystal structures. Graphene is also included.
-       The nearest-neighbor distances are calculated using standard crystallographic formulas.
+   Parameters Class for Metal and Graphene Structures.
+
+   This class provides essential lattice parameters, minimum interatomic distances, 
+   and atomic arrangements for various elements, including FCC, BCC, HCP metals, 
+   and graphene.
+
+   Attributes:
+       convergence (float): Convergence threshold for numerical operations.
+       convergence_step (float): Step size for convergence calculations.
+       min_dist_translate (float): Minimum allowable distance for translation operations.
+
+       lattice_constant (dict): Lattice constants (in Ångströms) for various elements.
+           - Keys: Atomic symbols (e.g., "Ag", "Au", "C").
+           - Values: Single float (for cubic structures) or tuple (for HCP structures).
+
+       min_dist (dict): Minimum interatomic distances (in Ångströms).
+           - Keys: Atomic symbols.
+           - Values: Distance thresholds based on lattice parameters.
+
+       atomic_arrangement (dict): Crystallographic structure of elements.
+           - Keys: Atomic symbols.
+           - Values: String representation of atomic packing ("FCC", "BCC", "HCP").
+
+       metal_atomtypes (list): List of valid atomic types for metal nanoparticles.
    
    Sources:
        - Chemistry LibreTexts - Crystal Structures of Metals
          https://chem.libretexts.org/Bookshelves/Inorganic_Chemistry/Introduction_to_Inorganic_Chemistry_(Wikibook)/06%3A_Metals_and_Alloys-_Structure_Bonding_Electronic_and_Magnetic_Properties/6.04%3A_Crystal_Structures_of_Metals
-         Accessed: 21st February 2025
-   
-       - Graphene Constants:
-         Wikipedia - Graphene
+       - Wikipedia - Graphene
          https://en.wikipedia.org/wiki/Graphene
-         Accessed: 21st February 2025
+
+         (Both accessed on 21st February 2025.)
+   
+   Notes:
+       - All values are in Ångströms.
+       - The `lattice_constant` dictionary includes FCC, BCC, HCP metals and graphene.
+       - The `min_dist` dictionary ensures reasonable atomic separations for simulations.
+       - The class is mainly used for molecular structure generation and validation.
    """
-   #
+
    def __init__(self):
+      """
+      Initializes default parameters for molecular structures.
+
+      Attributes Initialized:
+          - `convergence` and `convergence_step`: Thresholds for numerical calculations.
+          - `lattice_constant`: Dictionary of atomic lattice parameters (FCC, BCC, HCP, Graphene).
+          - `min_dist`: Minimum interatomic distances to avoid structural inconsistencies.
+          - `atomic_arrangement`: Defines the atomic packing type for different elements.
+          - `metal_atomtypes`: List of metal elements supported in the simulations.
+      """
        
       # Convergence options
       self.convergence      = 0.010
