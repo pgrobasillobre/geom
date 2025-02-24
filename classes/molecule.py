@@ -599,7 +599,7 @@ class molecule:
    # ------- Filter XYZ within elliptic paraboloid ------- #
    
    def filter_xyz_in_elliptic_paraboloid(self, inp):
-      """
+      r"""
       Filters atoms in the molecular geometry, keeping only those inside an elliptic paraboloid.
   
       Args:
@@ -727,7 +727,7 @@ class molecule:
    # ------- Filter XYZ within cone ------- #
    
    def filter_xyz_in_cone(self, inp):
-      """
+      r"""
       Filters atoms in the molecular geometry, keeping only those inside a cone.
   
       Args:
