@@ -239,8 +239,8 @@ def test_create_tip(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "elliptic_paraboloid_a-0.02_b-0.02_zmin-0.0_zmax-50.0.xyz")
-   generated_file = f"{test_folder}/elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "tip_ag_elliptic_paraboloid_a-0.02_b-0.02_zmin-0.0_zmax-50.0.xyz")
+   generated_file = f"{test_folder}/tip_{inp.atomtype}_elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    
