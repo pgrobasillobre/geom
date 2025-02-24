@@ -267,8 +267,8 @@ def test_create_pyramid(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "pyramid_length-30.0_zmin-0.0_zmax-50.0.xyz")
-   generated_file = f"{test_folder}/pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "pyramid_ag_length-30.0_zmin-0.0_zmax-50.0.xyz")
+   generated_file = f"{test_folder}/pyramid_{inp.atomtype}_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    
