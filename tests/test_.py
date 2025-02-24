@@ -71,8 +71,8 @@ def test_create_sphere(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_r_20.0_center_0.0_0.0_0.0.xyz")
-   generated_file = f"{test_folder}/sphere_r_{inp.radius}_center_{inp.sphere_center[0]}_{inp.sphere_center[1]}_{inp.sphere_center[2]}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_ag_r_20.0.xyz")
+   generated_file = f"{test_folder}/sphere_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    
@@ -144,7 +144,7 @@ def test_create_sphere_core_shell(monkeypatch):
    test_folder = 'sphere_core_shell'
    
    # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", "-create", "-sphere", "-core", "20.0", "au", "-shell", "30", "ag"]
+   mock_args = ["dummy", "-create", "-sphere", "-core", "au", "20.0", "-shell", "ag", "30"]
    monkeypatch.setattr(sys, "argv", mock_args)
    
    # Manually create and populate the input class

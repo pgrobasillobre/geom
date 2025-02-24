@@ -114,7 +114,7 @@ def print_help():
 
            Sphere: -create -sphere atom_type radius [optional: -alloy atom_type -percentual float]
  
-           Spherical core-shell (Au/Ag): -create -sphere -core r_core atom_type -shell r_shell atom_type [optional: -alloy -percentual float]
+           Spherical core-shell (Au/Ag): -create -sphere -core atom_type r_core -shell atom_type r_shell [optional: -alloy -percentual float]
 
            Sphere (3D continuum mesh): -create -sphere -continuum radius mesh_size
 
@@ -322,10 +322,11 @@ def parse_create(argv, inp):
             inp.gen_sphere_core_shell = True
             inp.create_ase_bulk = True
 
-            inp.radius_in    = float(argv[4])
-            inp.atomtype_in  = argv[5]
-            inp.radius_out   = float(argv[7])
-            inp.atomtype_out = argv[8]
+            inp.atomtype_in  = argv[4]
+            inp.radius_in    = float(argv[5])
+
+            inp.atomtype_out = argv[7]
+            inp.radius_out   = float(argv[8])
 
             if (inp.atomtype_in not in inp.atomtypes_core_shell):
                output.error(f'Core atom type "{inp.atomtype_in}" not supported.')

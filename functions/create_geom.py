@@ -71,12 +71,12 @@ def graphene(inp):
    mol.trans_geom_center_to_000()
 
    # Save filtered geometry
-   if inp.graphene_structure=='rib':      file_geom_filtered = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
-   if inp.graphene_structure=='disk':     file_geom_filtered = f'graphene_disk_{inp.radius}'
-   if inp.graphene_structure=='ring':     file_geom_filtered = f'graphene_ring_Out_{inp.radius_out}_In_{inp.radius_in}'
-   if inp.graphene_structure=='triangle': file_geom_filtered = f'graphene_triangle_{inp.graphene_edge_type}_{inp.side_length}'
+   if inp.graphene_structure=='rib':      inp.xyz_output = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
+   if inp.graphene_structure=='disk':     inp.xyz_output = f'graphene_disk_{inp.radius}'
+   if inp.graphene_structure=='ring':     inp.xyz_output = f'graphene_ring_Out_{inp.radius_out}_In_{inp.radius_in}'
+   if inp.graphene_structure=='triangle': inp.xyz_output = f'graphene_triangle_{inp.graphene_edge_type}_{inp.side_length}'
 
-   output.print_geom(mol, file_geom_filtered)
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def sphere(inp):
    #
@@ -103,8 +103,8 @@ def sphere(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'sphere_r_{inp.radius}_center_{inp.sphere_center[0]}_{inp.sphere_center[1]}_{inp.sphere_center[2]}{inp.alloy_string}'
-   output.print_geom(mol, file_geom_filtered)
+   inp.xyz_output = f'sphere_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def sphere_core_shell(inp):
    #
@@ -162,8 +162,8 @@ def sphere_core_shell(inp):
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
    # Save filtered geometry
-   file_geom_filtered = f'sphere_core_{inp.atomtype_in}_r_{inp.radius_in}_shell_{inp.atomtype_out}_r_{inp.radius_out}{inp.alloy_string}'
-   output.print_geom(mol_core_shell, file_geom_filtered)
+   inp.xyz_output = f'sphere_core_{inp.atomtype_in}_r_{inp.radius_in}_shell_{inp.atomtype_out}_r_{inp.radius_out}{inp.alloy_string}'
+   output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def sphere_3d_mesh(inp):
    #
@@ -250,8 +250,8 @@ def rod(inp):
    if inp.alloy: mol_rod.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}'
-   output.print_geom(mol_rod, file_geom_filtered)
+   inp.xyz_output = f'rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}{inp.alloy_string}'
+   output.print_geom(mol_rod, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def rod_core_shell(inp):
    #
@@ -357,8 +357,8 @@ def rod_core_shell(inp):
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
    # Save filtered geometry
-   file_geom_filtered = f'rod_{inp.main_axis}_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}'
-   output.print_geom(mol_core_shell, file_geom_filtered)
+   inp.xyz_output = f'rod_{inp.main_axis}_core_{inp.atomtype_in}_L_{inp.rod_length_in}_R_{inp.rod_width_in}_shell_{inp.atomtype_out}_L_{inp.rod_length_out}_R_{inp.rod_width_out}_shell_{inp.atomtype_out}{inp.alloy_string}'
+   output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def rod_3d_mesh(inp):
    #
@@ -450,8 +450,8 @@ def tip(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
-   output.print_geom(mol, file_geom_filtered)
+   inp.xyz_output = f'elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def pyramid(inp):
    #
@@ -513,8 +513,8 @@ def pyramid(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
-   output.print_geom(mol, file_geom_filtered)
+   inp.xyz_output = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def cone(inp):
    #
@@ -541,8 +541,8 @@ def cone(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'cone_radius-{inp.radius}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
-   output.print_geom(mol, file_geom_filtered)
+   inp.xyz_output = f'cone_radius-{inp.radius}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def microscope(inp):
    #
@@ -661,8 +661,8 @@ def icosahedra(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'icosahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
-   output.print_geom(mol, file_geom_filtered)
+   inp.xyz_output = f'icosahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def cto(inp):
    #
@@ -689,8 +689,8 @@ def cto(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'cuboctahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
-   output.print_geom(mol, file_geom_filtered)
+   inp.xyz_output = f'cuboctahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def idh(inp):
    #
@@ -717,10 +717,9 @@ def idh(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   file_geom_filtered = f'decahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
-   output.print_geom(mol, file_geom_filtered)
+   inp.xyz_output = f'decahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
-
 def create_ase_bulk_metal(inp, base_dir):
    """
    Create temporary bulk metal XYZ file with ASE
