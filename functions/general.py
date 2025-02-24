@@ -118,7 +118,7 @@ def print_help():
 
            Sphere (3D continuum mesh): -create -sphere -continuum radius mesh_size
 
-           Rod: -create -rod atom_type length width main_axis{X/Y/Z} [optional: -alloy atom_type -percentual float]
+           Rod: -create -rod atom_type main_axis{X/Y/Z} length width [optional: -alloy atom_type -percentual float]
 
            Rod core-shell (Au/Ag): -create -rod main_axis{X/Y/Z} -core atom_type length width -shell atom_type length width [optional: -alloy atom_type -percentual float]
 
@@ -335,6 +335,8 @@ def parse_create(argv, inp):
             elif (inp.atomtype_in == inp.atomtype_out):
                output.error(f"Core and shell atom types coincide.")
 
+            if inp.radius_in >= inp.radius_out: output.error(f'Shell radius must be greater than core radius.')
+
             # Set to create bulk ase geometry                                                                                      
             inp.atomtype = inp.atomtype_out
             inp.radius = inp.radius_out
@@ -374,6 +376,12 @@ def parse_create(argv, inp):
             elif (inp.atomtype_in == inp.atomtype_out):
                output.error(f"Core and shell atom types coincide.")
 
+            if inp.rod_width_in  >= inp.rod_length_in:  output.error(f"Core rod width must be greater than core length.")
+            if inp.rod_width_out >= inp.rod_length_out: output.error(f"Shell rod width must be greater than shell length.")
+
+            if inp.rod_width_in  >= inp.rod_width_out:  output.error(f"Shell rod width must be greater than core rod width.")
+            if inp.rod_length_in >= inp.rod_length_out: output.error(f"Shell rod length must be greater than core rod length.")
+
             # Set to create bulk ase geometry                                                                                      
             inp.atomtype = inp.atomtype_out
             inp.rod_length = inp.rod_length_out
@@ -388,15 +396,18 @@ def parse_create(argv, inp):
             inp.rod_width = float(argv[6])
             inp.mesh_size = float(argv[7])
 
-            inp.mesh_output = f"results_geom/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
+            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be greater than length.")
 
+            inp.mesh_output = f"results_geom/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
          else:
             inp.gen_rod = True
             inp.create_ase_bulk = True
 
-            inp.rod_length = float(argv[4])
-            inp.rod_width = float(argv[5])
-            inp.main_axis = argv[6].lower()
+            inp.main_axis = argv[4].lower()
+            inp.rod_length = float(argv[5])
+            inp.rod_width = float(argv[6])
+
+            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be greater than length.")
 
          if inp.main_axis not in inp.axes: output.error(f"Axis {inp.main_axis} not recognized.") 
 
