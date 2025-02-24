@@ -73,7 +73,7 @@ def graphene(inp):
    # Save filtered geometry
    if inp.graphene_structure=='rib':      inp.xyz_output = f'graphene_ribbon_{inp.X_length}_{inp.Y_length}'
    if inp.graphene_structure=='disk':     inp.xyz_output = f'graphene_disk_{inp.radius}'
-   if inp.graphene_structure=='ring':     inp.xyz_output = f'graphene_ring_Out_{inp.radius_out}_In_{inp.radius_in}'
+   if inp.graphene_structure=='ring':     inp.xyz_output = f'graphene_ring_out_{inp.radius_out}_in_{inp.radius_in}'
    if inp.graphene_structure=='triangle': inp.xyz_output = f'graphene_triangle_{inp.graphene_edge_type}_{inp.side_length}'
 
    output.print_geom(mol, inp.xyz_output)

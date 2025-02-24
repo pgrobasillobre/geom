@@ -491,8 +491,8 @@ def test_create_graphene_ring(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "graphene_ring_Out_60.0_In_30.0.xyz")
-   generated_file = f"{test_folder}/graphene_ring_Out_{inp.radius_out}_In_{inp.radius_in}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "graphene_ring_out_60.0_in_30.0.xyz")
+   generated_file = f"{test_folder}/graphene_ring_out_{inp.radius_out}_in_{inp.radius_in}.xyz"
 
    move_created_geom(test_folder)
    
