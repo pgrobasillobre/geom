@@ -535,7 +535,7 @@ def cone(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   inp.xyz_output = f'cone_radius-{inp.radius}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
+   inp.xyz_output = f'cone_{inp.atomtype}_radius-{inp.radius}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def microscope(inp):
