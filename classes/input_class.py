@@ -13,8 +13,12 @@ class input_class:
    """
    #
    def __init__(self):
+
+      # -- Small tasks
+      self.small_tasks = False
        
       # -- Translate
+      self.translate = False 
       self.translate_controlled_distance = False
       self.translate_1 = False
      
@@ -40,6 +44,7 @@ class input_class:
       self.min_dist = False
       
       # -- Rotate
+      self.rotate = False
       self.rotate_angles = False
       self.rotate_1      = False
 

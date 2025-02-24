@@ -6,14 +6,43 @@ from functions import general, tools, output
 param = parameters.parameters()
 
 # -------------------------------------------------------------------------------------
+def select_case(inp):
+   #
+   """ 
+   Selects the appropriate translation function based on user input.
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Calls the corresponding translation function.
+   """
+   #
+
+   if (inp.translate_controlled_distance): translate_controlled_distance(inp)
+   if (inp.translate_1):                   translate_1(inp)
+# -------------------------------------------------------------------------------------
 def translate_controlled_distance(inp):
    #
    """ 
-   Translate two molecules at a controlled distance given in input.
+   Translates a second molecule to a controlled distance from a fixed first molecule.
 
-   Geom1 remains fixed while geom2 will move.
+   This function moves `geom2` while keeping `geom1` fixed, ensuring that the minimum 
+   distance between the two structures meets the user-defined criteria.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the translated geometry at the optimized distances.
+
+   Notes:
+       - Reads the molecular geometries from input files.
+       - Performs an initial shift to move `geom2` far from `geom1`.
+       - Adjusts the translation direction based on calculated minimum distance.
+       - Iteratively optimizes the distance between `geom1` and `geom2`.
+       - Saves the final translated geometry for each desired distance.
+       - If optimization fails, raises an error.
    """
    #
    # Check input, create results folder, initialize logfile
@@ -152,9 +181,18 @@ def translate_controlled_distance(inp):
 def translate_1(inp):
    #
    """ 
-   Translate one molecule by a given shift.
+   Translates a single molecule by a given shift distance.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the translated geometry.
+
+   Notes:
+       - Reads the molecular geometry from an input file.
+       - Translates the molecule by the specified shift along a defined axis.
+       - Saves the new geometry after translation.
    """
    #
    # Check input, create results folder, initialize logfile
