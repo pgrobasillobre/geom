@@ -99,6 +99,7 @@ class input_class:
       self.Y_length = 0.0
       self.sphere_center = [0.0,0.0,0.0]
 
+      self.xyz_output = ''
       self.mesh_output = ''
       self.tmp_folder = ''
       self.alloy_string = ''
