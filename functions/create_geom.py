@@ -566,10 +566,6 @@ def microscope(inp):
    mol_paraboloid.read_geom(inp.geom_file,False)
    mol_paraboloid.filter_xyz_in_elliptic_paraboloid(inp)
 
-   #file_geom_paraboloid = f'elliptic_paraboloid_{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}'
-   #output.print_geom(mol_paraboloid, file_geom_paraboloid)
-
-
    # ------------------------------------------
    # Create pyramid from bulk metallic geometry
    # ------------------------------------------
@@ -614,9 +610,6 @@ def microscope(inp):
    shift = math.ceil((inp.z_max_pyramid/2.0)/lattice_constant) * lattice_constant
 
    mol_pyramid_rot.translate_geom(shift,[0.0,0.0, 1.0])
-
-   #file_geom_pyramid = f'pyramid_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}'
-   #output.print_geom(mol_pyramid_rot, file_geom_pyramid)
 
    # -----------------------------------------
    # Merge paraboloid and pyramidal geometries
