@@ -315,6 +315,8 @@ def parse_create(argv, inp):
          inp.atomtype = argv[3].lower()
          if inp.atomtype not in param.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
 
+         check_FCC_or_BCC(inp.atomtype)
+
       if (argv[2] == '-sphere'): 
          if (inp.gen_core_shell): 
             inp.gen_sphere_core_shell = True
@@ -486,6 +488,20 @@ def check_FCC(atomtype,string):
    arrangement = param.atomic_arrangement.get(atomtype)
 
    if arrangement != 'FCC': output.error(f'"{atomtype.capitalize()}" presents {arrangement} arrangement. FCC is required to create {string}.')
+# -------------------------------------------------------------------------------------
+def check_FCC_or_BCC(atomtype):
+   #
+   """ 
+   Check FCC or BCC arrangement in selected metal
+
+   :atomtype        : Metallic atom type
+   """
+   #
+   param = parameters.parameters()
+
+   arrangement = param.atomic_arrangement.get(atomtype)
+
+   if arrangement !='FCC' and arrangement != 'BCC': output.error(f'"{atomtype.capitalize()}" presents {arrangement} arrangement. Only FCC and BCC are supported for metal creation.')
 # -------------------------------------------------------------------------------------
 def check_file_extension(infile,extension):
    #
