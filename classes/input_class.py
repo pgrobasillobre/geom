@@ -224,16 +224,16 @@ class input_class:
       if (what=='distances'):
          with open(self.distances_input) as infile:
             for line in infile:
-               if len(line.split()) == 0: output.error(f'STOP: blank line found in distances input file "{self.distances_input}"')
-               if len(line.split())  > 1: output.error(f'STOP: more than one distance found in a single line of input file "{self.distances_input}"')
+               if len(line.split()) == 0: output.error(f'blank line found in distances input file "{self.distances_input}"')
+               if len(line.split())  > 1: output.error(f'more than one distance found in a single line of input file "{self.distances_input}"')
 
                self.distances.append(float(line.split()[0])) 
 
       elif (what=='angles'):
          with open(self.angles_input) as infile:
             for line in infile:
-               if len(line.split()) == 0: output.error(f'STOP: blank line found in angles input file "{self.angles_input}"')
-               if len(line.split())  > 1: output.error(f'STOP: more than one angle found in a single line of input file "{self.angles_input}"')
+               if len(line.split()) == 0: output.error(f'blank line found in angles input file "{self.angles_input}"')
+               if len(line.split())  > 1: output.error(f'more than one angle found in a single line of input file "{self.angles_input}"')
 
                self.angles.append(float(line.split()[0])) 
 

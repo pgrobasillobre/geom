@@ -42,7 +42,7 @@ def read_command_line(argv, inp):
     elif command == '-merge':
         parse_merge(argv,inp)
     else:
-        output.error("Option not recognized. Try python3 geom -h")
+        output.error(f'Option "{command}" not recognized. Try python3 geom -h')
 # -------------------------------------------------------------------------------------
 def print_help():
     """
@@ -375,7 +375,7 @@ def parse_create(argv, inp):
             output.error(f'Requested edge type "{inp.graphene_edge_type}" not recognised')
 
       else:
-         output.error("Create graphene option not recognized. Try python3 geom -h")
+         output.error(f'Create graphene option "{inp.graphene_structure}" not recognized. Try python3 geom -h')
 
       # Create bulk graphene dynamically
       create_geom.create_ase_bulk_graphene(inp, base_dir)
@@ -529,7 +529,7 @@ def parse_create(argv, inp):
          inp.radius = float(argv[4])
 
       else:
-         output.error("Create nanoparticle option not recognized. Try python3 geom -h")
+         output.error(f'Create nanoparticle option "{argv[2]}" not recognized. Try python3 geom -h')
 
 
       # Create bulk metal dynamically
@@ -565,7 +565,7 @@ def check_file_exists(infile):
        None: Raises an error if the file is not found.
    """
    #
-   if (not os.path.exists(infile)): output.error('STOP: file "' + infile + '" not found')
+   if (not os.path.exists(infile)): output.error('file "' + infile + '" not found')
 # -------------------------------------------------------------------------------------
 def check_FCC(atomtype,string):
    #
@@ -618,7 +618,7 @@ def check_file_extension(infile,extension):
    """
    #
    i = len(extension)
-   if (infile[-i:] != extension): output.error('STOP: extension "' + extension + '" not found in file "' + infile + '"' )
+   if (infile[-i:] != extension): output.error('extension "' + extension + '" not found in file "' + infile + '"' )
 # -------------------------------------------------------------------------------------
 def check_dir_axis(inp):
    #

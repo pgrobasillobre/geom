@@ -84,7 +84,7 @@ def translate_controlled_distance(inp):
       # Calculate new distance
       dist_opt_2 = tools.calc_min_distance(mol_1,mol_2)
 
-      if(dist_opt_2 > dist_opt): output.error('STOP: something wrong happened. Please, check the geometries and try again.')
+      if(dist_opt_2 > dist_opt): output.error('something wrong happened. Please, check the geometries and try again.')
    
       dist_opt = dist_opt_2
    
@@ -135,7 +135,7 @@ def translate_controlled_distance(inp):
                # Calculate distance
                dist_new = tools.calc_min_distance(mol_1,mol_2)
 
-               if (dist_new > distance): output.error(f'STOP: optimization error 1. Distance could not be optimized: dist_new = {dist_new} ; min_dist = {distance}')
+               if (dist_new > distance): output.error(f'optimization error 1. Distance could not be optimized: dist_new = {dist_new} ; min_dist = {distance}')
    
       # Move slowly towards desired distance
       diff_dist = abs(dist_new - distance)
@@ -148,7 +148,7 @@ def translate_controlled_distance(inp):
          # Calculate distance
          dist_new = tools.calc_min_distance(mol_1,mol_2)
         
-         if (dist_new > distance): output.error('STOP: optimization error 2')
+         if (dist_new > distance): output.error('optimization error 2')
    
 
       while (diff_dist > param.convergence):
@@ -160,7 +160,7 @@ def translate_controlled_distance(inp):
          diff_dist = abs(dist_new - distance)
 
          if (inp.verbose): output.print_computed_distance(dist_new)
-         if (dist_new > distance): output.error('STOP: reduce convergence criteria for distance optimization')
+         if (dist_new > distance): output.error('reduce convergence criteria for distance optimization')
       
          if(diff_dist < param.convergence): 
             output.print_convergence_achieved(dist_new)

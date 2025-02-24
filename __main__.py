@@ -1,7 +1,7 @@
 import sys 
 
 from classes import input_class
-from functions import general, translate, rotate, create_geom, various 
+from functions import general, translate, rotate, create_geom, various, output
 
 
 #                    ██████╗ ███████╗ ██████╗ ███╗   ███╗     ██████╗ ██████╗ ██████╗ ███████╗                
@@ -18,26 +18,40 @@ from functions import general, translate, rotate, create_geom, various
 #                                       Contact: pgrobasillobre@gmail.com                                      #
 # ============================================================================================================ #
 
-# -----------------------------------------------------------
-# PURPOSE: Create and manage XYZ files of metal nanoparticles 
-#          and graphene structures
+# ---------------------------------------------------------
+# PURPOSE: Create XYZ files of metal nanoparticles/graphene
+#          structures and manage geometries
 #
-# EXECUTION details: python3 geom.py -h 
-# -----------------------------------------------------------
+# EXECUTION details: python3 geom -h 
+# ---------------------------------------------------------
 
-# -- Input initialize and read command line
-inp = input_class.input_class()
-general.read_command_line(sys.argv,inp)
+def main():
+    """
+    Main function to initialize input parameters and execute the appropriate geometry processing task.
 
-# -- Select geom code case
-if (inp.translate):
-   translate.select_case(inp)
+    Returns:
+        None: Calls the relevant function based on the user's input.
+    """
+    try:
+        # Initialize input class and parse command-line arguments
+        inp = input_class.input_class()
+        general.read_command_line(sys.argv, inp)
 
-elif(inp.rotate):
-   rotate.select_case(inp)
+        # Select and execute the appropriate task
+        if inp.translate:
+            translate.select_case(inp)
+        elif inp.rotate:
+            rotate.select_case(inp)
+        elif inp.create_geom:
+            create_geom.select_case(inp)
+        elif inp.small_tasks:
+            various.select_case(inp)
+        else:
+            output.error("No valid task specified. Use -h for help.")
 
-elif(inp.create_geom):
-   create_geom.select_case(inp)
+    except Exception as e:
+        output.error(f"An error occurred: {e}")
 
-elif(inp.small_tasks):
-   various.select_case(inp)
+
+if __name__ == "__main__":
+    main()
