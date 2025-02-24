@@ -444,7 +444,7 @@ def tip(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   inp.xyz_output = f'elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
+   inp.xyz_output = f'tip_{inp.atomtype}_elliptic_paraboloid_a-{inp.elliptic_parabola_a}_b-{inp.elliptic_parabola_b}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def pyramid(inp):
