@@ -11,7 +11,7 @@ def error(error_message):
    Returns:
        None: The function exits the program.
    """
-   #
+
    print("")
    print("")
    print("   ERROR: " + error_message)
@@ -32,7 +32,7 @@ def error_dir_axis(dir_axis_input):
    Notes:
        - Accepted values: `+x`, `+y`, `+z`, `-x`, `-y`, `-z`.
    """
-   #
+
    print(' ')
    print(' ERROR: Sense or direction axis "' + dir_axis_input + '" not supported')
    print(' ')
@@ -50,7 +50,7 @@ def logfile_init():
    Returns:
        file object: An open logfile in write mode (`logfile.txt`).
    """
-   #
+
    out_log = open('results_geom/logfile.txt','w')
 
    return(out_log)
@@ -65,7 +65,7 @@ def logfile_close(out_log):
    Returns:
        None
    """
-   #
+
    out_log.close()
 
    return(out_log)
@@ -86,7 +86,7 @@ def print_geom(molecule,output_file):
        - The second line contains a header.
        - The atomic coordinates are printed with 8 decimal places.
    """
-   #
+
    with open(f'results_geom/{output_file}.xyz', 'w') as out_f:
        out_f.write(f"{molecule.nAtoms}\n")
        out_f.write('Generated with GEOM code\n')
@@ -102,7 +102,7 @@ def print_optimization_starts():
    Returns:
        None
    """
-   #
+
    print(' ')
    print(' ')
    print(' ===================================== ')
@@ -120,7 +120,7 @@ def print_optimizing_distance(distance):
    Returns:
        None
    """
-   # 
+
    print(f'  ------ Optimizing d = {distance} Å ------ ')  
    print('\n')
 # -------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ def print_computed_distance(dist):
    Returns:
        None
    """
-   # 
+
    print('  Computed distance = ' + str(round(dist,4)) + ' Å')
    print('\n') 
 # -------------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ def print_convergence_achieved(dist):
    Returns:
        None
    """
-   # 
+
    print('  Convergence achieved to distance ' +  str(round(dist,4)) + ' Å') 
    print('')
 # -------------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ def save_distance_opt(out_log,distance,dist_new,dir_axis_input):
    Returns:
        None
    """
-   #
+
    out_log.write(f"\n"
                  f" {' ------ Optimizing d =':>22} {distance:20.8f} {'Å ------ ':>12}\n\n")
    
@@ -184,7 +184,7 @@ def print_normal_termination(inp):
    Notes:
        - This function does not print if `min_dist` or `geom_center` calculations are performed.
    """
-   #
+
    if (not inp.min_dist and not inp.geom_center):
       print(' ')
       print(' ===================================== ')
@@ -203,7 +203,7 @@ def print_min_dist(inp,distance):
    Returns:
        None
    """
-   #
+
    distance = round(distance,4)
 
    print('')
@@ -226,7 +226,7 @@ def print_geom_center(inp,xyz_c):
    Returns:
        None
    """
-   #
+
    x = round(xyz_c[0],4)
    y = round(xyz_c[1],4)
    z = round(xyz_c[2],4)

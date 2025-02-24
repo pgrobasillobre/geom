@@ -7,7 +7,6 @@ param = parameters.parameters()
 
 # -------------------------------------------------------------------------------------
 def select_case(inp):
-   #
    """ 
    Selects the appropriate translation function based on user input.
 
@@ -17,13 +16,11 @@ def select_case(inp):
    Returns:
        None: Calls the corresponding translation function.
    """
-   #
 
    if (inp.translate_controlled_distance): translate_controlled_distance(inp)
    if (inp.translate_1):                   translate_1(inp)
 # -------------------------------------------------------------------------------------
 def translate_controlled_distance(inp):
-   #
    """ 
    Translates a second molecule to a controlled distance from a fixed first molecule.
 
@@ -44,7 +41,7 @@ def translate_controlled_distance(inp):
        - Saves the final translated geometry for each desired distance.
        - If optimization fails, raises an error.
    """
-   #
+
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
@@ -179,7 +176,6 @@ def translate_controlled_distance(inp):
    #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------
 def translate_1(inp):
-   #
    """ 
    Translates a single molecule by a given shift distance.
 
@@ -194,7 +190,7 @@ def translate_1(inp):
        - Translates the molecule by the specified shift along a defined axis.
        - Saves the new geometry after translation.
    """
-   #
+
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()

@@ -14,7 +14,6 @@ from ase.build import graphene as graphene_general_ase
 from ase.io import write
 # -------------------------------------------------------------------------------------
 def select_case(inp):
-   #
    """
    Selects the appropriate geometry creation function based on user input.
 
@@ -24,7 +23,6 @@ def select_case(inp):
    Returns:
        None: Executes the corresponding geometry generation function.
    """
-   #
 
    if (inp.gen_graphene):          graphene(inp)
    if (inp.gen_sphere):            sphere(inp)
@@ -45,7 +43,6 @@ def select_case(inp):
    if inp.create_ase_bulk: shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
 def graphene(inp):
-   #
    """
    Generates a graphene structure (ribbon, disk, ring, or triangle).
 
@@ -55,7 +52,6 @@ def graphene(inp):
    Returns:
        None: Saves the generated geometry to a file.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -87,7 +83,6 @@ def graphene(inp):
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def sphere(inp):
-   #
    """
    Generates a spherical nanoparticle geometry.
 
@@ -97,7 +92,6 @@ def sphere(inp):
    Returns:
        None: Saves the generated sphere geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -119,7 +113,6 @@ def sphere(inp):
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def sphere_core_shell(inp):
-   #
    """
    Generates a core-shell sphere structure.
 
@@ -129,7 +122,6 @@ def sphere_core_shell(inp):
    Returns:
        None: Saves the core-shell structure to a file.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -182,7 +174,6 @@ def sphere_core_shell(inp):
    output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def sphere_3d_mesh(inp):
-   #
    """ 
    Generates a 3D mesh representation of a sphere using Gmsh in MeshFormat 2.2.
 
@@ -192,7 +183,6 @@ def sphere_3d_mesh(inp):
    Returns:
        None: Saves the generated 3D mesh structure.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -223,7 +213,6 @@ def sphere_3d_mesh(inp):
    gmsh.finalize()
 # -------------------------------------------------------------------------------------
 def rod(inp):
-   #
    """ 
     Generates a cylindrical rod geometry.
 
@@ -233,7 +222,6 @@ def rod(inp):
     Returns:
         None: Saves the generated rod geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -278,7 +266,6 @@ def rod(inp):
    output.print_geom(mol_rod, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def rod_core_shell(inp):
-   #
    """
    Generates a core-shell rod structure.
 
@@ -288,7 +275,6 @@ def rod_core_shell(inp):
    Returns:
        None: Saves the generated core-shell rod geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -383,7 +369,6 @@ def rod_core_shell(inp):
    output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def rod_3d_mesh(inp):
-   #
    """ 
    Generates a 3D mesh representation of a rod using Gmsh in MeshFormat 2.2.
 
@@ -393,7 +378,6 @@ def rod_3d_mesh(inp):
    Returns:
        None: Saves the generated 3D mesh structure.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -452,7 +436,6 @@ def rod_3d_mesh(inp):
    gmsh.finalize()
 # -------------------------------------------------------------------------------------
 def tip(inp):
-   #
    """ 
    Generates a nanostructured round tip geometry.
 
@@ -462,7 +445,6 @@ def tip(inp):
    Returns:
        None: Saves the generated tip geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -484,7 +466,6 @@ def tip(inp):
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def pyramid(inp):
-   #
    """
    Generates a pyramid-shaped geometry with a square base.
 
@@ -494,7 +475,6 @@ def pyramid(inp):
    Returns:
        None: Saves the generated pyramid geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()
@@ -551,7 +531,6 @@ def pyramid(inp):
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def cone(inp):
-   #
    """
    Generates a conical geometry.
 
@@ -561,7 +540,6 @@ def cone(inp):
    Returns:
        None: Saves the generated cone geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()
@@ -583,7 +561,6 @@ def cone(inp):
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def microscope(inp):
-   #
    """ 
    Generates a simulated microscope tip structure with a pyramidal and paraboloidal combination.
 
@@ -593,7 +570,6 @@ def microscope(inp):
    Returns:
        None: Saves the generated microscope tip geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -672,7 +648,6 @@ def microscope(inp):
    output.print_geom(mol_microscope, file_geom_microscope)
 # -------------------------------------------------------------------------------------
 def icosahedra(inp):
-   #
    """ 
    Generates an icosahedral nanoparticle geometry.
 
@@ -682,7 +657,6 @@ def icosahedra(inp):
    Returns:
        None: Saves the generated icosahedral geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -704,7 +678,6 @@ def icosahedra(inp):
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def cto(inp):
-   #
    """ 
    Generates a cuboctahedral nanoparticle geometry.
 
@@ -714,7 +687,6 @@ def cto(inp):
    Returns:
        None: Saves the generated cuboctahedral geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -736,7 +708,6 @@ def cto(inp):
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def idh(inp):
-   #
    """ 
    Generates a decahedral nanoparticle geometry.
 
@@ -746,7 +717,6 @@ def idh(inp):
    Returns:
        None: Saves the generated decahedral geometry.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -778,7 +748,6 @@ def create_ase_bulk_metal(inp, base_dir):
    Returns:
        None: Saves the generated bulk metal geometry.
    """
-   #
 
    # Extract lattice constant and atomic arrangement from parameters dictionary
    param = parameters.parameters()
@@ -816,7 +785,6 @@ def get_layers(inp, lattice_constant):
    Returns:
        list[int]: Number of layers required along the x, y, and z axes.
    """
-   #
 
    # Scaling factor to ensure enough layers are considered, independently of FCC of BCC structure
    structure_scaling = 2.0
@@ -883,7 +851,6 @@ def create_ase_bulk_graphene(inp, base_dir):
    Returns:
        None: Saves the generated bulk graphene geometry.
    """
-   #
 
    # Extract lattice constant from parameters dictionary
    param = parameters.parameters()

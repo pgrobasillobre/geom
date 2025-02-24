@@ -21,7 +21,7 @@ def read_command_line(argv, inp):
         - Recognizes different command-line options and triggers the corresponding function.
         - Prints help if `-h` or `-help` is passed.
     """
-    #
+
     if len(argv) < 2:
         output.error("Missing command line arguments.")
     command = argv[1]
@@ -51,7 +51,6 @@ def print_help():
     Returns:
         None: Displays the help text and terminates execution.
     """
-    #
 
     help_text = '''
 
@@ -176,7 +175,6 @@ def parse_translation(argv, inp):
        - Handles both controlled distance translation (`-t`) and simple shift translation (`-t1`).
        - Extracts input filenames, translation parameters, and verbosity settings.
    """
-   #
 
    inp.translate = True
 
@@ -220,7 +218,6 @@ def parse_rotation(argv, inp):
        - Handles both list-based rotation (`-r`) and single-angle rotation (`-r1`).
        - Extracts input filenames and rotation parameters.
    """
-   #
 
    inp.rotate = True
 
@@ -255,7 +252,7 @@ def parse_mirror(argv, inp):
    Returns:
        None: Sets mirroring attributes in `inp`.
    """
-   #
+
    inp.small_tasks = True
 
    inp.geom_specular = True
@@ -275,7 +272,7 @@ def parse_merge(argv, inp):
    Notes:
        - Requires two geometry files and a cutoff distance.
    """
-   # 
+
    inp.small_tasks = True
 
    inp.merge = True
@@ -294,7 +291,7 @@ def parse_min(argv, inp):
    Returns:
        None: Sets minimum distance calculation attributes in `inp`.
    """
-   #
+
    inp.small_tasks = True
 
    inp.min_dist = True
@@ -312,7 +309,7 @@ def parse_center(argv, inp):
    Returns:
        None: Sets geometric centering attributes in `inp`.
    """
-   #
+
    inp.small_tasks = True
 
    inp.geom_center = True
@@ -333,7 +330,7 @@ def parse_create(argv, inp):
        - Handles the creation of graphene structures, nanoparticles, and bulk metal structures.
        - Validates input parameters and extracts atomic and structural properties.
    """
-   #
+
    inp.create_geom = True 
 
    # Extract parameters
@@ -554,7 +551,6 @@ def parse_create(argv, inp):
             inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
 # -------------------------------------------------------------------------------------
 def check_file_exists(infile):
-   #
    """
    Checks if a given file exists.
 
@@ -564,11 +560,10 @@ def check_file_exists(infile):
    Returns:
        None: Raises an error if the file is not found.
    """
-   #
+
    if (not os.path.exists(infile)): output.error('file "' + infile + '" not found')
 # -------------------------------------------------------------------------------------
 def check_FCC(atomtype,string):
-   #
    """ 
    Checks if the given metallic atom type follows an FCC arrangement.
 
@@ -579,7 +574,7 @@ def check_FCC(atomtype,string):
    Returns:
        None: Raises an error if the atom type is not FCC.
    """
-   #
+
    param = parameters.parameters()
 
    arrangement = param.atomic_arrangement.get(atomtype)
@@ -587,7 +582,6 @@ def check_FCC(atomtype,string):
    if arrangement != 'FCC': output.error(f'"{atomtype.capitalize()}" presents {arrangement} arrangement. FCC is required to create {string}.')
 # -------------------------------------------------------------------------------------
 def check_FCC_or_BCC(atomtype):
-   #
    """ 
    Checks if the given metallic atom type follows either an FCC or BCC arrangement.
 
@@ -597,7 +591,7 @@ def check_FCC_or_BCC(atomtype):
    Returns:
        None: Raises an error if the atom type is not FCC or BCC.
    """
-   #
+
    param = parameters.parameters()
 
    arrangement = param.atomic_arrangement.get(atomtype)
@@ -605,7 +599,6 @@ def check_FCC_or_BCC(atomtype):
    if arrangement !='FCC' and arrangement != 'BCC': output.error(f'"{atomtype.capitalize()}" presents {arrangement} arrangement. Only FCC and BCC are supported for metal creation.')
 # -------------------------------------------------------------------------------------
 def check_file_extension(infile,extension):
-   #
    """ 
    Checks if the input file has the correct extension.
 
@@ -616,12 +609,11 @@ def check_file_extension(infile,extension):
    Returns:
        None: Raises an error if the file does not have the expected extension.
    """
-   #
+
    i = len(extension)
    if (infile[-i:] != extension): output.error('extension "' + extension + '" not found in file "' + infile + '"' )
 # -------------------------------------------------------------------------------------
 def check_dir_axis(inp):
-   #
    """ 
    Validates the direction axis input for translation or rotation.
 
@@ -635,7 +627,7 @@ def check_dir_axis(inp):
        - Ensures that the axis is properly formatted (e.g., `+x`, `-y`).
        - Assigns the corresponding numerical translation factor.
    """
-   #
+
    if ((len(inp.dir_axis_input) < 2) or 
        (len(inp.dir_axis_input) > 2) or
        (inp.dir_axis_input[1] != 'x' and inp.dir_axis_input[1] != 'y' and inp.dir_axis_input[1] != 'z') or
@@ -650,14 +642,13 @@ def check_dir_axis(inp):
    return(inp)
 # -------------------------------------------------------------------------------------
 def create_results_geom():
-   #
    """ 
    Creates the `results_geom` directory if it does not already exist.
 
    Returns:
        None: Ensures that output files can be stored in the correct location.
    """
-   #
+
    #if (os.path.exists('results_geom')):
    #   print(' ')
    #   print(' ------------------------------------------------')

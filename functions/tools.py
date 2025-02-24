@@ -18,7 +18,7 @@ def calc_min_distance(geom1,geom2):
    Notes:
        - Uses NumPy broadcasting for efficient pairwise distance computation.
    """
-   #
+
    # Compute pairwise distance matrix using broadcasting
    diffs = geom2.xyz[:, :, np.newaxis] - geom1.xyz[:, np.newaxis, :]
    dist_matrix = np.sqrt(np.sum(diffs**2, axis=0))
@@ -43,7 +43,7 @@ def rotate(mol,angle,dir_axis_input,mol_rot):
        - Rotation is performed using standard rotation matrices.
        - Supports rotation around x, y, and z axes.
    """
-   #
+
    mol_rot = copy.deepcopy(mol)
 
    theta = math.radians(angle)
@@ -82,7 +82,6 @@ def merge_geoms(inp, geom1, geom2):
         - Atoms from `geom2` that are too close to `geom1` are removed.
         - The merged geometry retains properties such as center and bounding box.
     """
-    #
 
     # Convert lists to NumPy arrays for efficiency
     geom1_xyz = np.array(geom1.xyz)  # (3, N1)
@@ -130,7 +129,6 @@ def subtract_geoms(inp, geom1, geom2):
         - Atoms from `geom2` that are within the cutoff distance of `geom1` are removed.
         - The resulting geometry retains calculated properties such as center and bounding box.
     """
-    #
 
     # Convert lists to NumPy arrays for efficiency
     geom1_xyz = np.array(geom1.xyz)  # (3, N1)
@@ -177,7 +175,7 @@ def determine_sphere_center(inp,sense):
        - The sphere's radius is computed as half the rod width.
        - The center is positioned based on the rod's main axis.
    """
-   #
+
    inp.sphere_center = [0.0,0.0,0.0]
    inp.radius = inp.rod_width/2.0
    #
