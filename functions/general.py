@@ -290,7 +290,7 @@ def parse_create(argv, inp):
       elif inp.graphene_structure == 'ring':
          inp.radius_out = float(argv[4])
          inp.radius_in  = float(argv[5])
-         if (inp.radius_in >= inp.radius_out): output.error(f'Inner radius must be smaller than Outter radius.')
+         if (inp.radius_in >= inp.radius_out): output.error(f'Inner radius must be smaller than outer radius.')
 
       elif inp.graphene_structure == 'triangle':
          inp.graphene_edge_type = argv[4]
@@ -471,7 +471,8 @@ def parse_create(argv, inp):
 
          if not inp.gen_core_shell:
             inp.atomtype_alloy = argv[-3].lower()
-            if inp.atomtype_alloy not in param.metal_atomtypes: output.error(f'Alloy atom type "{inp.atomtype_alloy}" not supported.')
+            if inp.atomtype not in inp.atomtypes_alloys: output.error(f'Alloy atom type "{inp.atomtype}" not supported.')
+            if inp.atomtype_alloy not in inp.atomtypes_alloys: output.error(f'Alloy atom type "{inp.atomtype_alloy}" not supported.')
             if inp.atomtype_alloy == inp.atomtype: output.error(f'Alloy atom type coincides with original geometry atom type.')
 
             inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'

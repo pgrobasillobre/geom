@@ -343,8 +343,9 @@ class molecule:
        :inp: input class
        """
 
-       print("  Removing dangling C atoms on generated structure...")
-       print("")
+       #debug
+       #print("  Removing dangling C atoms on generated structure...")
+       #print("")
    
        def get_neighbors(atom_index, cutoff=1.5):
            """Find neighbors of an atom within a distance cutoff."""
@@ -362,8 +363,9 @@ class molecule:
    
            # If no dangling atoms are found, exit the loop
            if not dangling_atoms:
-               print("")
-               print(f"  --> All dangling bonds removed after {iteration + 1} iteration(s).")
+               #debug
+               #print("")
+               #print(f"  --> All dangling bonds removed after {iteration + 1} iteration(s).")
                return self
    
            # Remove dangling atoms
@@ -377,7 +379,8 @@ class molecule:
            self.xyz_max = np.max(self.xyz, axis=1)
            self.xyz_min = np.min(self.xyz, axis=1)
    
-           print(f"  - Iteration {iteration + 1}: Removed {len(dangling_atoms)} dangling atom(s).")
+           #debug
+           #print(f"  - Iteration {iteration + 1}: Removed {len(dangling_atoms)} dangling atom(s).")
    
        # If dangling bonds remain after 3 iterations, raise an error
        dangling_atoms = []
@@ -817,7 +820,8 @@ class molecule:
          for idx in selected_indices:
              self.atoms[idx] = inp.atomtype_alloy.lower()
 
-         print(f"Replaced {n_replace} {inp.atomtype} atoms with {inp.atomtype_alloy}")
+         #debug
+         #print(f"Replaced {n_replace} {inp.atomtype} atoms with {inp.atomtype_alloy}")
 
       else:
          output.error('number of atoms to replace in alloy creation n_replace{}')

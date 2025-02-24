@@ -106,6 +106,7 @@ class input_class:
       self.atomtype = ''
       self.atomtype_in = ''
       self.atomtype_out = ''
+      self.atomtypes_alloys     = ['ag','au']
       self.atomtypes_core_shell = ['ag','au']
       self.axes = ["x","y","z"]
       self.graphene_structures  = ["rib","disk","ring","triangle"]
