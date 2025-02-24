@@ -5,15 +5,19 @@ import copy
 from classes import molecule
 # -------------------------------------------------------------------------------------
 def calc_min_distance(geom1,geom2):
-   #
    """
-   Calculate the minimum distance between two molecule classes
+   Calculates the minimum distance between two molecular geometries.
 
-   :geom1: molecule class 1
-   :geom2: molecule class 2
+   Args:
+       geom1 (molecule): The first molecule object.
+       geom2 (molecule): The second molecule object.
 
-   :return: dist: minimum distance between the two geometries
-   """ 
+   Returns:
+       float: The minimum distance between the two geometries.
+
+   Notes:
+       - Uses NumPy broadcasting for efficient pairwise distance computation.
+   """
    #
    # Compute pairwise distance matrix using broadcasting
    diffs = geom2.xyz[:, :, np.newaxis] - geom1.xyz[:, np.newaxis, :]
@@ -23,16 +27,22 @@ def calc_min_distance(geom1,geom2):
    return np.min(dist_matrix)
 # -------------------------------------------------------------------------------------
 def rotate(mol,angle,dir_axis_input,mol_rot):
-   #
    """
-   Rotate molecule geometry
+   Rotates a molecular geometry by a given angle around a specified axis.
 
-   :mol           : initial geometry
-   :angle         : rotation angle (degrees)
-   :dir_axis_input: rotation axis and sense {+-}{xyz}
+   Args:
+       mol (molecule): The original molecule object.
+       angle (float): The rotation angle in degrees.
+       dir_axis_input (str): The rotation axis and sense (e.g., `+x`, `-y`).
+       mol_rot (molecule): A new molecule object to store the rotated geometry.
 
-   :return: mol_rot: rotated geometry
-   """ 
+   Returns:
+       molecule: The rotated molecule object.
+
+   Notes:
+       - Rotation is performed using standard rotation matrices.
+       - Supports rotation around x, y, and z axes.
+   """
    #
    mol_rot = copy.deepcopy(mol)
 
@@ -56,15 +66,21 @@ def rotate(mol,angle,dir_axis_input,mol_rot):
    return(mol_rot)
 # -------------------------------------------------------------------------------------
 def merge_geoms(inp, geom1, geom2):
-    #
     """
-    Merge two geometries while avoiding overlap based on the cutoff distance.
+    Merges two molecular geometries while avoiding overlap based on a cutoff distance.
 
-    :inp  : input class with cutoff distance
-    :geom1: molecule class 1 
-    :geom2: molecule class 2
-    
-    :return: geom3: merged geometry 
+    Args:
+        inp (input_class): Input object containing cutoff distance.
+        geom1 (molecule): The first molecule object.
+        geom2 (molecule): The second molecule object.
+
+    Returns:
+        molecule: The merged molecular geometry.
+
+    Notes:
+        - Uses pairwise distance calculations to avoid overlapping atoms.
+        - Atoms from `geom2` that are too close to `geom1` are removed.
+        - The merged geometry retains properties such as center and bounding box.
     """
     #
 
@@ -99,15 +115,20 @@ def merge_geoms(inp, geom1, geom2):
     return geom3
 # -------------------------------------------------------------------------------------
 def subtract_geoms(inp, geom1, geom2):
-    #
     """
-    Subtract two geometries based on a cutoff distance.
+    Subtracts one geometry from another based on a cutoff distance.
 
-    :inp  : input class with cutoff distance
-    :geom1: molecule class 1 
-    :geom2: molecule class 2
-    
-    :return: geom3: geom2 - geom1
+    Args:
+        inp (input_class): Input object containing cutoff distance.
+        geom1 (molecule): The first molecule object (to be subtracted).
+        geom2 (molecule): The second molecule object.
+
+    Returns:
+        molecule: A new molecule object representing `geom2 - geom1`.
+
+    Notes:
+        - Atoms from `geom2` that are within the cutoff distance of `geom1` are removed.
+        - The resulting geometry retains calculated properties such as center and bounding box.
     """
     #
 
@@ -142,15 +163,20 @@ def subtract_geoms(inp, geom1, geom2):
     return geom3
 # -------------------------------------------------------------------------------------
 def determine_sphere_center(inp,sense):
-   #
    """
-   Calculate sphere center within a rod
+   Determines the center of a sphere within a rod-like structure.
 
-   :inp  : input class
-   :sense: + or - direction
+   Args:
+       inp (input_class): Input object containing rod and sphere dimensions.
+       sense (str): Direction (`'+'` or `'-'`) to position the sphere.
 
-   :return: inp.sphere_center: center of the sphere updated
-   """ 
+   Returns:
+       list[float]: The updated sphere center coordinates.
+
+   Notes:
+       - The sphere's radius is computed as half the rod width.
+       - The center is positioned based on the rod's main axis.
+   """
    #
    inp.sphere_center = [0.0,0.0,0.0]
    inp.radius = inp.rod_width/2.0

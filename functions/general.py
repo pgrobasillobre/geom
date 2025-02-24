@@ -6,6 +6,22 @@ from functions import output, create_geom
 
 # -------------------------------------------------------------------------------------
 def read_command_line(argv, inp):
+    """
+    Parses command-line arguments and determines the operation mode.
+
+    Args:
+        argv (list[str]): List of command-line arguments.
+        inp (input_class): An instance containing input parameters.
+
+    Returns:
+        None: Calls the appropriate parsing function or displays help.
+
+    Notes:
+        - If no arguments are provided, an error is raised.
+        - Recognizes different command-line options and triggers the corresponding function.
+        - Prints help if `-h` or `-help` is passed.
+    """
+    #
     if len(argv) < 2:
         output.error("Missing command line arguments.")
     command = argv[1]
@@ -29,8 +45,11 @@ def read_command_line(argv, inp):
         output.error("Option not recognized. Try python3 geom -h")
 # -------------------------------------------------------------------------------------
 def print_help():
-    """ 
-    Prints help message and exits 
+    """
+    Prints the help message with usage instructions and exits the program.
+
+    Returns:
+        None: Displays the help text and terminates execution.
     """
     #
 
@@ -144,12 +163,23 @@ def print_help():
 # -------------------------------------------------------------------------------------
 def parse_translation(argv, inp):
    """
-   Parse translation command line
+   Parses translation-related command-line arguments.
 
-   :argv : arguments list
-   :inp  : input class
+   Args:
+       argv (list[str]): List of command-line arguments.
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Sets translation-related attributes in `inp`.
+
+   Notes:
+       - Handles both controlled distance translation (`-t`) and simple shift translation (`-t1`).
+       - Extracts input filenames, translation parameters, and verbosity settings.
    """
    #
+
+   inp.translate = True
+
    if argv[1] == '-t':
       inp.translate_controlled_distance = True
 
@@ -177,12 +207,23 @@ def parse_translation(argv, inp):
 # -------------------------------------------------------------------------------------
 def parse_rotation(argv, inp):
    """
-   Parse rotation command line
+   Parses rotation-related command-line arguments.
 
-   :argv : arguments list
-   :inp  : input class
+   Args:
+       argv (list[str]): List of command-line arguments.
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Sets rotation-related attributes in `inp`.
+
+   Notes:
+       - Handles both list-based rotation (`-r`) and single-angle rotation (`-r1`).
+       - Extracts input filenames and rotation parameters.
    """
    #
+
+   inp.rotate = True
+
    if argv[1] == '-r':
       inp.rotate_angles = True
 
@@ -205,23 +246,38 @@ def parse_rotation(argv, inp):
 # -------------------------------------------------------------------------------------
 def parse_mirror(argv, inp):
    """
-   Parse mirror command line
+   Parses command-line arguments for performing a mirror reflection.
 
-   :argv : arguments list
-   :inp  : input class
+   Args:
+       argv (list[str]): List of command-line arguments.
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Sets mirroring attributes in `inp`.
    """
    #
+   inp.small_tasks = True
+
    inp.geom_specular = True
    inp.geom_file = str(argv[2])
 # -------------------------------------------------------------------------------------
 def parse_merge(argv, inp):
    """
-   Parse merge command line
+   Parses command-line arguments for merging geometries.
 
-   :argv : arguments list
-   :inp  : input class
+   Args:
+       argv (list[str]): List of command-line arguments.
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Sets merging attributes in `inp`.
+
+   Notes:
+       - Requires two geometry files and a cutoff distance.
    """
-   #
+   # 
+   inp.small_tasks = True
+
    inp.merge = True
    inp.geom1_file = str(argv[2])
    inp.geom2_file = str(argv[3])
@@ -229,33 +285,53 @@ def parse_merge(argv, inp):
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
-   Parse min command line
+   Parses command-line arguments for calculating the minimum distance between two geometries.
 
-   :argv : arguments list
-   :inp  : input class
+   Args:
+       argv (list[str]): List of command-line arguments.
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Sets minimum distance calculation attributes in `inp`.
    """
    #
+   inp.small_tasks = True
+
    inp.min_dist = True
    inp.geom1_file = str(argv[2])
    inp.geom2_file = str(argv[3])
 # -------------------------------------------------------------------------------------
 def parse_center(argv, inp):
    """
-   Parse center command line
+   Parses command-line arguments for computing the geometric center of a structure.
 
-   :argv : arguments list
-   :inp  : input class
+   Args:
+       argv (list[str]): List of command-line arguments.
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Sets geometric centering attributes in `inp`.
    """
    #
+   inp.small_tasks = True
+
    inp.geom_center = True
    inp.geom_file = str(argv[2])
 # -------------------------------------------------------------------------------------
 def parse_create(argv, inp):
    """
-   Parse create command line
+   Parses command-line arguments for generating different types of geometries.
 
-   :argv : arguments list
-   :inp  : input class
+   Args:
+       argv (list[str]): List of command-line arguments.
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Sets attributes in `inp` for geometry generation.
+
+   Notes:
+       - Handles the creation of graphene structures, nanoparticles, and bulk metal structures.
+       - Validates input parameters and extracts atomic and structural properties.
    """
    #
    inp.create_geom = True 
@@ -479,10 +555,14 @@ def parse_create(argv, inp):
 # -------------------------------------------------------------------------------------
 def check_file_exists(infile):
    #
-   """ 
-   Check if file exist
+   """
+   Checks if a given file exists.
 
-   :infile : Input file to check
+   Args:
+       infile (str): Path to the input file.
+
+   Returns:
+       None: Raises an error if the file is not found.
    """
    #
    if (not os.path.exists(infile)): output.error('STOP: file "' + infile + '" not found')
@@ -490,10 +570,14 @@ def check_file_exists(infile):
 def check_FCC(atomtype,string):
    #
    """ 
-   Check FCC arrangement in selected metal
+   Checks if the given metallic atom type follows an FCC arrangement.
 
-   :atomtype        : Metallic atom type
-   :string          : Structure to create
+   Args:
+       atomtype (str): Type of metal atom.
+       string (str): Structure name being validated.
+
+   Returns:
+       None: Raises an error if the atom type is not FCC.
    """
    #
    param = parameters.parameters()
@@ -505,9 +589,13 @@ def check_FCC(atomtype,string):
 def check_FCC_or_BCC(atomtype):
    #
    """ 
-   Check FCC or BCC arrangement in selected metal
+   Checks if the given metallic atom type follows either an FCC or BCC arrangement.
 
-   :atomtype        : Metallic atom type
+   Args:
+       atomtype (str): Type of metal atom.
+
+   Returns:
+       None: Raises an error if the atom type is not FCC or BCC.
    """
    #
    param = parameters.parameters()
@@ -519,10 +607,14 @@ def check_FCC_or_BCC(atomtype):
 def check_file_extension(infile,extension):
    #
    """ 
-   Check file extension
+   Checks if the input file has the correct extension.
 
-   :infile   : Input file to check
-   :extension: 
+   Args:
+       infile (str): Path to the input file.
+       extension (str): Expected file extension.
+
+   Returns:
+       None: Raises an error if the file does not have the expected extension.
    """
    #
    i = len(extension)
@@ -531,9 +623,17 @@ def check_file_extension(infile,extension):
 def check_dir_axis(inp):
    #
    """ 
-   Check direction axis to translate/rotate
+   Validates the direction axis input for translation or rotation.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       input_class: Updated `inp` with validated direction axis settings.
+
+   Notes:
+       - Ensures that the axis is properly formatted (e.g., `+x`, `-y`).
+       - Assigns the corresponding numerical translation factor.
    """
    #
    if ((len(inp.dir_axis_input) < 2) or 
@@ -552,7 +652,10 @@ def check_dir_axis(inp):
 def create_results_geom():
    #
    """ 
-   Create results folder
+   Creates the `results_geom` directory if it does not already exist.
+
+   Returns:
+       None: Ensures that output files can be stored in the correct location.
    """
    #
    #if (os.path.exists('results_geom')):

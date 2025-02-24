@@ -15,10 +15,14 @@ from ase.io import write
 # -------------------------------------------------------------------------------------
 def select_case(inp):
    #
-   """ 
-   Select create geometry case
+   """
+   Selects the appropriate geometry creation function based on user input.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance of the input class containing user-defined parameters.
+
+   Returns:
+       None: Executes the corresponding geometry generation function.
    """
    #
 
@@ -42,10 +46,14 @@ def select_case(inp):
 # -------------------------------------------------------------------------------------
 def graphene(inp):
    #
-   """ 
-   Generate graphene geometry (ribbon) 
+   """
+   Generates a graphene structure (ribbon, disk, ring, or triangle).
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing the input parameters.
+
+   Returns:
+       None: Saves the generated geometry to a file.
    """
    #
 
@@ -80,10 +88,14 @@ def graphene(inp):
 # -------------------------------------------------------------------------------------
 def sphere(inp):
    #
-   """ 
-   Generate sphere geometry 
+   """
+   Generates a spherical nanoparticle geometry.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing the input parameters.
+
+   Returns:
+       None: Saves the generated sphere geometry.
    """
    #
 
@@ -108,10 +120,14 @@ def sphere(inp):
 # -------------------------------------------------------------------------------------
 def sphere_core_shell(inp):
    #
-   """ 
-   Generate sphere core shell geometry 
+   """
+   Generates a core-shell sphere structure.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the core-shell structure to a file.
    """
    #
 
@@ -168,9 +184,13 @@ def sphere_core_shell(inp):
 def sphere_3d_mesh(inp):
    #
    """ 
-   Generate sphere 3D mesh geometry using Gmsh in MeshFormat 2.2 0 8 
+   Generates a 3D mesh representation of a sphere using Gmsh in MeshFormat 2.2.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated 3D mesh structure.
    """
    #
 
@@ -205,9 +225,13 @@ def sphere_3d_mesh(inp):
 def rod(inp):
    #
    """ 
-   Generate rod geometry 
+    Generates a cylindrical rod geometry.
 
-   :inp: input class
+    Args:
+        inp (input_class): An instance containing input parameters.
+
+    Returns:
+        None: Saves the generated rod geometry.
    """
    #
 
@@ -255,10 +279,14 @@ def rod(inp):
 # -------------------------------------------------------------------------------------
 def rod_core_shell(inp):
    #
-   """ 
-   Generate rod core shell geometry 
+   """
+   Generates a core-shell rod structure.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated core-shell rod geometry.
    """
    #
 
@@ -357,9 +385,13 @@ def rod_core_shell(inp):
 def rod_3d_mesh(inp):
    #
    """ 
-   Generate rod 3D mesh geometry using Gmsh in MeshFormat 2.2 0 8 
+   Generates a 3D mesh representation of a rod using Gmsh in MeshFormat 2.2.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated 3D mesh structure.
    """
    #
 
@@ -422,9 +454,13 @@ def rod_3d_mesh(inp):
 def tip(inp):
    #
    """ 
-   Generate round tip geometry 
+   Generates a nanostructured round tip geometry.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated tip geometry.
    """
    #
 
@@ -450,9 +486,13 @@ def tip(inp):
 def pyramid(inp):
    #
    """
-   Generate pyramid geometry (with square base)
+   Generates a pyramid-shaped geometry with a square base.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated pyramid geometry.
    """
    #
 
@@ -513,9 +553,13 @@ def pyramid(inp):
 def cone(inp):
    #
    """
-   Generate cone geometry 
+   Generates a conical geometry.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated cone geometry.
    """
    #
 
@@ -541,9 +585,13 @@ def cone(inp):
 def microscope(inp):
    #
    """ 
-   Generate microscope with pyramidal tip 
+   Generates a simulated microscope tip structure with a pyramidal and paraboloidal combination.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated microscope tip geometry.
    """
    #
 
@@ -626,9 +674,13 @@ def microscope(inp):
 def icosahedra(inp):
    #
    """ 
-   Generate icosahedral geometry 
+   Generates an icosahedral nanoparticle geometry.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated icosahedral geometry.
    """
    #
 
@@ -654,9 +706,13 @@ def icosahedra(inp):
 def cto(inp):
    #
    """ 
-   Generate cuboctahedral geometry 
+   Generates a cuboctahedral nanoparticle geometry.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated cuboctahedral geometry.
    """
    #
 
@@ -682,9 +738,13 @@ def cto(inp):
 def idh(inp):
    #
    """ 
-   Generate decahedral geometry 
+   Generates a decahedral nanoparticle geometry.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated decahedral geometry.
    """
    #
 
@@ -709,10 +769,14 @@ def idh(inp):
 # -------------------------------------------------------------------------------------
 def create_ase_bulk_metal(inp, base_dir):
    """
-   Create temporary bulk metal XYZ file with ASE
+   Creates a temporary bulk metal XYZ file using ASE.
 
-   :inp: input class
-   :base_dir: absolute path to folder
+   Args:
+       inp (input_class): An instance containing input parameters.
+       base_dir (str): Absolute path to the working directory.
+
+   Returns:
+       None: Saves the generated bulk metal geometry.
    """
    #
 
@@ -742,11 +806,15 @@ def create_ase_bulk_metal(inp, base_dir):
 # -------------------------------------------------------------------------------------
 def get_layers(inp, lattice_constant):
    """
-   Dynamically calculate the required number of ASE layers for creating bulk structures
-   as a function of the structural shapes.
+   Dynamically calculates the required number of ASE layers for bulk structures 
+   based on the structural shape.
 
-   :inp: input class
-   :lattice constant: lattice_constant parameter
+   Args:
+       inp (input_class): An instance containing input parameters.
+       lattice_constant (float): Lattice constant of the atomic structure.
+
+   Returns:
+       list[int]: Number of layers required along the x, y, and z axes.
    """
    #
 
@@ -806,10 +874,14 @@ def get_layers(inp, lattice_constant):
 # -------------------------------------------------------------------------------------
 def create_ase_bulk_graphene(inp, base_dir):
    """
-   Create temporary bulk graphene XYZ file with ASE
+   Creates a temporary bulk graphene XYZ file using ASE.
 
-   :inp: input class
-   :base_dir: absolute path to folder
+   Args:
+       inp (input_class): An instance containing input parameters.
+       base_dir (str): Absolute path to the working directory.
+
+   Returns:
+       None: Saves the generated bulk graphene geometry.
    """
    #
 

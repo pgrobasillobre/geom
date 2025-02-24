@@ -11,10 +11,21 @@ from classes import input_class
 from functions import general, various, translate, rotate, create_geom
 
 # -------------------------------------------------------------------------------------
-def move_input_geom(folder,xyz_file,optional_file=None):
+def move_input_geom(folder, xyz_file, optional_file=None):
    """
-   Move input geometry into scratch folder 
-   If an optional file is provided, it is also copied
+   Moves the input geometry file into the scratch folder.
+
+   Args:
+       folder (str): The folder where the input file is located.
+       xyz_file (str): The name of the input XYZ file to be moved.
+       optional_file (str, optional): An additional file to move if provided.
+
+   Returns:
+       None: The function executes shell commands to move files.
+
+   Notes:
+       - Uses `os.system` to copy files.
+       - If an optional file is provided, it is also copied.
    """
 
    file_path_xyz = os.path.join(os.path.dirname(__file__), folder, xyz_file)
@@ -25,10 +36,20 @@ def move_input_geom(folder,xyz_file,optional_file=None):
       file_path_optional = os.path.join(os.path.dirname(__file__), folder, optional_file)
       os.system(f'cp {file_path_optional} .')
 # -------------------------------------------------------------------------------------
-def move_managed_geom(folder, remove_optional_file = None):
+def move_managed_geom(folder, remove_optional_file=None):
    """
-   Move created geometry to folder and remove results_geom folder
-   If an optional file is provided, it is removed
+   Moves managed geometry files to the specified folder and removes temporary files.
+
+   Args:
+       folder (str): The destination folder for the created geometry files.
+       remove_optional_file (str, optional): A specific file to be removed if provided.
+
+   Returns:
+       None: The function executes shell commands to move and remove files.
+
+   Notes:
+       - Moves generated `.xyz` files from `results_geom` to the specified folder.
+       - Deletes temporary geometry files and the `results_geom` directory.
    """
 
    file_path = os.path.join(os.path.dirname(__file__))
@@ -42,8 +63,19 @@ def move_managed_geom(folder, remove_optional_file = None):
 # -------------------------------------------------------------------------------------
 def move_created_geom(folder):
    """
-   Move created geometry to folder and remove results_geom folder
+   Moves the generated geometry files to the specified folder and removes temporary files.
+
+   Args:
+       folder (str): The destination folder for the created geometry files.
+
+   Returns:
+       None: The function executes shell commands to move and remove files.
+
+   Notes:
+       - Moves all generated files from `results_geom` to the specified folder.
+       - Deletes the `results_geom` directory afterward.
    """
+
 
    file_path_results = os.path.join(os.path.dirname(__file__), "results_geom")
    file_path_results = os.path.join(file_path_results, "*")
@@ -53,7 +85,18 @@ def move_created_geom(folder):
 # -------------------------------------------------------------------------------------
 def test_create_sphere(monkeypatch):
    """
-   Test if the generated sphere geometry matches the expected XYZ file.
+   Tests the generation of a spherical geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of generated output.
+
+   Notes:
+       - Mocks command-line arguments for sphere creation.
+       - Runs the geometry creation process.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -81,7 +124,18 @@ def test_create_sphere(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_sphere_continuum(monkeypatch):
    """
-   Test if the generated sphere 3D continuum geometry matches the expected XYZ file.
+   Tests the generation of a sphere 3D continuum mesh and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the generated `.msh` file.
+
+   Notes:
+       - Mocks command-line arguments for sphere continuum creation.
+       - Runs the geometry creation process.
+       - Compares the generated `.msh` file with an expected reference file.
    """
 
    # Test folder
@@ -107,38 +161,22 @@ def test_create_sphere_continuum(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated Mesh file does not match the expected output"
 # -------------------------------------------------------------------------------------
-def test_create_rod_continuum(monkeypatch):
-   """
-   Test if the generated rod 3D continuum geometry matches the expected XYZ file.
-   """
-
-   # Test folder
-   test_folder = 'rod_continuum'
-   
-   # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", "-create", "-rod", "-continuum", "Z", "100.0", "30.0", "5.0"]
-   monkeypatch.setattr(sys, "argv", mock_args)
-   
-   # Manually create and populate the input class
-   inp = input_class.input_class()
-   general.read_command_line(sys.argv, inp)
-   
-   # Run the geometry creation
-   create_geom.select_case(inp)
-   
-   # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_Z_l_100.0_w_30.0_mesh_size_5.0.msh")
-   generated_file = f"{test_folder}/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
-
-   move_created_geom(test_folder)
-   
-   # Compare the generated file with the reference
-   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated Mesh file does not match the expected output"
-# -------------------------------------------------------------------------------------
 def test_create_sphere_core_shell(monkeypatch):
    """
-   Test if the generated sphere core-shell geometry matches the expected XYZ file.
+   Tests the generation of a sphere core-shell geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for core-shell sphere creation.
+       - Runs the geometry creation process.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
+
 
    # Test folder
    test_folder = 'sphere_core_shell'
@@ -165,7 +203,19 @@ def test_create_sphere_core_shell(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_rod(monkeypatch):
    """
-   Test if the generated rod geometry matches the expected XYZ file.
+   Tests the generation of a rod geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for rod creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -191,9 +241,60 @@ def test_create_rod(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
+def test_create_rod_continuum(monkeypatch):
+   """
+   Tests the generation of a rod 3D continuum mesh and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the generated `.msh` file.
+
+   Notes:
+       - Mocks command-line arguments for rod continuum creation.
+       - Runs the geometry creation process.
+       - Compares the generated `.msh` file with an expected reference file.
+   """
+
+   # Test folder
+   test_folder = 'rod_continuum'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-rod", "-continuum", "Z", "100.0", "30.0", "5.0"]
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_Z_l_100.0_w_30.0_mesh_size_5.0.msh")
+   generated_file = f"{test_folder}/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated Mesh file does not match the expected output"
+# -------------------------------------------------------------------------------------
 def test_create_rod_core_shell(monkeypatch):
    """
-   Test if the generated rod core-shell geometry matches the expected XYZ file.
+   Tests the generation of a rod core-shell geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for core-shell rod creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -221,7 +322,19 @@ def test_create_rod_core_shell(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_tip(monkeypatch):
    """
-   Test if the generated tip geometry matches the expected XYZ file.
+   Tests the generation of a tip geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for tip creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -249,7 +362,19 @@ def test_create_tip(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_pyramid(monkeypatch):
    """
-   Test if the generated pyramid geometry matches the expected XYZ file.
+   Tests the generation of a pyramid geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for pyramid creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -277,7 +402,19 @@ def test_create_pyramid(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_cone(monkeypatch):
    """
-   Test if the generated cone geometry matches the expected XYZ file.
+   Tests the generation of a cone geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for cone creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -305,7 +442,19 @@ def test_create_cone(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_icosahedra(monkeypatch):
    """
-   Test if the generated icosahedral geometry matches the expected XYZ file.
+   Tests the generation of an icosahedral geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for icosahedral geometry creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -333,7 +482,19 @@ def test_create_icosahedra(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_cuboctahedra(monkeypatch):
    """
-   Test if the generated cuboctahedral geometry matches the expected XYZ file.
+   Tests the generation of a cuboctahedral geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for cuboctahedral geometry creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -361,7 +522,19 @@ def test_create_cuboctahedra(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_decahedra(monkeypatch):
    """
-   Test if the generated decahedral geometry matches the expected XYZ file.
+   Tests the generation of a decahedral geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for decahedral geometry creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -389,7 +562,19 @@ def test_create_decahedra(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_microscope(monkeypatch):
    """
-   Test if the generated microscope geometry matches the expected XYZ file.
+   Tests the generation of a microscope geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for microscope geometry creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -417,7 +602,19 @@ def test_create_microscope(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_graphene_ribbon(monkeypatch):
    """
-   Test if the generated graphene ribbon geometry matches the expected XYZ file.
+   Tests the generation of a graphene ribbon geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for graphene ribbon creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -445,7 +642,19 @@ def test_create_graphene_ribbon(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_graphene_disk(monkeypatch):
    """
-   Test if the generated graphene disk geometry matches the expected XYZ file.
+   Tests the generation of a graphene disk geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for graphene disk creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -473,7 +682,19 @@ def test_create_graphene_disk(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_graphene_ring(monkeypatch):
    """
-   Test if the generated graphene ring geometry matches the expected XYZ file.
+   Tests the generation of a graphene ring geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for graphene ring creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -501,7 +722,19 @@ def test_create_graphene_ring(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_graphene_triangle_armchair(monkeypatch):
    """
-   Test if the generated graphene triangle armchair geometry matches the expected XYZ file.
+   Tests the generation of a graphene triangle (armchair type) geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for graphene armchair triangle creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -529,7 +762,19 @@ def test_create_graphene_triangle_armchair(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_create_graphene_triangle_zigzag(monkeypatch):
    """
-   Test if the generated graphene triangle zigzag geometry matches the expected XYZ file.
+   Tests the generation of a graphene triangle (zigzag type) geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for graphene zigzag triangle creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -557,7 +802,19 @@ def test_create_graphene_triangle_zigzag(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_specular_geometry(monkeypatch):
    """
-   Test creation of specular geometry.
+   Tests the creation of a specular (mirrored) geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for mirroring a geometry.
+       - Moves the input file temporarily.
+       - Runs the mirroring process.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -576,7 +833,7 @@ def test_specular_geometry(monkeypatch):
    move_input_geom(test_folder,xyz_input_file)
 
    # Create specular geometry
-   various.geom_specular(inp)
+   various.select_case(inp)
    
    # Define the expected and actual output files
    expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "doxorubicin_000_mirror.xyz")
@@ -589,7 +846,19 @@ def test_specular_geometry(monkeypatch):
 # -------------------------------------------------------------------------------------
 def test_controlled_distance(monkeypatch):
    """
-   Test controlled distance.
+   Tests the controlled translation of a molecule to maintain a specific distance.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for controlled distance translation.
+       - Moves the input file temporarily.
+       - Runs the translation process.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
@@ -599,7 +868,7 @@ def test_controlled_distance(monkeypatch):
    distances_input  = 'distances_input'
 
    # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", "-t", "distances_input", "doxorubicin.xyz", "no", "sphere_r_10.0_center_0.0_0.0_0.0.xyz", "no", "+x", "verbose_no"]
+   mock_args = ["dummy", "-t", distances_input, "doxorubicin.xyz", "no", "sphere_r_10.0_center_0.0_0.0_0.0.xyz", "no", "+x", "verbose_no"]
    monkeypatch.setattr(sys, "argv", mock_args)
    
    # Manually create and populate the input class
@@ -611,7 +880,7 @@ def test_controlled_distance(monkeypatch):
    move_input_geom(test_folder,xyz_input_file_2)
 
    # Translate controlled distance
-   translate.translate_controlled_distance(inp)
+   translate.select_case(inp)
 
    # Define the expected and actual output files
    expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_r_10.0_center_0.0_0.0_0.0_+x_d_10.00.xyz")
@@ -622,17 +891,30 @@ def test_controlled_distance(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
-def test_r1_rotation(monkeypatch):
+def test_controlled_rotation(monkeypatch):
    """
-   Test r1 rotation
+   Tests the controlled rotation of a molecule along a specified axis.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for controlled rotation.
+       - Moves the input file temporarily.
+       - Runs the rotation process.
+       - Compares the generated `.xyz` file with an expected reference file.
    """
 
    # Test folder
-   test_folder    = 'r1_rotation'
+   test_folder    = 'control_rotation'
    xyz_input_file = 'doxorubicin.xyz'
+   angles_input = 'angles_input'
 
    # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", "-r1", "30.0", "doxorubicin.xyz", "no", "-y"]
+   mock_args = ["dummy", "-r", angles_input, "doxorubicin.xyz", "no", "+x"]
    monkeypatch.setattr(sys, "argv", mock_args)
    
    # Manually create and populate the input class
@@ -640,17 +922,17 @@ def test_r1_rotation(monkeypatch):
    general.read_command_line(sys.argv, inp)
 
    # Temporaly move input file
-   move_input_geom(test_folder,xyz_input_file)
+   move_input_geom(test_folder,xyz_input_file, optional_file = angles_input)
 
    # Translate controlled distance
-   rotate.rotate_1(inp)
+   rotate.rotate_angles(inp)
 
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "doxorubicin_-y_degree_30.0.xyz")
-   generated_file = f"{test_folder}/doxorubicin_-y_degree_30.0.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "doxorubicin_+x_degree_90.0.xyz")
+   generated_file = f"{test_folder}/doxorubicin_+x_degree_90.0.xyz"
 
-   move_managed_geom(test_folder)
- 
+   move_managed_geom(test_folder, remove_optional_file = angles_input)
+   
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------

@@ -5,12 +5,41 @@ from classes import molecule
 from functions import tools, general, output
 
 # -------------------------------------------------------------------------------------
-def min_dist(inp):
-   #
-   """ 
-   Calculate minimum distance between two molecules
+def select_case(inp):
+   """
+   Selects and executes a small task based on user input.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Calls the corresponding function.
+
+   Notes:
+       - Supports calculating the minimum distance, geometrical center,
+         specular transformation, and merging geometries.
+   """
+   #
+
+   if (inp.min_dist):      min_dist(inp) 
+   if (inp.geom_center):   geom_center(inp) 
+   if (inp.geom_specular): geom_specular(inp)
+   if (inp.merge):         merge_geoms(inp)
+# -------------------------------------------------------------------------------------
+def min_dist(inp):
+   """
+   Computes the minimum distance between two molecular geometries.
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Prints the calculated minimum distance.
+
+   Notes:
+       - Reads the geometries of two molecules from input files.
+       - Uses `calc_min_distance` from `tools.py` to determine the minimum distance.
+       - Outputs the result via `output.print_min_dist()`.
    """
    #
 
@@ -31,11 +60,19 @@ def min_dist(inp):
    output.print_min_dist(inp,distance)
 # -------------------------------------------------------------------------------------
 def geom_center(inp):
-   #
-   """ 
-   Calculate geometrical center
+   """
+   Calculates the geometrical center of a molecule.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Prints the geometrical center coordinates.
+
+   Notes:
+       - Reads the molecular geometry from an input file.
+       - Computes the center using the molecule’s atomic coordinates.
+       - Outputs the computed center via `output.print_geom_center()`.
    """
    #
 
@@ -49,11 +86,20 @@ def geom_center(inp):
    output.print_geom_center(inp,mol.xyz_center)
 # -------------------------------------------------------------------------------------
 def geom_specular(inp):
-   #
-   """ 
-   Create specular geometry
+   """
+   Creates a specular (mirror image) geometry of a molecule.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the mirrored geometry.
+
+   Notes:
+       - Reads the molecular geometry from an input file.
+       - Reflects the molecule across the x-axis.
+       - Translates the mirrored molecule by a shift distance (5 Å + molecule width).
+       - Saves the new geometry file.
    """
    #
 
@@ -81,11 +127,19 @@ def geom_specular(inp):
    #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------
 def merge_geoms(inp):
-   #
-   """ 
-   Merge two geometries
+   """
+   Merges two molecular geometries into a single structure.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the merged geometry.
+
+   Notes:
+       - Reads two molecular geometries from input files.
+       - Uses `merge_geoms` from `tools.py` to combine the structures.
+       - Saves the merged structure to an output file.
    """
    #
 

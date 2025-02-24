@@ -5,12 +5,38 @@ from classes import molecule
 from functions import general, tools, output
 
 # -------------------------------------------------------------------------------------
+def select_case(inp):
+   #
+   """ 
+   Selects the appropriate rotation function based on user input.
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Calls the corresponding rotation function.
+   """
+   #
+
+   if (inp.rotate_angles): rotate_angles(inp)
+   if (inp.rotate_1):      rotate_1(inp)
+# -------------------------------------------------------------------------------------
 def rotate_angles(inp):
    #
    """ 
-   Rotate molecule at a list of angles given in input.
+   Rotates a molecule at a list of angles specified in the input.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the rotated geometry for each angle.
+   
+   Notes:
+       - Reads the molecule from the specified geometry file.
+       - Adjusts angles based on the specified axis direction.
+       - Iterates through the list of angles and applies rotation.
+       - Saves each rotated geometry as an output file.
    """
    #
    # Check input, create results folder, initialize logfile
@@ -44,9 +70,19 @@ def rotate_angles(inp):
 def rotate_1(inp):
    #
    """ 
-   Rotate molecule to a given angle.
+   Rotates a molecule to a specified single angle.
 
-   :inp: input class
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the rotated geometry.
+
+   Notes:
+       - Reads the molecule from the specified geometry file.
+       - Adjusts the rotation angle based on the specified axis direction.
+       - Applies the rotation transformation.
+       - Saves the rotated geometry as an output file.
    """
    #
    # Check input, create results folder, initialize logfile

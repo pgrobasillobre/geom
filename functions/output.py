@@ -2,11 +2,14 @@ import sys
 
 # -------------------------------------------------------------------------------------
 def error(error_message):
-   #
-   """ 
-   Raise error and stop
+   """
+   Prints an error message and terminates execution.
 
-   :error_message : Error message to raise
+   Args:
+       error_message (str): The error message to be displayed.
+
+   Returns:
+       None: The function exits the program.
    """
    #
    print("")
@@ -17,11 +20,17 @@ def error(error_message):
    sys.exit()
 # -------------------------------------------------------------------------------------
 def error_dir_axis(dir_axis_input):
-   #
-   """ 
-   Raise error related to axis input
+   """
+   Prints an error message related to an unsupported axis input and exits.
 
-   :dir_axis_input: Direction axis not supported
+   Args:
+       dir_axis_input (str): The invalid direction axis input.
+
+   Returns:
+       None: The function exits the program.
+
+   Notes:
+       - Accepted values: `+x`, `+y`, `+z`, `-x`, `-y`, `-z`.
    """
    #
    print(' ')
@@ -35,9 +44,11 @@ def error_dir_axis(dir_axis_input):
    sys.exit()
 # -------------------------------------------------------------------------------------
 def logfile_init():
-   #
    """
-   Initialize logfile memory unit
+   Initializes and opens a logfile for writing.
+
+   Returns:
+       file object: An open logfile in write mode (`logfile.txt`).
    """
    #
    out_log = open('results_geom/logfile.txt','w')
@@ -45,9 +56,14 @@ def logfile_init():
    return(out_log)
 # -------------------------------------------------------------------------------------
 def logfile_close(out_log):
-   #
    """
-   Close logfile memory unit
+   Closes the logfile.
+
+   Args:
+       out_log (file object): The logfile object to close.
+
+   Returns:
+       None
    """
    #
    out_log.close()
@@ -55,12 +71,20 @@ def logfile_close(out_log):
    return(out_log)
 # -------------------------------------------------------------------------------------
 def print_geom(molecule,output_file):
-   #
    """
-   Print geometry to xyz file
+   Saves molecular geometry to an XYZ file.
 
-   :molecule   : molecule class 
-   :output_file: output file name
+   Args:
+       molecule (molecule): The molecule object containing atomic data.
+       output_file (str): The name of the output XYZ file.
+
+   Returns:
+       None: The function writes the geometry to `results_geom/{output_file}.xyz`.
+
+   Notes:
+       - The first line of the XYZ file contains the number of atoms.
+       - The second line contains a header.
+       - The atomic coordinates are printed with 8 decimal places.
    """
    #
    with open(f'results_geom/{output_file}.xyz', 'w') as out_f:
@@ -72,9 +96,11 @@ def print_geom(molecule,output_file):
            out_f.write(f'{atom.capitalize():2} {x:20.8f} {y:20.8f} {z:20.8f}\n')
 # -------------------------------------------------------------------------------------
 def print_optimization_starts():
-   #
    """
-   Print optimization starts banner
+   Prints a banner indicating the start of the distance optimization process.
+
+   Returns:
+       None
    """
    #
    print(' ')
@@ -85,36 +111,59 @@ def print_optimization_starts():
    print(' ')
 # -------------------------------------------------------------------------------------
 def print_optimizing_distance(distance):
-   #
    """
-   Print optimization distance message
+   Prints a message indicating that distance optimization is in progress.
+
+   Args:
+       distance (float): The target distance for optimization.
+
+   Returns:
+       None
    """
    # 
    print(f'  ------ Optimizing d = {distance} Å ------ ')  
    print('\n')
 # -------------------------------------------------------------------------------------
 def print_computed_distance(dist):
-   #
    """
-   Print computed distance
+   Prints the computed distance after translation or optimization.
+
+   Args:
+       dist (float): The computed distance.
+
+   Returns:
+       None
    """
    # 
    print('  Computed distance = ' + str(round(dist,4)) + ' Å')
    print('\n') 
 # -------------------------------------------------------------------------------------
 def print_convergence_achieved(dist):
-   #
    """
-   Print converged achieved 
+   Prints a message indicating that convergence has been achieved.
+
+   Args:
+       dist (float): The final optimized distance.
+
+   Returns:
+       None
    """
    # 
    print('  Convergence achieved to distance ' +  str(round(dist,4)) + ' Å') 
    print('')
 # -------------------------------------------------------------------------------------
 def save_distance_opt(out_log,distance,dist_new,dir_axis_input):
-   #
    """
-   Save converged distance in logfile
+   Saves the optimized distance information in the logfile.
+
+   Args:
+       out_log (file object): The logfile object.
+       distance (float): The initial distance target.
+       dist_new (float): The final achieved distance.
+       dir_axis_input (str): The translation or rotation axis.
+
+   Returns:
+       None
    """
    #
    out_log.write(f"\n"
@@ -123,9 +172,17 @@ def save_distance_opt(out_log,distance,dist_new,dir_axis_input):
    out_log.write(f" {'  Convergence achieved to distance':>34} {dist_new:20.8f} {'Å':>5}\n\n\n")
 # -------------------------------------------------------------------------------------
 def print_normal_termination(inp):
-   #
    """
-   Print normal termination banner
+   Prints a normal termination banner if the process completes successfully.
+
+   Args:
+       inp (input_class): The input class instance containing execution parameters.
+
+   Returns:
+       None
+
+   Notes:
+       - This function does not print if `min_dist` or `geom_center` calculations are performed.
    """
    #
    if (not inp.min_dist and not inp.geom_center):
@@ -136,9 +193,15 @@ def print_normal_termination(inp):
       print(' ')
 # -------------------------------------------------------------------------------------
 def print_min_dist(inp,distance):
-   #
    """
-   Print minimum distance
+   Prints the minimum distance between two geometries.
+
+   Args:
+       inp (input_class): The input class instance containing file information.
+       distance (float): The computed minimum distance.
+
+   Returns:
+       None
    """
    #
    distance = round(distance,4)
@@ -153,12 +216,15 @@ def print_min_dist(inp,distance):
    print('')
 # -------------------------------------------------------------------------------------
 def print_geom_center(inp,xyz_c):
-   #
    """
-   Print geometrical center of given molecule distance
+   Prints the geometrical center of a molecule.
 
-   :inp  : input class
-   :xyz_c: geometrical center
+   Args:
+       inp (input_class): The input class instance containing file information.
+       xyz_c (list[float]): The computed (x, y, z) coordinates of the geometrical center.
+
+   Returns:
+       None
    """
    #
    x = round(xyz_c[0],4)
