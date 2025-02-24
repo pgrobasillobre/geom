@@ -19,7 +19,6 @@ def select_case(inp):
        - Supports calculating the minimum distance, geometrical center,
          specular transformation, and merging geometries.
    """
-   #
 
    if (inp.min_dist):      min_dist(inp) 
    if (inp.geom_center):   geom_center(inp) 
@@ -41,7 +40,6 @@ def min_dist(inp):
        - Uses `calc_min_distance` from `tools.py` to determine the minimum distance.
        - Outputs the result via `output.print_min_dist()`.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -74,7 +72,6 @@ def geom_center(inp):
        - Computes the center using the molecule’s atomic coordinates.
        - Outputs the computed center via `output.print_geom_center()`.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -101,7 +98,6 @@ def geom_specular(inp):
        - Translates the mirrored molecule by a shift distance (5 Å + molecule width).
        - Saves the new geometry file.
    """
-   #
 
    # Check input
    inp.check_input_case()   
@@ -141,7 +137,6 @@ def merge_geoms(inp):
        - Uses `merge_geoms` from `tools.py` to combine the structures.
        - Saves the merged structure to an output file.
    """
-   #
 
    # Check input
    inp.check_input_case()   

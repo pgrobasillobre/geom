@@ -925,7 +925,7 @@ def test_controlled_rotation(monkeypatch):
    move_input_geom(test_folder,xyz_input_file, optional_file = angles_input)
 
    # Translate controlled distance
-   rotate.rotate_angles(inp)
+   rotate.select_case(inp)
 
    # Define the expected and actual output files
    expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "doxorubicin_+x_degree_90.0.xyz")

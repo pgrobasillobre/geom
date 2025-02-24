@@ -6,7 +6,6 @@ from functions import general, tools, output
 
 # -------------------------------------------------------------------------------------
 def select_case(inp):
-   #
    """ 
    Selects the appropriate rotation function based on user input.
 
@@ -16,13 +15,11 @@ def select_case(inp):
    Returns:
        None: Calls the corresponding rotation function.
    """
-   #
 
    if (inp.rotate_angles): rotate_angles(inp)
    if (inp.rotate_1):      rotate_1(inp)
 # -------------------------------------------------------------------------------------
 def rotate_angles(inp):
-   #
    """ 
    Rotates a molecule at a list of angles specified in the input.
 
@@ -38,7 +35,7 @@ def rotate_angles(inp):
        - Iterates through the list of angles and applies rotation.
        - Saves each rotated geometry as an output file.
    """
-   #
+
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
@@ -68,7 +65,6 @@ def rotate_angles(inp):
       #output.logfile_close(out_log)
 # -------------------------------------------------------------------------------------
 def rotate_1(inp):
-   #
    """ 
    Rotates a molecule to a specified single angle.
 
@@ -84,7 +80,7 @@ def rotate_1(inp):
        - Applies the rotation transformation.
        - Saves the rotated geometry as an output file.
    """
-   #
+
    # Check input, create results folder, initialize logfile
    inp.check_input_case()   
    general.create_results_geom()
