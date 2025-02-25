@@ -4,7 +4,6 @@ import copy
 import shutil
 import os
 import glob
-import sys # debug
 
 from classes import molecule
 from functions import translate, output
