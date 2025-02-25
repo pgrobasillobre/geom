@@ -976,4 +976,45 @@ def test_create_dimer(monkeypatch):
    
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_bowtie(monkeypatch):
+   """
+   Tests the creation of a bowtie geometry and validates it against a reference file.
 
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv` for command-line argument simulation.
+
+   Returns:
+       None: Uses assertions to verify the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for bowtie creation with a conical base structure.
+       - Initializes and populates the input class.
+       - Executes the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file against an expected reference file.
+   """
+
+   # Test folder
+   test_folder = 'bowtie'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-create", "-cone", "ag", "30.0", "40.0", "-bowtie", "10.0"] 
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "bowtie_cone_ag_radius-40.0_zmin-0.0_zmax-30.0_-z_d_10.0.xyz")
+   generated_file = f"{test_folder}/bowtie_{inp.xyz_output}_{inp.dir_axis_input}_d_{inp.distances[0]}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------

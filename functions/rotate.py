@@ -56,10 +56,10 @@ def rotate_angles(inp):
       mol_rot = tools.rotate(mol,angle,inp.dir_axis_input,mol_rot)
 
       # Save rotate geometry
-      if inp.dir_axis_input[0] == '-': rot_file = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{abs(angle - 360)}"
-      if inp.dir_axis_input[0] == '+': rot_file = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{angle}" 
+      if inp.dir_axis_input[0] == '-': inp.file_geom_rotated = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{abs(angle - 360)}"
+      if inp.dir_axis_input[0] == '+': inp.file_geom_rotated = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{angle}" 
        
-      output.print_geom(mol_rot, rot_file)
+      output.print_geom(mol_rot, inp.file_geom_rotated)
 
       # Close and save logfile
       #output.logfile_close(out_log)
@@ -99,10 +99,10 @@ def rotate_1(inp):
    mol_rot = tools.rotate(mol,inp.angle,inp.dir_axis_input,mol_rot)
 
    # Save rotate geometry
-   if inp.dir_axis_input[0] == '-': rot_file = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{abs(inp.angle - 360)}"
-   if inp.dir_axis_input[0] == '+': rot_file = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{inp.angle}" 
+   if inp.dir_axis_input[0] == '-': inp.file_geom_rotated = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{abs(inp.angle - 360)}"
+   if inp.dir_axis_input[0] == '+': inp.file_geom_rotated = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_degree_{inp.angle}" 
        
-   output.print_geom(mol_rot, rot_file)
+   output.print_geom(mol_rot, inp.file_geom_rotated)
 
    # Close and save logfile
    #output.logfile_close(out_log)

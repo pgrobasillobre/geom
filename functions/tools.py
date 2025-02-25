@@ -3,10 +3,12 @@ import math
 import copy
 import shutil
 import os
+import glob
 import sys # debug
 
 from classes import molecule
 from functions import translate, output
+from functions import rotate as rotate_module
 # -------------------------------------------------------------------------------------
 def calc_min_distance(geom1,geom2):
    """
@@ -224,6 +226,24 @@ def delete_geometry_file(file_path):
     except OSError:
         output.error(f"Failed to delete temporary file '{file_path}'.")
 # -------------------------------------------------------------------------------------
+def delete_all_files(pattern):
+    """
+    Deletes all files matching a given pattern in the execution directory.
+
+    Args:
+        pattern (str): File path pattern to match (e.g., "results_geom/*.xyz").
+
+    Returns:
+        None
+    """
+    files_to_remove = glob.glob(pattern) 
+    
+    for file_path in files_to_remove:
+        try:
+            os.remove(file_path)  # Remove file
+        except Exception as e:
+            output.error(f"Failed deleting {file_path}: {e}")
+# -------------------------------------------------------------------------------------
 def create_dimer(inp):
     """
     Creates a molecular dimer by translating a geometry to a controlled distance.
@@ -286,4 +306,97 @@ def create_dimer(inp):
     delete_geometry_file(f'results_geom/{inp.xyz_output}_000.xyz')
     delete_geometry_file(f'results_geom/{inp.file_geom2_translated}.xyz')
 # -------------------------------------------------------------------------------------
+def create_bowtie(inp):
+    """
+    Generates a molecular bowtie structure by rotating and translating a geometry.
 
+    Args:
+        inp (input_class): Input object containing:
+            - `xyz_output` (str): Name of the geometry file.
+            - `geom1_file`, `geom2_file` (str): Paths to the geometry files.
+            - `move_geom_1_to_000`, `move_geom_2_to_000` (bool): Flags to center geometries at the origin.
+            - `dir_axis_input` (str): Translation direction (`+x`, `-y`, etc.).
+            - `distances` (list[float]): List containing the interatomic distance for the bowtie.
+            - `file_geom2_translated` (str): Name of the translated geometry file.
+            - `angle` (float): Rotation angle in degrees.
+
+    Returns:
+        None: The function updates input parameters and generates output files.
+
+    Notes:
+        - Copies the initial geometry file from `results_geom/` to the execution directory.
+        - Rotates the geometry by 180 degrees around the `+x` axis.
+        - Copies the rotated geometries for translation.
+        - Translates one geometry along the `+z` or `-z` axis depending on the structure type.
+        - Merges the rotated and translated geometries into a final bowtie structure.
+        - Saves the final structure and deletes temporary files.
+    """
+
+    # Define file paths for the geometry to rotate
+    initial_name = f'results_geom/{inp.xyz_output}'
+    source_file_rot = f'results_geom/{inp.xyz_output}.xyz'
+    destination_file_rot = f'{inp.xyz_output}.xyz'  # Save in the current working directory
+
+    # Copy the structure from the results directory to the execution directory
+    copy_geometry_file(source_file_rot, destination_file_rot)
+
+    # Rotate molecule as required for bowtie creation
+    inp.move_geom_to_000 = True
+    inp.dir_axis_input   = '+x'
+    inp.angle            = 180.0
+    inp.geom_file        = destination_file_rot
+
+    rotate_module.rotate_1(inp)
+
+    # Define file paths for the geometry to translate
+    source_file_trans_1 = f'results_geom/{inp.xyz_output}_000.xyz'
+    destination_file_trans_1 = f'{inp.xyz_output}_000.xyz'
+
+    source_file_trans_2 = f'results_geom/{inp.xyz_output}_+x_degree_180.0.xyz'
+    destination_file_trans_2 = f'{inp.xyz_output}_+x_degree_180.0.xyz'
+
+    # Copy the structure from the results directory to the execution directory
+    copy_geometry_file(source_file_trans_1, destination_file_trans_1)
+    copy_geometry_file(source_file_trans_2, destination_file_trans_2)
+
+    # Populate input class attributes for compatibility with translate function
+    inp.geom1_file, inp.geom2_file = destination_file_trans_1, destination_file_trans_2
+    inp.move_geom_1_to_000, inp.move_geom_2_to_000 = True, True
+
+    if inp.gen_pyramid:
+       inp.dir_axis_input = '+z'
+       inp.dir_factor = [0.0,0.0,1.0]
+
+    else:
+       inp.dir_axis_input = '-z'
+       inp.dir_factor = [0.0,0.0,-1.0]
+
+    # Create dimer by translating the geometry to a controlled distance
+    translate.translate_controlled_distance(inp)
+
+    # Remove the temporary file from the execution directory
+    delete_geometry_file(destination_file_trans_1)
+    delete_geometry_file(destination_file_trans_2)
+    delete_geometry_file(destination_file_rot)
+
+    # Read the initial and translated geometries from the results directory
+    mol_init_000 = molecule.molecule()
+    mol_translated = molecule.molecule()
+
+    file_mol_init_000 = f'results_geom/{inp.xyz_output}_000.xyz'
+    file_mol_translated = f'results_geom/{inp.file_geom2_translated}.xyz'
+
+    mol_init_000.read_geom(file_mol_init_000, False)
+    mol_translated.read_geom(file_mol_translated, False)
+
+    # Merge the two geometries to form the dimer and print the result
+    dimer = merge_geoms(inp, mol_init_000, mol_translated)
+    dimer_file = f'bowtie_{inp.xyz_output}_{inp.dir_axis_input}_d_{inp.distances[0]}'
+    output.print_geom(dimer, dimer_file)
+
+    # Eliminate temporary XYZ files created during the process
+    delete_geometry_file(file_mol_init_000)
+    delete_geometry_file(file_mol_translated)
+
+    delete_all_files(f'{initial_name}*xyz')
+# -------------------------------------------------------------------------------------
