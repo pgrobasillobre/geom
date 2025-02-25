@@ -16,6 +16,8 @@ tests/tip/*xyz
 tests/cuboctahedron/*xyz
 tests/decahedron/*xyz
 tests/icosahedron/*xyz
+tests/dimer/*xyz
+tests/bowtie/*xyz
 tests/sphere_continuum/*msh
 tests/rod_continuum/*msh
 
