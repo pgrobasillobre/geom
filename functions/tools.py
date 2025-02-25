@@ -1,8 +1,12 @@
 import numpy as np
 import math
 import copy
+import shutil
+import os
+import sys # debug
 
 from classes import molecule
+from functions import translate, output
 # -------------------------------------------------------------------------------------
 def calc_min_distance(geom1,geom2):
    """
@@ -187,3 +191,99 @@ def determine_sphere_center(inp,sense):
    elif sense == '-':
        inp.sphere_center[index] = -((inp.rod_length - inp.rod_width)/2.0)
 # -------------------------------------------------------------------------------------
+def copy_geometry_file(source_file, destination_file):
+    """
+    Copies the geometry file from 'results_geom/' to the current working directory.
+
+    Args:
+        source_file (str): Path to the source geometry file.
+        destination_file (str): Path where the file should be copied.
+        output (module): The output module for error handling.
+
+    Returns:
+        None
+    """
+    try:
+        shutil.copy(source_file, destination_file)
+    except FileNotFoundError:
+        output.error(f"File '{source_file}' not found. Ensure the geometry file exists in 'results_geom/'.")
+# -------------------------------------------------------------------------------------
+def delete_geometry_file(file_path):
+    """
+    Deletes the temporary geometry file from the execution directory.
+
+    Args:
+        file_path (str): Path to the temporary geometry file to be deleted.
+        output (module): The output module for error handling.
+
+    Returns:
+        None
+    """
+    try:
+        os.remove(file_path)
+    except OSError:
+        output.error(f"Failed to delete temporary file '{file_path}'.")
+# -------------------------------------------------------------------------------------
+def create_dimer(inp):
+    """
+    Creates a molecular dimer by translating a geometry to a controlled distance.
+
+    Args:
+        inp (input_class): Input object containing:
+            - `xyz_output` (str): Name of the geometry file.
+            - `geom1_file`, `geom2_file` (str): Paths to the geometry files.
+            - `move_geom_1_to_000`, `move_geom_2_to_000` (bool): Flags to center geometries at the origin.
+            - `dir_axis_input` (str): Translation direction (`+x`, `-y`, etc.).
+            - `distances` (list[float]): List containing the interatomic distance for the dimer.
+            - `file_geom2_translated` (str): Name of the translated geometry file.
+
+    Returns:
+        None: The function updates input parameters and generates output files.
+
+    Notes:
+        - Copies the initial geometry file from `results_geom/` to the execution directory.
+        - Prepares input parameters for translation.
+        - Translates the second molecule to maintain the specified interatomic distance.
+        - Reads and merges the initial and translated geometries.
+        - Saves the final dimer structure as an output file.
+        - Deletes temporary geometry files after processing.
+    """
+
+    # Define file paths for the geometry
+    source_file = f'results_geom/{inp.xyz_output}.xyz'
+    destination_file = f'{inp.xyz_output}.xyz'  # Save in the current working directory
+
+    # Copy the structure from the results directory to the execution directory
+    copy_geometry_file(source_file, destination_file)
+
+    # Populate input class attributes for compatibility with translate function
+    inp.geom1_file, inp.geom2_file = destination_file, destination_file
+    inp.move_geom_1_to_000, inp.move_geom_2_to_000 = True, True
+
+    # Create dimer by translating the geometry to a controlled distance
+    translate.translate_controlled_distance(inp)
+
+    # Remove the temporary file from the execution directory
+    delete_geometry_file(destination_file)
+
+    # Read the initial and translated geometries from the results directory
+    mol_init_000 = molecule.molecule()
+    mol_translated = molecule.molecule()
+
+    file_mol_init_000 = f'results_geom/{inp.xyz_output}_000.xyz'
+    file_mol_translated = f'results_geom/{inp.file_geom2_translated}.xyz'
+
+    mol_init_000.read_geom(file_mol_init_000, False)
+    mol_translated.read_geom(file_mol_translated, False)
+
+    # Merge the two geometries to form the dimer and print the result
+    dimer = merge_geoms(inp, mol_init_000, mol_translated)
+    dimer_file = f'dimer_{inp.xyz_output}_{inp.dir_axis_input}_d_{inp.distances[0]}'
+    output.print_geom(dimer, dimer_file)
+
+    # Eliminate temporary XYZ files created during the process
+    delete_geometry_file(f'results_geom/{inp.xyz_output}.xyz')
+    delete_geometry_file(f'results_geom/{inp.xyz_output}_000.xyz')
+    delete_geometry_file(f'results_geom/{inp.file_geom2_translated}.xyz')
+# -------------------------------------------------------------------------------------
+

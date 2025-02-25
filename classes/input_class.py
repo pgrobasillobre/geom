@@ -46,6 +46,7 @@ class input_class:
       self.distances  = []
       self.dir_factor = []
 
+      self.file_geom2_translated = ''
       self.distances_input = ''
       self.geom_file       = ''
       self.geom1_file      = ''
@@ -56,6 +57,7 @@ class input_class:
       self.origin_CM_2     = '' 
 
       self.direction = 1.0
+      self.dimer_distance = 0.0
 
       # -- Minimum distance
       self.min_dist = False
@@ -78,6 +80,7 @@ class input_class:
       self.geom_specular = False
 
       # -- Generate structure geometry
+      self.create_dimer = False
       self.create_geom = False
       self.create_ase_bulk = False
       self.gen_3d_mesh = False

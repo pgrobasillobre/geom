@@ -533,21 +533,119 @@ def parse_create(argv, inp):
       if inp.create_ase_bulk: create_geom.create_ase_bulk_metal(inp, base_dir)
 
       # Alloy case
-      if ('-alloy' in argv): inp.alloy = True
-    
-      if (inp.alloy):
-         inp.alloy_perc = float(argv[-1])
-         if (inp.alloy_perc == 0.0   or 
-             inp.alloy_perc == 100.0 or 
-             inp.alloy_perc  < 0.0   or
-             inp.alloy_perc  > 100.0): output.error(f'Alloy percentual requested {inp.alloy_perc} %. It must be greater than 0 and lower than 100')
+      parse_alloy_arguments(argv, inp, output)
 
-         if not inp.gen_core_shell:
-            inp.atomtype_alloy = argv[-3].lower()
-            if inp.atomtype not in inp.atomtypes_alloys: output.error(f'Alloy atom type "{inp.atomtype}" not supported.')
-            if inp.atomtype_alloy not in inp.atomtypes_alloys: output.error(f'Alloy atom type "{inp.atomtype_alloy}" not supported.')
-            if inp.atomtype_alloy == inp.atomtype: output.error(f'Alloy atom type coincides with original geometry atom type.')
+      # Create dimer case
+      parse_dimer_argument(argv, inp, output)
+# -------------------------------------------------------------------------------------
+def parse_dimer_argument(argv, inp, output):
+    """
+    Parses dimer-related command-line arguments and updates the `inp` object.
 
+    Args:
+        argv (list[str]): Command-line arguments list.
+        inp (input_class): The input class instance where dimer attributes are stored.
+        output (module): The output module for error handling.
+
+    Returns:
+        None: Updates inp.create_dimer, inp.distances, and inp.dir_axis_input.
+
+    Notes:
+        - Searches for "-dimer" in argv.
+        - Reads the next argument as a float and stores it in inp.distances as a list.
+        - Reads the following argument as an axis specification (+x, -y, +z, etc.).
+        - Ensures the extracted values are valid.
+    """
+
+    if "-dimer" in argv:
+        inp.create_dimer = True
+        idx = argv.index("-dimer")  
+
+        # Ensure there are at least two more arguments after "-dimer" (distance & axis)
+        if idx + 2 >= len(argv):
+            output.error("Missing dimer distance value or axis after '-dimer'.")
+
+        # Parse the next argument as a float and store it in a list
+        try:
+            inp.distances = [float(argv[idx + 1])]
+        except ValueError:
+            output.error(f'Invalid dimer distance "{argv[idx + 1]}". It must be a number.')
+
+        # Ensure the dimer distance is greater than 0
+        if inp.distances[0] <= 0:
+            output.error(f'Dimer distance "{inp.distances[0]}" must be greater than zero.')
+
+        # Extract and validate the axis argument
+        inp.dir_axis_input = argv[idx + 2].lower()
+
+        # Call axis validation function
+        check_dir_axis(inp)
+# -------------------------------------------------------------------------------------
+def parse_alloy_arguments(argv, inp, output):
+    """
+    Parses alloy-related command-line arguments and updates the `inp` object.
+
+    Args:
+        argv (list[str]): Command-line arguments list.
+        inp (input_class): The input class instance where alloy attributes are stored.
+        output (module): The output module for error handling.
+
+    Returns:
+        None: Updates `inp` attributes based on the parsed alloy arguments.
+
+    Notes:
+        - Handles both cases:
+            1. `-alloy atom_type -percentual float`
+            2. `-alloy -percentual float`
+        - Ensures `inp.alloy_perc` is a **valid float** and **between 0 and 100**.
+        - If atom type is omitted, it defaults to `inp.atomtype`.
+    """
+
+    # Check if "-alloy" exists in argv
+    if "-alloy" in argv:
+        inp.alloy = True
+        idx = argv.index("-alloy")  # Get index of "-alloy"
+
+        # Ensure there is at least one more argument after "-alloy"
+        if idx + 1 >= len(argv):
+            output.error("Missing alloy parameters after '-alloy'.")
+
+        # Case 1: Next argument is an atom type
+        if argv[idx + 1] != "-percentual":
+            inp.atomtype_alloy = argv[idx + 1].lower()
+            if idx + 2 >= len(argv) or argv[idx + 2] != "-percentual":
+                output.error("Expected '-percentual' after alloy atom type.")
+
+            percentual_idx = idx + 3  # Alloy percentage should be after "-percentual"
+
+        # Case 2: No atom type, only "-percentual float"
+        else:
+            percentual_idx = idx + 2  # Alloy percentage should be after "-percentual"
+
+        # Ensure there's a percentage value
+        if percentual_idx >= len(argv):
+            output.error("Missing alloy percentage value after '-percentual'.")
+
+        # Extract and validate alloy percentage
+        try:
+            inp.alloy_perc = float(argv[percentual_idx])
+        except ValueError:
+            output.error(f'Invalid alloy percentage "{argv[percentual_idx]}". It must be a number.')
+
+        # Validate range
+        if inp.alloy_perc == 0.0 or inp.alloy_perc == 100.0 or inp.alloy_perc < 0.0 or inp.alloy_perc > 100.0:
+            output.error(f'Alloy percentual requested {inp.alloy_perc} %. It must be greater than 0 and lower than 100.')
+
+        # Validate atom types if not in core-shell mode
+        if not inp.gen_core_shell:
+            if inp.atomtype not in inp.atomtypes_alloys:
+                output.error(f'Alloy atom type "{inp.atomtype}" not supported.')
+            if inp.atomtype_alloy not in inp.atomtypes_alloys:
+                output.error(f'Alloy atom type "{inp.atomtype_alloy}" not supported.')
+            if inp.atomtype_alloy == inp.atomtype:
+                output.error(f'Alloy atom type coincides with original geometry atom type.')
+
+            # Generate alloy string
             inp.alloy_string = f'_alloy_{inp.atomtype_alloy}_{inp.alloy_perc:5.2f}_perc'
 # -------------------------------------------------------------------------------------
 def check_file_exists(infile):

@@ -24,6 +24,7 @@ def select_case(inp):
    if (inp.geom_center):   geom_center(inp) 
    if (inp.geom_specular): geom_specular(inp)
    if (inp.merge):         merge_geoms(inp)
+   if (inp.create_dimer):  create_dimer(inp)
 # -------------------------------------------------------------------------------------
 def min_dist(inp):
    """
