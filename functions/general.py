@@ -128,7 +128,7 @@ def print_help():
 
            Triangle: -create -graphene triangle edge_type{armchair/zigzag} side_length
 
-         Nanoparticles (Ag/Au/Na):
+         Nanoparticles:
 
            Sphere: -create -sphere atom_type radius [optional: -alloy atom_type -percentual float]
  
@@ -537,6 +537,9 @@ def parse_create(argv, inp):
 
       # Create dimer case
       parse_dimer_argument(argv, inp, output)
+
+      # Create bowtie case
+      parse_bowtie_argument(argv, inp, output)
 # -------------------------------------------------------------------------------------
 def parse_dimer_argument(argv, inp, output):
     """
@@ -580,6 +583,60 @@ def parse_dimer_argument(argv, inp, output):
 
         # Call axis validation function
         check_dir_axis(inp)
+# -------------------------------------------------------------------------------------
+def parse_bowtie_argument(argv, inp, output):
+    """
+    Parses bowtie-related command-line arguments and updates the `inp` object.
+
+    Args:
+        argv (list[str]): 
+            List of command-line arguments.
+        inp (input_class): 
+            An instance of the input class where bowtie attributes are stored.
+        output (module): 
+            The output module used for error handling.
+
+    Returns:
+        None: 
+            This function does not return a value but updates `inp.create_bowtie`, 
+            `inp.distances`, and `inp.dir_axis_input`.
+
+    Raises:
+        ValueError: 
+            If bowtie arguments are missing or contain invalid values.
+
+    Notes:
+        - This function checks if "-bowtie" is present in `argv`.
+        - If found, it ensures that the bowtie structure is only available 
+          for tip, pyramid, cone, and microscope structures.
+        - The function then extracts the bowtie distance (must be a positive float).
+        - If any validation fails, it calls `output.error()` to handle errors.
+    """
+
+    if "-bowtie" in argv:
+
+        # Option only available for tip, pyramid, cone, microscope structures
+        if (not inp.gen_tip      and
+            not inp.gen_pyramid  and 
+            not inp.gen_cone     and 
+            not inp.gen_microscope): output.error(f'bowtie structure only available for tip, pyramid, cone, and microscope structures.')
+
+        inp.create_bowtie = True
+        idx = argv.index("-bowtie")  
+
+        # Ensure there are at least two more arguments after "-bowtie" (distance & axis)
+        if idx + 1 >= len(argv):
+            output.error("Missing bowtie distance value.")
+
+        # Parse the next argument as a float and store it in a list
+        try:
+            inp.distances = [float(argv[idx + 1])]
+        except ValueError:
+            output.error(f'Invalid dimer distance "{argv[idx + 1]}". It must be a number.')
+
+        # Ensure the bowtie distance is greater than 0
+        if inp.distances[0] <= 0:
+            output.error(f'Bowtie distance "{inp.distances[0]}" must be greater than zero.')
 # -------------------------------------------------------------------------------------
 def parse_alloy_arguments(argv, inp, output):
     """

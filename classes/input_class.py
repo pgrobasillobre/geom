@@ -70,6 +70,7 @@ class input_class:
       self.angles = []
 
       self.angles_input = ''
+      self.file_geom_rotated = ''
 
       self.angle = 0.0
       
@@ -81,6 +82,7 @@ class input_class:
 
       # -- Generate structure geometry
       self.create_dimer = False
+      self.create_bowtie = False
       self.create_geom = False
       self.create_ase_bulk = False
       self.gen_3d_mesh = False
