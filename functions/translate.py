@@ -96,11 +96,11 @@ def translate_controlled_distance(inp):
    # STEP 2: Optimize geom2 to minimum distances
    # ===========================================
 
-   output.print_optimization_starts()
+   if (inp.verbose): output.print_optimization_starts()
 
    for distance in inp.distances:
       
-      output.print_optimizing_distance(distance)
+      if (inp.verbose): output.print_optimizing_distance(distance)
 
       # Calculate difference between previous distance and desired one
       shift = distance - dist_pre
@@ -160,15 +160,15 @@ def translate_controlled_distance(inp):
          if (dist_new > distance): output.error('reduce convergence criteria for distance optimization')
       
          if(diff_dist < param.convergence): 
-            output.print_convergence_achieved(dist_new)
+            if (inp.verbose): output.print_convergence_achieved(dist_new)
 
             #output.save_distance_opt(out_log,distance,dist_new,inp.dir_axis_input) # Save to logfile
    
             # Save distance-optimized geometry
             dist_new_rounded = math.ceil(dist_new * 100) / 100
-            file_geom2_translated = f"{inp.geom2_file[:-4]}_{inp.dir_axis_input}_d_{dist_new_rounded:.2f}"
+            inp.file_geom2_translated = f"{inp.geom2_file[:-4]}_{inp.dir_axis_input}_d_{dist_new_rounded:.2f}"
             
-            output.print_geom(mol_2, file_geom2_translated)
+            output.print_geom(mol_2, inp.file_geom2_translated)
 
       dist_pre = dist_new
    

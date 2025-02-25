@@ -39,6 +39,9 @@ def select_case(inp):
    if (inp.gen_cto):               cto(inp)
    if (inp.gen_idh):               idh(inp)
 
+   # Creation of dimer and bowtie structures
+   if (inp.create_dimer): tools.create_dimer(inp)
+
    # Eliminate tmp folder containing bulk structure
    if inp.create_ase_bulk: shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
