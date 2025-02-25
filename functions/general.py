@@ -130,31 +130,51 @@ def print_help():
 
          Nanoparticles:
 
-           Sphere: -create -sphere atom_type radius [optional: -alloy atom_type -percentual float]
- 
-           Spherical core-shell (Au/Ag): -create -sphere -core atom_type r_core -shell atom_type r_shell [optional: -alloy -percentual float]
+           Sphere: -create -sphere atom_type radius
 
            Sphere (3D continuum mesh): -create -sphere -continuum radius mesh_size
 
-           Rod: -create -rod atom_type main_axis{X/Y/Z} length width [optional: -alloy atom_type -percentual float]
+           Sphere (core-shell): -create -sphere -core atom_type r_core -shell atom_type r_shell
+           
+           Rod: -create -rod atom_type main_axis{X/Y/Z} length width
 
-           Rod core-shell (Au/Ag): -create -rod main_axis{X/Y/Z} -core atom_type length width -shell atom_type length width [optional: -alloy atom_type -percentual float]
+           Rod (3D continuum mesh): -create -rod -continuum main_axis{X/Y/Z} length width mesh_size
 
-           Rod: (3D continuum mesh): -create -rod -continuum main_axis{X/Y/Z} length width mesh_size 
+           Rod (core-shell): -create -rod main_axis{X/Y/Z} -core atom_type length width -shell atom_type length width
+           
+           Tip (elliptic paraboloid): -create -tip atom_type z_max a b
 
-           Tip (elliptic paraboloid): -create -tip atom_type z_max a b [optional: -alloy atom_type -percentual float]
+           Pyramid (square base): -create -pyramid atom_type z_max base_side_length
 
-           Pyramid (square base): -create -pyramid atom_type z_max base_side_length [optional: -alloy atom_type -percentual float]
+           Cone: -create -cone atom_type z_max base_radius
 
-           Cone: -create -cone atom_type z_max base_radius [optional: -alloy atom_type -percentual float]
+           Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length
 
-           Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length [optional: -alloy atom_type -percentual float]
+           Icosahedron: -create -ico atom_type radius
 
-           Icosahedron: -create -ico atom_type radius [optional: -alloy atom_type -percentual float]
+           Cuboctahedron: -create -cto atom_type radius
 
-           Cuboctahedron: -create -cto atom_type radius [optional: -alloy atom_type -percentual float]
+           Decahedron: -create -idh atom_type radius
 
-           Decahedron: -create -idh atom_type radius [optional: -alloy atom_type -percentual float]
+         -----------------------------
+         Additional Options
+         -----------------------------
+
+         - The -alloy option allows creating a random alloy by specifying:
+             -alloy atom_type -percentual float
+
+         - Core-shell structures are available for spheres and rods:
+             -core atom_type r_core -shell atom_type r_shell
+
+         - Dimer creation is available for all nanoparticles by adding:
+             -dimer dimer_distance axis{+/-}{x/y/z}
+
+         - Bowtie creation is available for tip, pyramid, cone, and microscope:
+             -bowtie bowtie_distance
+
+         - The alloy option is compatible with bowtie and dimer creation.
+
+         Note: Alloying, core-shell, dimer, and bowtie options are only available for Ag and Au-based nanoparticles.
 
     '''
     print(help_text)
