@@ -5,6 +5,7 @@ __pycache__
 .__main__*
 
 tmp/
+venv/
 
 tests/cone/*xyz
 tests/graphene*/*xyz
