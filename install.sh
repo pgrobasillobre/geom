@@ -13,15 +13,14 @@ command_exists() {
 # Detect OS type
 OS_TYPE="$(uname -s)"
 
-# Check for Python3 and install if missing
+# Install Python3 if missing
 if ! command_exists python3; then
     echo "Python3 is not installed. Installing..."
-
     case "$OS_TYPE" in
-        Linux*) 
+        Linux*)
             sudo apt update && sudo apt install -y python3 || sudo dnf install -y python3
             ;;
-        Darwin*) 
+        Darwin*)
             echo "Installing Python3 using Homebrew..."
             if ! command_exists brew; then
                 echo "Homebrew not found. Installing Homebrew..."
@@ -29,11 +28,11 @@ if ! command_exists python3; then
             fi
             brew install python3
             ;;
-        MINGW* | MSYS* | CYGWIN*) 
+        MINGW* | MSYS* | CYGWIN*)
             echo "Please install Python3 manually from https://www.python.org/downloads/"
             exit 1
             ;;
-        *) 
+        *)
             echo "Unsupported OS. Please install Python3 manually."
             exit 1
             ;;
@@ -42,23 +41,22 @@ else
     echo "Python3 is already installed."
 fi
 
-# Check for pip3 and install if missing
+# Install pip3 if missing
 if ! command_exists pip3; then
     echo "pip3 is not installed. Installing..."
-
     case "$OS_TYPE" in
-        Linux*) 
+        Linux*)
             sudo apt install -y python3-pip || sudo dnf install -y python3-pip
             ;;
-        Darwin*) 
+        Darwin*)
             echo "Installing pip3 using Homebrew..."
             brew install python3  # Homebrew installs pip3 with Python3
             ;;
-        MINGW* | MSYS* | CYGWIN*) 
+        MINGW* | MSYS* | CYGWIN*)
             echo "Please install Python and ensure pip3 is available."
             exit 1
             ;;
-        *) 
+        *)
             echo "Unsupported OS. Please install pip3 manually."
             exit 1
             ;;
@@ -66,24 +64,25 @@ if ! command_exists pip3; then
 else
     echo "pip3 is already installed."
     echo "Upgrading pip3..."
-    pip3 install --upgrade pip --user
+    sudo pip3 install --upgrade pip
 fi
 
-# Install required dependencies
-echo "Installing dependencies from requirements.txt..."
-pip3 install --user -r requirements.txt
+# Install required dependencies **globally**
+echo "Installing dependencies globally..."
+sudo pip3 install -r requirements.txt
 
-# Ensure ~/.local/bin (Linux/macOS) or ~/AppData/Roaming/Python/Scripts (Windows) is in the PATH
-case "$OS_TYPE" in
-    Linux* | Darwin*)
-        export PATH="$HOME/.local/bin:$PATH"
-        ;;
-    MINGW* | MSYS* | CYGWIN*) 
-        export PATH="$HOME/AppData/Roaming/Python/Scripts:$PATH"
-        ;;
-esac
+# Install the GEOM package globally using setup.py
+echo "Installing GEOM globally..."
+sudo pip3 install .
 
-# Run tests if the script exists
+# Ensure the correct path is available
+if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
+    export PATH="/usr/local/bin:$PATH"
+    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
+    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc
+fi
+
+# Run tests if available
 if [ -f "./tests/run_all_tests.sh" ]; then
     echo "Running tests..."
     chmod +x ./tests/run_all_tests.sh

@@ -5,6 +5,8 @@ __pycache__
 .__main__*
 
 tmp/
+
+geom.egg-info/
 venv/
 
 tests/cone/*xyz
