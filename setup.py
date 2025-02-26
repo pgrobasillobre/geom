@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="geom",
     version="1.0.0",
-    author="Your Name",
+    author="Pablo Grobas Illobre",
     description="GEOM: A CLI for nanoplasmonics geometry manipulation",
     packages=find_packages(),
     install_requires=[
@@ -14,12 +14,12 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "geom = geom.__main__:main",  # Exposes 'geom' as a CLI command
+            "geom = geom.__main__:main",
         ]
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
