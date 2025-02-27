@@ -18,7 +18,7 @@ GEOM requires **Python 3** and the following dependencies:
 - `ase==3.22.1`
 - `gmsh==4.11.1`
 - `numpy==1.24.3`
-- `pytest==8.3.4` (remove if not testing)
+- `pytest==8.3.4`
 
 ### Install with:
 ```bash
