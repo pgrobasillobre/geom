@@ -18,7 +18,7 @@ if ! command_exists python3; then
     echo "Python3 is not installed. Installing..."
     case "$OS_TYPE" in
         Linux*)
-            sudo apt update && sudo apt install -y python3 || sudo dnf install -y python3
+            sudo apt update && sudo apt install -y python3 python3-venv || sudo dnf install -y python3 python3-venv
             ;;
         Darwin*)
             echo "Installing Python3 using Homebrew..."
@@ -63,9 +63,11 @@ if ! command_exists pip3; then
     esac
 else
     echo "pip3 is already installed."
-    echo "Upgrading pip3..."
-    pip3 install --user --upgrade pip setuptools wheel build
 fi
+
+# Upgrade pip, setuptools, wheel, and build (in user space, without system interference)
+echo "Upgrading pip, setuptools, wheel, and build..."
+pip3 install --user --upgrade pip setuptools wheel build
 
 # Ensure ~/.local/bin is in PATH for local installs
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
