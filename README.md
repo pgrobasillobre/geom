@@ -1,4 +1,4 @@
-# GEOM – XYZ Geometry File Management
+# GEOM – Geometry File Management
 
 **GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
