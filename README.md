@@ -1,46 +1,75 @@
-# 🚀 GEOM – XYZ Geometry File Management
+# GEOM – XYZ Geometry File Management
 
-## 📌 Table of Contents
+**GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
-- About
-- Prerequisites
-- Installation
-- Usage
-- License
-- Contact
+## Features
 
-## ✨ About
+- **Geometry Transformations**: Translation, rotation, merging, and specular (mirror) transformations.
+- **Nanoparticle Generation**: Sphere, rod, core-shell, tip, pyramid, cone, icosahedron, and more.
+- **Graphene Structures**: Ribbons, disks, rings, and triangles.
+- **Advanced Options**: Alloying, dimer formation, and bowtie configurations.
+- **Minimum Distance Calculation** between XYZ geometries.
+- **Geometrical Center Computation**.
 
-GEOM is a command-line tool designed for managing XYZ geometry files with various operations, including:
+## Installation
 
-- 🏗️ **Nanoparticle geometry creation** (e.g., tips, pyramids)
-- 🧪 **Graphene structure generation** (e.g., ribbons, triangles)
-- 🔄 **Transformation operations** (translation, rotation)
-- 📏 **Distance control** between two geometries
-- 🔬 **Minimum distance calculation** between XYZ files
-- 🎯 **Geometrical center computation**
-- 🛠️ **Geometry merging**
-- 🔍 **Specular (mirror) geometry creation**
+GEOM requires **Python 3** and the following dependencies:
 
-## ⚙️ Prerequisites
+- `ase==3.22.1`
+- `gmsh==4.11.1`
+- `numpy==1.24.3`
+- `pytest==8.3.4` (remove if not testing)
 
-- Python **3.8.10** or later
-
-## 📖 Usage
-
-To view available commands, run:
-
-```
-python3 geom -h
+### Install with:
+```bash
+./install.sh
 ```
 
+## Usage
 
-## 📜 License
+Run the following command to see available options:
 
-This project is licensed under the **GNU General Public License v3.0**.
+```
+geom -h
+```
 
-## 📬 Contact
+Example commands:
 
-For inquiries or issues, please contact:
+- **Rotate geometry 90 degrees** around the Y-axis:
 
-📧 **pgrobasillobre@gmail.com**
+```
+geom -r1 90 geom.xyz origin_CM_yes +y
+```
+
+- Generate a nanoparticle sphere:
+
+```
+geom -create -sphere Ag 30
+```
+
+- Generate a graphene ribbon: 
+
+```
+geom -create -graphene rib 50 20
+```
+
+## Running Tests
+
+After running ./install.sh, the tests are executed automatically.
+
+To manually run the tests again:
+
+```
+./tests/run_all_tests.sh
+```
+
+## License
+
+GEOM is licensed under the **GNU General Public License v3.0**.
+
+## Contact
+
+For issues or contributions:
+
+- Email: **pgrobasillobre@gmail.com**
+- Github issues: https://github.com/pgrobasillobre/geom/issues
