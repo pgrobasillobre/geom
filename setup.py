@@ -4,7 +4,7 @@ setup(
     name="geom",
     version="1.0.0",
     author="Pablo Grobas Illobre",
-    description="GEOM: A CLI for nanoplasmonics geometry manipulation",
+    description="GEOM: A CLI for geometry manipulation",
     packages=find_packages(),
     install_requires=[
         "ase==3.22.1",
