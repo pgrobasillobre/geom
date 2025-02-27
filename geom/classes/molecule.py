@@ -1,9 +1,9 @@
 import numpy as np
 import random
 
-from classes import parameters
+from geom.classes import parameters
 
-from functions import output
+from geom.functions import output
 from ase.cluster import Icosahedron, Octahedron, Decahedron
 
 class molecule:

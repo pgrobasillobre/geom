@@ -6,8 +6,8 @@ import os
 import shutil
 import gmsh
 
-from classes import molecule, parameters
-from functions import general, output, tools
+from geom.classes import molecule, parameters
+from geom.functions import general, output, tools
 from ase.cluster.cubic import FaceCenteredCubic, BodyCenteredCubic
 from ase.build import graphene_nanoribbon
 from ase.build import graphene as graphene_general_ase

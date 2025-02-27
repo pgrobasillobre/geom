@@ -1,8 +1,8 @@
 import math
 import copy
 
-from classes import molecule
-from functions import general, tools, output
+from geom.classes import molecule
+from geom.functions import general, tools, output
 
 # -------------------------------------------------------------------------------------
 def select_case(inp):

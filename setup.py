@@ -5,7 +5,7 @@ setup(
     version="1.0.0",
     author="Pablo Grobas Illobre",
     description="GEOM: A CLI for geometry manipulation",
-    packages=find_packages(),
+    packages=find_packages(),  # Automatically finds 'geom' package
     install_requires=[
         "ase==3.22.1",
         "gmsh==4.11.1",
@@ -23,5 +23,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
+    include_package_data=True,  # Ensure non-code files are included
 )
 
