@@ -1,7 +1,7 @@
 import math
 
-from classes import molecule, parameters
-from functions import general, tools, output
+from geom.classes import molecule, parameters
+from geom.functions import general, tools, output
 
 param = parameters.parameters()
 

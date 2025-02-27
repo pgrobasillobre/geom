@@ -1,8 +1,8 @@
 import sys
 import os
 
-from classes import parameters
-from functions import output, create_geom
+from geom.classes import parameters
+from geom.functions import output, create_geom
 
 # -------------------------------------------------------------------------------------
 def read_command_line(argv, inp):

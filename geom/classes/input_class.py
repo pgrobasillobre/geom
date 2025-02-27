@@ -1,4 +1,4 @@
-from functions import general, output
+from geom.functions import general, output
 
 class input_class:
    """

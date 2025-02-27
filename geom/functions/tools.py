@@ -5,9 +5,9 @@ import shutil
 import os
 import glob
 
-from classes import molecule
-from functions import translate, output
-from functions import rotate as rotate_module
+from geom.classes import molecule
+from geom.functions import translate, output
+from geom.functions import rotate as rotate_module
 # -------------------------------------------------------------------------------------
 def calc_min_distance(geom1,geom2):
    """

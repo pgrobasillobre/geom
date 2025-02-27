@@ -4,11 +4,11 @@ import os
 import filecmp
 
 # Add the project root to sys.path to import modules
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../geom")))
 test_folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
-from classes import input_class
-from functions import general, various, translate, rotate, create_geom
+from geom.classes import input_class
+from geom.functions import general, various, translate, rotate, create_geom
 
 # -------------------------------------------------------------------------------------
 def move_input_geom(folder, xyz_file, optional_file=None):
