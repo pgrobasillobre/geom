@@ -64,23 +64,27 @@ if ! command_exists pip3; then
 else
     echo "pip3 is already installed."
     echo "Upgrading pip3..."
-    sudo pip3 install --upgrade pip
+    pip3 install --user --upgrade pip setuptools wheel build
 fi
 
-# Install required dependencies **globally**
-echo "Installing dependencies globally..."
-sudo pip3 install -r requirements.txt
-
-# Install the GEOM package globally using setup.py
-echo "Installing GEOM globally..."
-sudo pip3 install .
-
-# Ensure the correct path is available
-if [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
-    export PATH="/usr/local/bin:$PATH"
-    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
-    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc
+# Ensure ~/.local/bin is in PATH for local installs
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    export PATH="$HOME/.local/bin:$PATH"
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 fi
+
+# Clean up old build files
+echo "Cleaning up old installation files..."
+rm -rf geom.egg-info build dist
+
+# Install required dependencies **for the user only**
+echo "Installing dependencies in user space..."
+pip3 install --user -r requirements.txt
+
+# Install the GEOM package with proper flags to avoid build issues
+echo "Installing GEOM package..."
+pip3 install --user --no-build-isolation --no-cache-dir .
 
 # Run tests if available
 if [ -f "./tests/run_all_tests.sh" ]; then
