@@ -19,6 +19,7 @@ GEOM requires **Python 3** and the following dependencies:
 - `gmsh==4.11.1`
 - `numpy==1.24.3`
 - `pytest==8.3.4`
+- `launchpadlib==2.1.0`
 
 ### Install with:
 ```bash
@@ -27,11 +28,19 @@ GEOM requires **Python 3** and the following dependencies:
 
 ## Usage
 
-Run the following command to see available options:
+After installation, load the GEOM environment by running the `geom\_load` function, which will configure the necessary environment variables and aliases:
+
+```
+geom_load
+```
+
+Once the environment is set up, run the following command to see the available options:
 
 ```
 geom -h
 ```
+
+This will display the help menu with all the available commands and their descriptions.
 
 Example commands:
 
@@ -60,7 +69,7 @@ After running ./install.sh, the tests are executed automatically.
 To manually run the tests again:
 
 ```
-./tests/run_all_tests.sh
+./geom/tests/run_all_tests.sh
 ```
 
 ## License
