@@ -28,7 +28,7 @@ GEOM requires **Python 3** and the following dependencies:
 
 ## Usage
 
-After installation, load the GEOM environment by running the `geom\_load` function, which will configure the necessary environment variables and aliases:
+After installation, load the GEOM environment by running the `geom_load` function, which will configure the necessary environment variables and aliases:
 
 ```
 geom_load
