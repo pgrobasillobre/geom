@@ -19,6 +19,7 @@ setup(
         "gmsh==4.11.1",
         "numpy==1.24.3",
         "pytest==8.3.4",
+        "launchpadlib==2.1.0"
     ],
     entry_points={
         "console_scripts": [
