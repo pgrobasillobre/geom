@@ -13,89 +13,80 @@ command_exists() {
 # Detect OS type
 OS_TYPE="$(uname -s)"
 
-# Install Python3 if missing
+# Check if Python3 is installed
 if ! command_exists python3; then
-    echo "Python3 is not installed. Installing..."
-    case "$OS_TYPE" in
-        Linux*)
-            sudo apt update && sudo apt install -y python3 python3-venv || sudo dnf install -y python3 python3-venv
-            ;;
-        Darwin*)
-            echo "Installing Python3 using Homebrew..."
-            if ! command_exists brew; then
-                echo "Homebrew not found. Installing Homebrew..."
-                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            fi
-            brew install python3
-            ;;
-        MINGW* | MSYS* | CYGWIN*)
-            echo "Please install Python3 manually from https://www.python.org/downloads/"
-            exit 1
-            ;;
-        *)
-            echo "Unsupported OS. Please install Python3 manually."
-            exit 1
-            ;;
-    esac
+    echo "Error: Python3 is not installed. Please install Python3 manually from https://www.python.org/downloads/."
+    exit 1
 else
     echo "Python3 is already installed."
 fi
 
-# Install pip3 if missing
+# Check if pip3 is installed
 if ! command_exists pip3; then
-    echo "pip3 is not installed. Installing..."
-    case "$OS_TYPE" in
-        Linux*)
-            sudo apt install -y python3-pip || sudo dnf install -y python3-pip
-            ;;
-        Darwin*)
-            echo "Installing pip3 using Homebrew..."
-            brew install python3  # Homebrew installs pip3 with Python3
-            ;;
-        MINGW* | MSYS* | CYGWIN*)
-            echo "Please install Python and ensure pip3 is available."
-            exit 1
-            ;;
-        *)
-            echo "Unsupported OS. Please install pip3 manually."
-            exit 1
-            ;;
-    esac
+    echo "Error: pip3 is not installed. Please install pip3 manually."
+    exit 1
 else
     echo "pip3 is already installed."
 fi
 
-# Upgrade pip, setuptools, wheel, and build (in user space, without system interference)
-echo "Upgrading pip, setuptools, wheel, and build..."
-pip3 install --user --upgrade pip setuptools wheel build
+# Install required dependencies
+echo "Installing dependencies..."
+pip3 install -r requirements.txt
 
-# Ensure ~/.local/bin is in PATH for local installs
-if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-    export PATH="$HOME/.local/bin:$PATH"
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+# Append geom_load function to shell configuration file
+if [ "$SHELL" = "/bin/zsh" ]; then
+    SHELL_RC="$HOME/.zshrc"
+elif [ "$SHELL" = "/bin/bash" ]; then
+    SHELL_RC="$HOME/.bashrc"
+elif [ "$SHELL" = "/bin/fish" ]; then
+    SHELL_RC="$HOME/.config/fish/config.fish"
+else
+    SHELL_RC="$HOME/.profile"
 fi
 
-# Clean up old build files
-echo "Cleaning up old installation files..."
-rm -rf geom.egg-info build dist
+# Define the path and geom_load function
+GEOM_PATH="$(dirname "$(realpath "$0")")"
+GEOM_LOAD_FUNCTION="function geom_load {\n    export PYTHONPATH=\"$GEOM_PATH:\$PYTHONPATH\"\n    alias geom=\"python3 -m geom\"\n}"
 
-# Install required dependencies **for the user only**
-echo "Installing dependencies in user space..."
-pip3 install --user -r requirements.txt
-
-# Install the GEOM package with proper flags to avoid build issues
-echo "Installing GEOM package..."
-pip3 install --user --no-build-isolation --no-cache-dir .
+# Check if the function geom_load is already in the shell config
+if ! grep -q "function geom_load" "$SHELL_RC"; then
+    echo "Adding geom_load function to $SHELL_RC..."
+    echo -e "\n$GEOM_LOAD_FUNCTION" >> "$SHELL_RC"
+fi
 
 # Run tests if available
-if [ -f "./tests/run_all_tests.sh" ]; then
+if [ -f "./geom/tests/run_all_tests.sh" ]; then
     echo "Running tests..."
-    chmod +x ./tests/run_all_tests.sh
-    ./tests/run_all_tests.sh
+    chmod +x ./geom/tests/run_all_tests.sh
+    ./geom/tests/run_all_tests.sh
+    if [ $? -ne 0 ]; then
+        echo "Tests failed. Aborting installation."
+        exit 1
+    fi
 else
-    echo "No test script found at ./tests/run_all_tests.sh. Skipping tests."
+    echo "No test script found at ./geom/tests/run_all_tests.sh. Skipping tests."
 fi
 
-echo "Installation complete."
+# Source the shell configuration to apply the changes immediately
+echo "Applying changes to your shell configuration..."
+
+# Source the shell config file to apply the changes in the current shell
+source "$SHELL_RC"
+
+# Highlighting the final instructions with color and spacing
+echo -e "\n\n\033[1;32mInstallation complete!\033[0m"
+
+echo -e "\n\033[1;33mIf 'geom_load' doesn't work right away, please run the following command based on your shell:\033[0m"
+
+if [ "$SHELL" = "/bin/zsh" ]; then
+    echo -e "\n\033[1;34mRun: source ~/.zshrc\033[0m"
+elif [ "$SHELL" = "/bin/bash" ]; then
+    echo -e "\n\033[1;34mRun: source ~/.bashrc\033[0m"
+elif [ "$SHELL" = "/bin/fish" ]; then
+    echo -e "\n\033[1;34mRun: source ~/.config/fish/config.fish\033[0m"
+else
+    echo -e "\n\033[1;34mRun: source ~/.profile\033[0m"
+fi
+
+echo -e "\n\033[1;33mThen, you can run 'geom_load' to set up your environment and 'geom -h' to check the help menu for available options.\033[0m"
 
