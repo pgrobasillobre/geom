@@ -1,14 +1,14 @@
 #!/bin/bash
 
-echo -e "This script will install dependencies and set up the GEOM project using Python 3 only."
-echo "If you prefer, you can install dependencies manually with:"
+echo -e "This script will install dependencies and may modify or break system packages."
+echo "If you prefer, you can manually install dependencies by running:"
 echo "    python3 -m venv geom_venv && source geom_venv/bin/activate"
 echo "    pip install --upgrade pip && pip install -r requirements.txt"
 echo
 echo "Press Ctrl+C to cancel or wait 5 seconds to continue..."
 sleep 5
 
-echo "Setting up GEOM project with Python 3..."
+echo "Setting up GEOM project..."
 
 # Ensure the script stops on any error
 set -e
@@ -41,9 +41,9 @@ fi
 
 echo "Detected OS: $OS"
 
-# Install Python 3 and Pip 3
+# Install Python and Pip
 if [[ "$OS" == "macOS" ]]; then
-    echo "Using Homebrew to install Python 3..."
+    echo "Using Homebrew to install Python..."
     if ! command_exists brew; then
         echo "Error: Homebrew is not installed. Install it from https://brew.sh/"
         exit 1
@@ -51,61 +51,46 @@ if [[ "$OS" == "macOS" ]]; then
     if ! command_exists python3; then
         brew install python
     fi
-    python3 -m pip install --upgrade pip setuptools wheel
+    python3 -m pip install --upgrade pip
 
-elif [[ "$OS" == "Debian" || "$OS" == "WSL" ]]; then
-    echo "Using APT to install Python 3..."
+elif [[ "$OS" == "Debian" ]]; then
+    echo "Using APT to install Python..."
     sudo apt update
     sudo apt install -y python3 python3-pip
-    python3 -m pip install --upgrade pip setuptools wheel
 
 elif [[ "$OS" == "Fedora" ]]; then
-    echo "Using DNF to install Python 3..."
+    echo "Using DNF to install Python..."
     sudo dnf install -y python3 python3-pip
-    python3 -m pip install --upgrade pip setuptools wheel
+
+elif [[ "$OS" == "WSL" ]]; then
+    echo "Detected WSL. Using APT (or alternative) to install Python..."
+    if command_exists apt; then
+        sudo apt update
+        sudo apt install -y python3 python3-pip
+    elif command_exists dnf; then
+        sudo dnf install -y python3 python3-pip
+    else
+        echo "No known package manager found. Please install Python manually."
+        exit 1
+    fi
 
 elif [[ "$OS" == "Windows" ]]; then
-    echo "Using Windows package manager to install Python 3..."
-    if ! command_exists python3; then
-        echo "Installing Python 3 using winget..."
+    echo "Using Windows package manager to install Python..."
+    if ! command_exists python; then
+        echo "Installing Python using winget..."
         winget install -e --id Python.Python
     fi
-    python3 -m pip install --upgrade pip setuptools wheel
+    python -m pip install --upgrade pip
 
 else
-    echo "Unsupported Linux distribution. Please install Python 3 manually."
+    echo "Unsupported Linux distribution. Please install Python manually."
     exit 1
-fi
-
-# Ensure Python 3 is used
-echo "Ensuring Python 3 is the default version..."
-if command_exists python && [[ "$(python --version 2>&1)" =~ "Python 2" ]]; then
-    echo "Warning: Python 2 detected. It is recommended to remove it."
-    sudo apt remove -y python python-pip
 fi
 
 # Install project dependencies
 echo "Installing Python dependencies..."
-python3 -m pip install --upgrade pip setuptools wheel
-python3 -m pip install -r requirements.txt
-
-# Install Gmsh for Python 3
-echo "Installing Gmsh for Python 3..."
-python3 -m pip install --upgrade gmsh
-
-# Check if Gmsh library is available
-if ! python3 -c "import gmsh" 2>/dev/null; then
-    echo "Error: Gmsh Python library is not found. Please check your installation."
-    exit 1
-fi
-
-# Ensure the shared library is correctly linked
-echo "Checking Gmsh shared library..."
-if ! find /usr/lib /usr/local/lib -name "libgmsh.so*" | grep -q libgmsh; then
-    echo "Warning: libgmsh.so is missing. You may need to manually set up library paths."
-    echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/gmsh.conf
-    sudo ldconfig
-fi
+pip3 install --upgrade pip
+pip3 install -r requirements.txt
 
 # Determine the correct shell configuration file
 if [[ "$OS" == "Windows" ]]; then

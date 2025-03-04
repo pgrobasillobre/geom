@@ -15,7 +15,7 @@ setup(
     url="https://github.com/pgrobasillobre/geom", 
     packages=find_packages(include=["geom", "geom.*"]),
     install_requires=[
-        "gmsh==4.11.1",
+        "gmsh>=4.11.1",
         "ase>=3.22.1",
         "numpy>=1.24.3",
         "pytest>=8.3.4",
