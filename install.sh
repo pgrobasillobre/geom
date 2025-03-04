@@ -20,30 +20,90 @@ command_exists() {
 
 # Detect OS type
 OS_TYPE="$(uname -s)"
-
-# Check if Python3 is installed
-if ! command_exists python3; then
-    echo "Error: Python3 is not installed. Please install it manually from https://www.python.org/downloads/"
+if [[ "$OS_TYPE" == "Darwin" ]]; then
+    OS="macOS"
+elif [[ "$OS_TYPE" == "Linux" ]]; then
+    if grep -qi microsoft /proc/version; then
+        OS="WSL"
+    elif command_exists apt; then
+        OS="Debian"
+    elif command_exists dnf; then
+        OS="Fedora"
+    else
+        OS="Linux-Other"
+    fi
+elif [[ "$OS_TYPE" =~ "MINGW" || "$OS_TYPE" =~ "CYGWIN" || "$OS_TYPE" =~ "MSYS" ]]; then
+    OS="Windows"
+else
+    echo "Unsupported OS: $OS_TYPE"
     exit 1
-else
-    echo "Python3 is already installed."
 fi
 
-# Check if pip3 is installed
-if ! command_exists pip3; then
-    echo "Error: pip3 is not installed. Attempting to install..."
-    sudo apt update && sudo apt install -y python3-pip || { echo "Failed to install pip3. Please install it manually."; exit 1; }
+echo "Detected OS: $OS"
+
+# Install Python and Pip
+if [[ "$OS" == "macOS" ]]; then
+    echo "Using Homebrew to install Python..."
+    if ! command_exists brew; then
+        echo "Error: Homebrew is not installed. Install it from https://brew.sh/"
+        exit 1
+    fi
+    if ! command_exists python3; then
+        brew install python
+    fi
+    python3 -m pip install --upgrade pip
+
+elif [[ "$OS" == "Debian" ]]; then
+    echo "Using APT to install Python..."
+    sudo apt update
+    sudo apt install -y python3 python3-pip
+
+elif [[ "$OS" == "Fedora" ]]; then
+    echo "Using DNF to install Python..."
+    sudo dnf install -y python3 python3-pip
+
+elif [[ "$OS" == "WSL" ]]; then
+    echo "Detected WSL. Using APT (or alternative) to install Python..."
+    if command_exists apt; then
+        sudo apt update
+        sudo apt install -y python3 python3-pip
+    elif command_exists dnf; then
+        sudo dnf install -y python3 python3-pip
+    else
+        echo "No known package manager found. Please install Python manually."
+        exit 1
+    fi
+
+elif [[ "$OS" == "Windows" ]]; then
+    echo "Using Windows package manager to install Python..."
+    if ! command_exists python; then
+        echo "Installing Python using winget..."
+        winget install -e --id Python.Python
+    fi
+    python -m pip install --upgrade pip
+
 else
-    echo "pip3 is already installed."
+    echo "Unsupported Linux distribution. Please install Python manually."
+    exit 1
 fi
 
-# Install the required dependencies system-wide
-echo "Installing dependencies globally..."
-pip3 install --upgrade pip  # Ensure pip is up-to-date
-pip3 install --break-system-packages -r requirements.txt
+# Install project dependencies
+echo "Installing Python dependencies..."
+pip3 install --upgrade pip
+pip3 install -r requirements.txt
 
-# Append the geom_load function to the shell's configuration file for automatic setup
-SHELL_RC="$HOME/.bashrc"  # Change this if using another shell like zsh
+# Determine the correct shell configuration file
+if [[ "$OS" == "Windows" ]]; then
+    SHELL_RC="$HOME/Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
+elif [[ "$SHELL" == "/bin/zsh" ]]; then
+    SHELL_RC="$HOME/.zshrc"
+elif [[ "$SHELL" == "/bin/bash" ]]; then
+    SHELL_RC="$HOME/.bashrc"
+elif [[ "$SHELL" == "/bin/fish" ]]; then
+    SHELL_RC="$HOME/.config/fish/config.fish"
+else
+    SHELL_RC="$HOME/.profile"
+fi
 
 # Define the geom_load function
 GEOM_LOAD_FUNCTION="function geom_load {
@@ -51,24 +111,26 @@ GEOM_LOAD_FUNCTION="function geom_load {
     alias geom=\"python3 -m geom\"
 }"
 
-# Check if geom_load is already in the shell config, if not, add it
+# Add geom_load function if not already present
 if ! grep -q "function geom_load" "$SHELL_RC"; then
     echo "Adding geom_load function to $SHELL_RC..."
     echo -e "\n$GEOM_LOAD_FUNCTION" >> "$SHELL_RC"
 fi
 
-# Inform the user about sourcing the shell configuration file
-echo "To apply changes, run the following command based on your shell:"
-if [ "$SHELL" = "/bin/zsh" ]; then
-    echo "source ~/.zshrc"
-elif [ "$SHELL" = "/bin/bash" ]; then
-    echo "source ~/.bashrc"
-elif [ "$SHELL" = "/bin/fish" ]; then
-    echo "source ~/.config/fish/config.fish"
+# Run tests
+if [ -f "./geom/tests/run_all_tests.sh" ]; then
+    echo "Running tests..."
+    chmod +x ./geom/tests/run_all_tests.sh
+    ./geom/tests/run_all_tests.sh
 else
-    echo "source ~/.profile"
+    echo "No test script found at ./geom/tests/run_all_tests.sh. Skipping tests."
 fi
+
+# Inform user how to apply changes
+echo "To apply changes, run:"
+echo "source $SHELL_RC"
 
 # Final message
 echo -e "\n\033[1;32mInstallation complete!\033[0m"
 echo -e "\nYou can now run \`geom_load\` to set up your environment, and \`geom -h\` to check available options."
+
