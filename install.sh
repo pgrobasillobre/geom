@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo -e "This script will install dependencies and may modify or break system packages."
-echo "If you prefer, you can manually install dependencies by running:"
+echo "If you prefer, you can manually install dependencies manually by running:"
 echo "    python3 -m venv geom_venv && source geom_venv/bin/activate"
 echo "    pip install --upgrade pip && pip install -r requirements.txt"
 echo
@@ -51,16 +51,18 @@ if [[ "$OS" == "macOS" ]]; then
     if ! command_exists python3; then
         brew install python
     fi
-    python3 -m pip install --upgrade pip
+    python3 -m pip install --upgrade pip setuptools wheel --break-system-packages
 
 elif [[ "$OS" == "Debian" ]]; then
     echo "Using APT to install Python..."
     sudo apt update
     sudo apt install -y python3 python3-pip
+    python3 -m pip install --upgrade pip setuptools wheel
 
 elif [[ "$OS" == "Fedora" ]]; then
     echo "Using DNF to install Python..."
     sudo dnf install -y python3 python3-pip
+    python3 -m pip install --upgrade pip setuptools wheel
 
 elif [[ "$OS" == "WSL" ]]; then
     echo "Detected WSL. Using APT (or alternative) to install Python..."
@@ -73,6 +75,7 @@ elif [[ "$OS" == "WSL" ]]; then
         echo "No known package manager found. Please install Python manually."
         exit 1
     fi
+    python3 -m pip install --upgrade pip setuptools wheel
 
 elif [[ "$OS" == "Windows" ]]; then
     echo "Using Windows package manager to install Python..."
@@ -80,7 +83,7 @@ elif [[ "$OS" == "Windows" ]]; then
         echo "Installing Python using winget..."
         winget install -e --id Python.Python
     fi
-    python -m pip install --upgrade pip
+    python -m pip install --upgrade pip setuptools wheel
 
 else
     echo "Unsupported Linux distribution. Please install Python manually."
@@ -89,8 +92,8 @@ fi
 
 # Install project dependencies
 echo "Installing Python dependencies..."
-pip3 install --upgrade pip
-pip3 install -r requirements.txt
+python3 -m pip install --upgrade pip setuptools wheel --break-system-packages
+python3 -m pip install -r requirements.txt --break-system-packages
 
 # Determine the correct shell configuration file
 if [[ "$OS" == "Windows" ]]; then
@@ -126,11 +129,13 @@ else
     echo "No test script found at ./geom/tests/run_all_tests.sh. Skipping tests."
 fi
 
-# Inform user how to apply changes
-echo "To apply changes, run:"
-echo "source $SHELL_RC"
-
 # Final message
-echo -e "\n\033[1;32mInstallation complete!\033[0m"
-echo -e "\nYou can now run \`geom_load\` to set up your environment, and \`geom -h\` to check available options."
+echo -e "\n\033[1;32m✔ Installation complete!\033[0m"
+echo -e "\n\033[1;34m➡ Before using \`geom\`, you must first run:\033[0m"
+echo -e "\033[1;33msource $SHELL_RC\033[0m   \033[0;37m# This sets up your environment\033[0m"
+echo -e "\n\033[1;34m➡ After that, you can use:\033[0m"
+echo -e "\033[1;33mgeom_load\033[0m   \033[0;37m# Loads the environment to use \`geom\` as a command\033[0m"
+echo -e "\033[1;33mgeom -h\033[0m   \033[0;37m  # Shows available options\033[0m"
+echo -e "\n\033[1;34m➡ Alternatively, you can always run:\033[0m"
+echo -e "\033[1;33mpython3 -m geom -h\033[0m   \033[0;37m# Runs GEOM without loading the environment\033[0m\n"
 
