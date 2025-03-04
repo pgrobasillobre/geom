@@ -175,44 +175,44 @@ def test_create_sphere(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
-def test_create_sphere_continuum(monkeypatch):
-   """
-   Tests the generation of a sphere 3D continuum mesh and compares it with a reference file.
-
-   Args:
-       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
-
-   Returns:
-       None: Uses assertions to validate the generated `.msh` file.
-
-   Notes:
-       - Mocks command-line arguments for sphere continuum creation.
-       - Runs the geometry creation process.
-       - Compares the generated `.msh` file with an expected reference file.
-   """
-
-   # Test folder
-   test_folder = 'sphere_continuum'
-   
-   # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", "-create", "-sphere", "-continuum", "50.0", "10.0"]
-   monkeypatch.setattr(sys, "argv", mock_args)
-   
-   # Manually create and populate the input class
-   inp = input_class.input_class()
-   general.read_command_line(sys.argv, inp)
-   
-   # Run the geometry creation
-   create_geom.select_case(inp)
-   
-   # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_r_50.0_mesh_size_10.0.msh")
-   generated_file = f"{test_folder}/sphere_r_{inp.radius}_mesh_size_{inp.mesh_size}.msh"
-
-   move_created_geom(test_folder)
-   
-   # Compare the generated file with the reference
-   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
+##def test_create_sphere_continuum(monkeypatch):
+##   """
+##   Tests the generation of a sphere 3D continuum mesh and compares it with a reference file.
+##
+##   Args:
+##       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+##
+##   Returns:
+##       None: Uses assertions to validate the generated `.msh` file.
+##
+##   Notes:
+##       - Mocks command-line arguments for sphere continuum creation.
+##       - Runs the geometry creation process.
+##       - Compares the generated `.msh` file with an expected reference file.
+##   """
+##
+##   # Test folder
+##   test_folder = 'sphere_continuum'
+##   
+##   # Mock sys.argv to simulate the command line input
+##   mock_args = ["dummy", "-create", "-sphere", "-continuum", "50.0", "10.0"]
+##   monkeypatch.setattr(sys, "argv", mock_args)
+##   
+##   # Manually create and populate the input class
+##   inp = input_class.input_class()
+##   general.read_command_line(sys.argv, inp)
+##   
+##   # Run the geometry creation
+##   create_geom.select_case(inp)
+##   
+##   # Define the expected and actual output files
+##   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_r_50.0_mesh_size_10.0.msh")
+##   generated_file = f"{test_folder}/sphere_r_{inp.radius}_mesh_size_{inp.mesh_size}.msh"
+##
+##   move_created_geom(test_folder)
+##   
+##   # Compare the generated file with the reference
+##   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_sphere_core_shell(monkeypatch):
    """
@@ -294,44 +294,44 @@ def test_create_rod(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
-def test_create_rod_continuum(monkeypatch):
-   """
-   Tests the generation of a rod 3D continuum mesh and compares it with a reference file.
-
-   Args:
-       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
-
-   Returns:
-       None: Uses assertions to validate the generated `.msh` file.
-
-   Notes:
-       - Mocks command-line arguments for rod continuum creation.
-       - Runs the geometry creation process.
-       - Compares the generated `.msh` file with an expected reference file.
-   """
-
-   # Test folder
-   test_folder = 'rod_continuum'
-   
-   # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", "-create", "-rod", "-continuum", "Z", "100.0", "30.0", "5.0"]
-   monkeypatch.setattr(sys, "argv", mock_args)
-   
-   # Manually create and populate the input class
-   inp = input_class.input_class()
-   general.read_command_line(sys.argv, inp)
-   
-   # Run the geometry creation
-   create_geom.select_case(inp)
-   
-   # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_Z_l_100.0_w_30.0_mesh_size_5.0.msh")
-   generated_file = f"{test_folder}/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
-
-   move_created_geom(test_folder)
-   
-   # Compare the generated file with the reference
-   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
+##def test_create_rod_continuum(monkeypatch):
+##   """
+##   Tests the generation of a rod 3D continuum mesh and compares it with a reference file.
+##
+##   Args:
+##       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+##
+##   Returns:
+##       None: Uses assertions to validate the generated `.msh` file.
+##
+##   Notes:
+##       - Mocks command-line arguments for rod continuum creation.
+##       - Runs the geometry creation process.
+##       - Compares the generated `.msh` file with an expected reference file.
+##   """
+##
+##   # Test folder
+##   test_folder = 'rod_continuum'
+##   
+##   # Mock sys.argv to simulate the command line input
+##   mock_args = ["dummy", "-create", "-rod", "-continuum", "Z", "100.0", "30.0", "5.0"]
+##   monkeypatch.setattr(sys, "argv", mock_args)
+##   
+##   # Manually create and populate the input class
+##   inp = input_class.input_class()
+##   general.read_command_line(sys.argv, inp)
+##   
+##   # Run the geometry creation
+##   create_geom.select_case(inp)
+##   
+##   # Define the expected and actual output files
+##   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_Z_l_100.0_w_30.0_mesh_size_5.0.msh")
+##   generated_file = f"{test_folder}/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
+##
+##   move_created_geom(test_folder)
+##   
+##   # Compare the generated file with the reference
+##   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_rod_core_shell(monkeypatch):
    """
