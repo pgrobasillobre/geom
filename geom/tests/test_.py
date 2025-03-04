@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import sys
 import os
@@ -83,6 +84,58 @@ def move_created_geom(folder):
    os.system(f'mv {file_path_results} {folder}')
    os.system(f'rm -rf {file_path_results}')
 # -------------------------------------------------------------------------------------
+def compare_mesh_files(file1: str, file2: str, tol: float = 1e-10) -> bool:
+   """
+   Compare two .msh files while allowing small floating-point differences.
+
+   This function reads two mesh files and compares them line by line. It ignores 
+   non-numeric headers (lines starting with "$") and allows numerical differences 
+   within a specified tolerance (`tol`). Non-numeric values (e.g., node indices) 
+   are compared strictly.
+
+   Args:
+       file1 (str): Path to the first .msh file (generated mesh).
+       file2 (str): Path to the second .msh file (reference mesh).
+       tol (float, optional): Absolute tolerance for floating-point comparisons. 
+           Defaults to 1e-10.
+
+   Returns:
+       bool: True if the files match within the tolerance, False otherwise.
+
+   Raises:
+       AssertionError: If the files differ in length, structure, or values 
+       outside the specified tolerance.
+   """
+   
+   with open(file1, 'r') as f1, open(file2, 'r') as f2:
+       lines1 = f1.readlines()
+       lines2 = f2.readlines()
+
+   assert len(lines1) == len(lines2), f"Files have different number of lines: {len(lines1)} vs {len(lines2)}"
+
+   for i, (line1, line2) in enumerate(zip(lines1, lines2)):
+       # Ignore non-numeric headers that start with "$"
+       if line1.startswith("$") or line2.startswith("$"):
+           assert line1.strip() == line2.strip(), f"Header mismatch at line {i+1}: {line1.strip()} != {line2.strip()}"
+           continue
+
+       tokens1 = line1.strip().split()
+       tokens2 = line2.strip().split()
+
+       assert len(tokens1) == len(tokens2), f"Line {i+1}: Different number of values"
+
+       for j, (token1, token2) in enumerate(zip(tokens1, tokens2)):
+           try:
+               num1 = float(token1)
+               num2 = float(token2)
+               assert np.isclose(num1, num2, atol=tol), \
+                   f"Line {i+1}, Value {j+1}: {num1} != {num2} (tolerance {tol})"
+           except ValueError:
+               # If not a float, compare as string (e.g., node indices)
+               assert token1 == token2, f"Line {i+1}: {token1} != {token2}"
+
+   return True  # Files match within tolerance
+# -------------------------------------------------------------------------------------
 def test_create_sphere(monkeypatch):
    """
    Tests the generation of a spherical geometry and compares it with a reference file.
@@ -159,7 +212,7 @@ def test_create_sphere_continuum(monkeypatch):
    move_created_geom(test_folder)
    
    # Compare the generated file with the reference
-   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated Mesh file does not match the expected output"
+   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_sphere_core_shell(monkeypatch):
    """
@@ -278,7 +331,7 @@ def test_create_rod_continuum(monkeypatch):
    move_created_geom(test_folder)
    
    # Compare the generated file with the reference
-   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated Mesh file does not match the expected output"
+   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_rod_core_shell(monkeypatch):
    """
