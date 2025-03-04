@@ -5,8 +5,13 @@ echo "If you prefer, you can manually install dependencies by running:"
 echo "    python3 -m venv geom_venv && source geom_venv/bin/activate"
 echo "    pip install --upgrade pip && pip install -r requirements.txt"
 echo
-echo "Press Ctrl+C to cancel or wait 5 seconds to continue..."
-sleep 5
+
+echo -n "Do you want to proceed with the installation? (Y/n): "
+read -r response
+if [[ "$response" =~ ^([nN][oO]?|[nN])$ ]]; then
+    echo "Installation aborted."
+    exit 0
+fi
 
 echo "Setting up GEOM project..."
 
@@ -51,7 +56,7 @@ if [[ "$OS" == "macOS" ]]; then
     if ! command_exists python3; then
         brew install python
     fi
-    python3 -m pip install --upgrade pip
+    python3 -m pip install --upgrade pip setuptools wheel --break-system-packages
 
 elif [[ "$OS" == "Debian" ]]; then
     echo "Using APT to install Python..."
@@ -89,8 +94,8 @@ fi
 
 # Install project dependencies
 echo "Installing Python dependencies..."
-pip3 install --upgrade pip
-pip3 install -r requirements.txt
+pip3 install --upgrade pip setuptools wheel --break-system-packages
+pip3 install -r requirements.txt --break-system-packages
 
 # Determine the correct shell configuration file
 if [[ "$OS" == "Windows" ]]; then
@@ -135,4 +140,3 @@ echo -e "\033[1;33mgeom_load\033[0m   \033[0;37m# Loads the environment to use \
 echo -e "\033[1;33mgeom -h\033[0m   \033[0;37m  # Shows available options\033[0m"
 echo -e "\n\033[1;34m➡ Alternatively, you can always run:\033[0m"
 echo -e "\033[1;33mpython3 -m geom -h\033[0m   \033[0;37m# Runs GEOM without loading the environment\033[0m\n"
-
