@@ -645,8 +645,8 @@ def test_create_microscope(monkeypatch):
    create_geom.select_case(inp)
    
    # Define the expected and actual output files
-   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "microscope_ag_parabola_26.0_0.02_0.02_pyramid_26.0_33.0.xyz")
-   generated_file = f"{test_folder}/microscope_{inp.atomtype}_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}{inp.alloy_string}.xyz"
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "microscope_ag_parabola_40.0_0.02_0.02_pyramid_26.0_33.0.xyz")
+   generated_file = f"{test_folder}/microscope_{inp.atomtype}_parabola_{inp.z_max_paraboloid}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max_pyramid}_{inp.side_length}{inp.alloy_string}.xyz"
 
    move_created_geom(test_folder)
    

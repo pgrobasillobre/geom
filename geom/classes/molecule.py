@@ -966,3 +966,76 @@ class molecule:
          output.error('number of atoms to replace in alloy creation n_replace{}')
 
 
+   # ---------------------------------------------- #
+   # ------- Remove metal dangling atoms ------- #
+
+   def remove_dangling_atoms_metals(self, inp):
+      """
+      Removes dangling atoms from a generated metal structure.
+  
+      Args:
+          inp (input_class): The input parameters for metal filtering.
+  
+      Returns:
+          molecule: The molecule object with dangling atoms removed.
+  
+      Notes:
+          - Performs up to 3 iterations to remove all dangling atoms.
+          - If dangling atoms remain after 3 iterations, an error is raised.
+      """
+
+      #debug
+      print("  Removing dangling metal atoms on generated structure...")
+      print("")
+
+      param = parameters.parameters()
+      cutoff_distance = param.min_dist.get(inp.atomtype) + 0.1 # Add small buffer
+
+      def get_neighbors_metal(atom_index, cutoff):
+          """Find neighbors of an atom within a distance cutoff."""
+          distances = np.linalg.norm(self.xyz.T - self.xyz.T[atom_index], axis=1)
+          neighbors = np.where((distances > 0) & (distances <= cutoff))[0]
+          return neighbors
+
+      max_iterations = 3
+      for iteration in range(max_iterations):
+          dangling_atoms = []
+          for i in range(self.nAtoms):
+              neighbors = get_neighbors_metal(i, cutoff_distance)
+              if len(neighbors) == 0:  # No neighbors found
+                  dangling_atoms.append(i)
+
+          # If no dangling atoms are found, exit the loop
+          if not dangling_atoms:
+              #debug
+              print("")
+              print(f"  --> All dangling bonds removed after {iteration + 1} iteration(s).")
+              return self
+
+          # Remove dangling atoms
+          keep_atoms = np.setdiff1d(np.arange(self.nAtoms), dangling_atoms)
+          self.xyz = self.xyz[:, keep_atoms]
+          self.nAtoms = len(keep_atoms)
+          self.atoms = [self.atoms[i] for i in keep_atoms]
+
+          # Recalculate geometry
+          self.xyz_center = np.mean(self.xyz, axis=1)
+          self.xyz_max = np.max(self.xyz, axis=1)
+          self.xyz_min = np.min(self.xyz, axis=1)
+
+          #debug
+          #print(f"  - Iteration {iteration + 1}: Removed {len(dangling_atoms)} dangling atom(s).")
+
+      # If dangling bonds remain after 3 iterations, raise an error
+      dangling_atoms = []
+      for i in range(self.nAtoms):
+          neighbors = get_neighbors_metal(i, cutoff_distance)
+          if len(neighbors) < 1:
+              dangling_atoms.append(i)
+
+      if dangling_atoms:
+          output.error(f"{len(dangling_atoms)} dangling atoms on generated metal structure could not be eliminated after {max_iterations} iterations.")
+
+      return self
+
+

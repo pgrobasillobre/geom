@@ -527,6 +527,9 @@ def pyramid(inp):
    # Pick only atoms within the defined pyramid
    mol.filter_xyz_in_pyramid(inp,centers, planes)
 
+   # Remove dangling atom on extreme 
+   mol.remove_dangling_atoms_metals(inp)
+
    # Alloy
    if inp.alloy: mol.create_alloy(inp)
 
@@ -556,6 +559,9 @@ def cone(inp):
 
    # Pick only atoms within the defined cone
    mol.filter_xyz_in_cone(inp)
+
+   # Remove dangling atom on extreme 
+   mol.remove_dangling_atoms_metals(inp)
 
    # Alloy
    if inp.alloy: mol.create_alloy(inp)
@@ -630,6 +636,9 @@ def microscope(inp):
    # Pick only atoms within the defined pyramid
    mol_pyramid.filter_xyz_in_pyramid(inp,centers, planes)
 
+   # Remove dangling atom on extreme 
+   mol_pyramid.remove_dangling_atoms_metals(inp)
+
    # Rotate pyramid 180 degrees along z
    mol_pyramid_rot = molecule.molecule()
    mol_pyramid_rot = tools.rotate(mol_pyramid,180.0,'+x',mol_pyramid_rot)
@@ -648,7 +657,7 @@ def microscope(inp):
    # Alloy
    if inp.alloy: mol_microscope.create_alloy(inp)
 
-   inp.xyz_output = f'microscope_{inp.atomtype}_parabola_{inp.z_max}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max}_{inp.side_length}{inp.alloy_string}'
+   inp.xyz_output = f'microscope_{inp.atomtype}_parabola_{inp.z_max_paraboloid}_{inp.elliptic_parabola_a}_{inp.elliptic_parabola_b}_pyramid_{inp.z_max_pyramid}_{inp.side_length}{inp.alloy_string}'
    output.print_geom(mol_microscope, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def icosahedra(inp):
