@@ -347,7 +347,7 @@ class molecule:
       z = self.xyz[2, :]
    
       # Define triangular region based on edge type
-      if inp.graphene_edge_type == 'armchair':
+      if inp.graphene_edge_type == 'zigzag':
           # Armchair triangle aligned with the armchair direction
           condition = (
               (y >= 0) &
@@ -355,7 +355,7 @@ class molecule:
               (x >= -y / np.sqrt(3)) &
               (x <= y / np.sqrt(3))
           )
-      elif inp.graphene_edge_type == 'zigzag':
+      elif inp.graphene_edge_type == 'armchair':
           # Zigzag triangle aligned with the zigzag direction
           condition = (
               (x >= 0) &
