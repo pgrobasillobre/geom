@@ -985,8 +985,8 @@ class molecule:
       """
 
       #debug
-      print("  Removing dangling metal atoms on generated structure...")
-      print("")
+      #print("  Removing dangling metal atoms on generated structure...")
+      #print("")
 
       param = parameters.parameters()
       cutoff_distance = param.min_dist.get(inp.atomtype) + 0.1 # Add small buffer
@@ -1008,8 +1008,8 @@ class molecule:
           # If no dangling atoms are found, exit the loop
           if not dangling_atoms:
               #debug
-              print("")
-              print(f"  --> All dangling bonds removed after {iteration + 1} iteration(s).")
+              #print("")
+              #print(f"  --> All dangling bonds removed after {iteration + 1} iteration(s).")
               return self
 
           # Remove dangling atoms
