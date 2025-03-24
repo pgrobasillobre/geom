@@ -825,7 +825,7 @@ def get_layers(inp, lattice_constant):
        return layers
 
    elif inp.gen_tip:
-      H = structure_scaling * inp.z_max  # Tip height
+      H = structure_scaling * inp.z_max * 1.8     # Tip height
       return [int(H / lattice_constant) + 2] * 3  # Tip grows mostly in z-axis
 
    elif inp.gen_cone:
