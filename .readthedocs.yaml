@@ -5,12 +5,12 @@ version: 2
 build:
   os: ubuntu-20.04
   tools:
-    python: "3.8"  # Set the Python version here, which should match the version in your environment.yml
-  
+    python: "3.10"
+
 sphinx:
   configuration: docs/source/conf.py
 
 python:
   install:
-    - requirements: docs/requirements.txt  # Optional, only if you have dependencies for building docs
+    - requirements: docs/requirements.txt  # Install doc dependencies from this file
 
