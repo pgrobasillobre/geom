@@ -1,142 +1,90 @@
 #!/bin/bash
 
-echo -e "This script will install dependencies and may modify or break system packages."
-echo "If you prefer, you can manually install dependencies by running:"
-echo "    python3 -m venv geom_venv && source geom_venv/bin/activate"
-echo "    pip install --upgrade pip && pip install -r requirements.txt"
-echo
-
-echo -n "Do you want to proceed with the installation? (Y/n): "
-read -r response
-if [[ "$response" =~ ^([nN][oO]?|[nN])$ ]]; then
-    echo "Installation aborted."
-    exit 0
-fi
-
-echo "Setting up GEOM project..."
-
-# Ensure the script stops on any error
 set -e
 
-# Function to check if a command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
+ENV_NAME="geom_env"
 
-# Detect OS type
-OS_TYPE="$(uname -s)"
-if [[ "$OS_TYPE" == "Darwin" ]]; then
-    OS="macOS"
-elif [[ "$OS_TYPE" == "Linux" ]]; then
-    if grep -qi microsoft /proc/version; then
-        OS="WSL"
-    elif command_exists apt; then
-        OS="Debian"
-    elif command_exists dnf; then
-        OS="Fedora"
+echo " Setting up GEOM with conda environment..."
+
+# Check for conda
+if ! command -v conda &> /dev/null; then
+    echo -e "\n Conda not found.\n"
+
+    # Detect OS
+    OS_TYPE="$(uname -s)"
+    if [[ "$OS_TYPE" == "Linux" || "$OS_TYPE" == "Darwin" ]]; then
+        read -p " Would you like to install Miniconda automatically? (y/N): " INSTALL_CONDA
+        if [[ "$INSTALL_CONDA" =~ ^[Yy]$ ]]; then
+            echo " Downloading Miniconda installer..."
+            curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-$([[ $OS_TYPE == "Darwin" ]] && echo "MacOSX" || echo "Linux")-x86_64.sh -o miniconda.sh
+
+            if [[ -d "$HOME/miniconda" ]]; then
+                echo " Miniconda is already installed at $HOME/miniconda."
+                read -p " Do you want to update it? (y/N): " UPDATE_MINICONDA
+                if [[ "$UPDATE_MINICONDA" =~ ^[Yy]$ ]]; then
+                    bash miniconda.sh -b -u -p $HOME/miniconda
+                else
+                    echo " Skipping Miniconda installation."
+                fi
+            else
+                echo " Running Miniconda installer..."
+                bash miniconda.sh -b -p $HOME/miniconda
+            fi
+
+            echo " Initializing conda..."
+            eval "$($HOME/miniconda/bin/conda shell.bash hook)"
+            $HOME/miniconda/bin/conda init
+
+            export PATH="$HOME/miniconda/bin:$PATH"
+            source "$HOME/.bashrc"
+        else
+            echo
+            echo " Please install Conda manually from one of the following:"
+            echo "  Anaconda (full): https://www.anaconda.com/products/distribution"
+            echo "  Miniconda (lightweight): https://docs.conda.io/en/latest/miniconda.html"
+            exit 1
+        fi
     else
-        OS="Linux-Other"
-    fi
-elif [[ "$OS_TYPE" =~ "MINGW" || "$OS_TYPE" =~ "CYGWIN" || "$OS_TYPE" =~ "MSYS" ]]; then
-    OS="Windows"
-else
-    echo "Unsupported OS: $OS_TYPE"
-    exit 1
-fi
-
-echo "Detected OS: $OS"
-
-# Install Python and Pip
-if [[ "$OS" == "macOS" ]]; then
-    echo "Using Homebrew to install Python..."
-    if ! command_exists brew; then
-        echo "Error: Homebrew is not installed. Install it from https://brew.sh/"
+        echo " Please install Conda manually:"
+        echo "  Anaconda (full): https://www.anaconda.com/products/distribution"
+        echo "  Miniconda (lightweight): https://docs.conda.io/en/latest/miniconda.html"
+        echo
+        echo " After installing, restart your terminal and re-run this script."
         exit 1
     fi
-    if ! command_exists python3; then
-        brew install python
-    fi
-    python3 -m pip install --upgrade pip setuptools wheel --break-system-packages
-
-elif [[ "$OS" == "Debian" ]]; then
-    echo "Using APT to install Python..."
-    sudo apt update
-    sudo apt install -y python3 python3-pip
-
-elif [[ "$OS" == "Fedora" ]]; then
-    echo "Using DNF to install Python..."
-    sudo dnf install -y python3 python3-pip
-
-elif [[ "$OS" == "WSL" ]]; then
-    echo "Detected WSL. Using APT (or alternative) to install Python..."
-    if command_exists apt; then
-        sudo apt update
-        sudo apt install -y python3 python3-pip
-    elif command_exists dnf; then
-        sudo dnf install -y python3 python3-pip
-    else
-        echo "No known package manager found. Please install Python manually."
-        exit 1
-    fi
-
-elif [[ "$OS" == "Windows" ]]; then
-    echo "Using Windows package manager to install Python..."
-    if ! command_exists python; then
-        echo "Installing Python using winget..."
-        winget install -e --id Python.Python
-    fi
-    python -m pip install --upgrade pip
-
-else
-    echo "Unsupported Linux distribution. Please install Python manually."
-    exit 1
 fi
 
-# Install project dependencies
-echo "Installing Python dependencies..."
-pip3 install --upgrade pip setuptools wheel --break-system-packages
-pip3 install -r requirements.txt --break-system-packages
+# Create conda environment if it doesn't exist
+if conda info --envs | grep -q "^$ENV_NAME"; then
+    echo " Conda environment '$ENV_NAME' already exists. Skipping creation."
+else
+    echo " Creating conda environment..."
+    conda env create -f environment.yml
+fi
 
-# Determine the correct shell configuration file
-if [[ "$OS" == "Windows" ]]; then
-    SHELL_RC="$HOME/Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
-elif [[ "$SHELL" == "/bin/zsh" ]]; then
+echo " Installing Python package inside the conda environment..."
+conda run -n $ENV_NAME python -m pip install --upgrade pip setuptools wheel
+conda run -n $ENV_NAME python -m pip install gmsh==4.11.1
+conda run -n $ENV_NAME python -m pip install -e .
+
+# Set up alias
+SHELL_RC="$HOME/.bashrc"
+if [[ "$SHELL" == *"zsh" ]]; then
     SHELL_RC="$HOME/.zshrc"
-elif [[ "$SHELL" == "/bin/bash" ]]; then
-    SHELL_RC="$HOME/.bashrc"
-elif [[ "$SHELL" == "/bin/fish" ]]; then
+elif [[ "$SHELL" == *"fish" ]]; then
     SHELL_RC="$HOME/.config/fish/config.fish"
-else
-    SHELL_RC="$HOME/.profile"
 fi
 
-# Define the geom_load function
-GEOM_LOAD_FUNCTION="function geom_load {
-    export PYTHONPATH=\"$PWD:\$PYTHONPATH\"
-    alias geom=\"python3 -m geom\"
-}"
-
-# Add geom_load function if not already present
-if ! grep -q "function geom_load" "$SHELL_RC"; then
-    echo "Adding geom_load function to $SHELL_RC..."
-    echo -e "\n$GEOM_LOAD_FUNCTION" >> "$SHELL_RC"
+ALIAS_CMD="alias geom='conda run -n $ENV_NAME python -m geom'"
+if ! grep -q "$ALIAS_CMD" "$SHELL_RC"; then
+    echo "Adding alias to $SHELL_RC..."
+    echo "$ALIAS_CMD" >> "$SHELL_RC"
 fi
 
-# Run tests
-if [ -f "./geom/tests/run_all_tests.sh" ]; then
-    echo "Running tests..."
-    chmod +x ./geom/tests/run_all_tests.sh
-    ./geom/tests/run_all_tests.sh
-else
-    echo "No test script found at ./geom/tests/run_all_tests.sh. Skipping tests."
-fi
+echo " Running tests..."
+conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh || echo " Some tests failed."
 
-# Final message
-echo -e "\n\033[1;32m✔ Installation complete!\033[0m"
-echo -e "\n\033[1;34m➡ Before using \`geom\`, you must first run:\033[0m"
-echo -e "\033[1;33msource $SHELL_RC\033[0m   \033[0;37m# This sets up your environment\033[0m"
-echo -e "\n\033[1;34m➡ After that, you can use:\033[0m"
-echo -e "\033[1;33mgeom_load\033[0m   \033[0;37m# Loads the environment to use \`geom\` as a command\033[0m"
-echo -e "\033[1;33mgeom -h\033[0m   \033[0;37m  # Shows available options\033[0m"
-echo -e "\n\033[1;34m➡ Alternatively, you can always run:\033[0m"
-echo -e "\033[1;33mpython3 -m geom -h\033[0m   \033[0;37m# Runs GEOM without loading the environment\033[0m\n"
+echo -e "\n Installation complete!"
+echo -e "  Restart your shell or run: source $SHELL_RC"
+echo -e "  Then you can run: geom -h"
+
