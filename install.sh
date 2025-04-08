@@ -1,3 +1,4 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                       1,1           All
 #!/bin/bash
 
 set -e
@@ -55,7 +56,7 @@ conda run -n $ENV_NAME python -m pip install --upgrade pip setuptools wheel
 conda run -n $ENV_NAME python -m pip install gmsh==4.11.1
 conda run -n $ENV_NAME python -m pip install --editable . --config-settings editable_mode=compat
 
-# Set up shell function (manual activation)
+# Set up shell config file
 SHELL_RC="$HOME/.bashrc"
 if [[ "$SHELL" == *"zsh" ]]; then
     SHELL_RC="$HOME/.zshrc"
@@ -63,14 +64,36 @@ elif [[ "$SHELL" == *"fish" ]]; then
     SHELL_RC="$HOME/.config/fish/config.fish"
 fi
 
-GEOM_LOAD_FUNCTION="function geom_load {
-    conda activate $ENV_NAME
-    alias geom='python -m geom'
-}"
+# Add conda init and geom_load if missing
+if ! grep -q "conda initialize" "$SHELL_RC"; then
+    echo "Adding conda init block to $SHELL_RC..."
+    cat << 'EOF' >> "$SHELL_RC"
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('$HOME/miniconda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "$HOME/miniconda/etc/profile.d/conda.sh" ]; then
+        . "$HOME/miniconda/etc/profile.d/conda.sh"
+    else
+        export PATH="$HOME/miniconda/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+EOF
+fi
 
 if ! grep -q "function geom_load" "$SHELL_RC"; then
     echo "Adding geom_load function to $SHELL_RC..."
-    echo -e "\\n$GEOM_LOAD_FUNCTION" >> "$SHELL_RC"
+    cat << 'EOF' >> "$SHELL_RC"
+
+function geom_load {
+    conda activate geom_env
+    alias geom='python -m geom'
+}
+EOF
 fi
 
 echo " Running tests..."
@@ -80,4 +103,3 @@ echo -e "\n  Installation complete!\n"
 echo -e "  Run: source $SHELL_RC"
 echo -e "  Then load the environment with: geom_load"
 echo -e "  And run the CLI using: geom -h\n"
-
