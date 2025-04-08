@@ -67,7 +67,7 @@ conda run -n $ENV_NAME python -m pip install --upgrade pip setuptools wheel
 conda run -n $ENV_NAME python -m pip install gmsh==4.11.1
 conda run -n $ENV_NAME python -m pip install -e .
 
-# Set up alias
+# Set up shell function (manual activation)
 SHELL_RC="$HOME/.bashrc"
 if [[ "$SHELL" == *"zsh" ]]; then
     SHELL_RC="$HOME/.zshrc"
@@ -75,16 +75,21 @@ elif [[ "$SHELL" == *"fish" ]]; then
     SHELL_RC="$HOME/.config/fish/config.fish"
 fi
 
-ALIAS_CMD="alias geom='conda run -n $ENV_NAME python -m geom'"
-if ! grep -q "$ALIAS_CMD" "$SHELL_RC"; then
-    echo "Adding alias to $SHELL_RC..."
-    echo "$ALIAS_CMD" >> "$SHELL_RC"
+GEOM_LOAD_FUNCTION="function geom_load {
+    conda activate $ENV_NAME
+    alias geom='python -m geom'
+}"
+
+if ! grep -q "function geom_load" "$SHELL_RC"; then
+    echo "Adding geom_load function to $SHELL_RC..."
+    echo -e "\\n$GEOM_LOAD_FUNCTION" >> "$SHELL_RC"
 fi
 
 echo " Running tests..."
 conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh || echo " Some tests failed."
 
-echo -e "\n Installation complete!"
-echo -e "  Restart your shell or run: source $SHELL_RC"
-echo -e "  Then you can run: geom -h"
+echo -e "\n  Installation complete!\n"
+echo -e "  Run: source $SHELL_RC"
+echo -e "  Then load the environment with: geom_load"
+echo -e "  And run the CLI using: geom -h"
 
