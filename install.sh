@@ -8,49 +8,37 @@ echo " Setting up GEOM with conda environment..."
 
 # Check for conda
 if ! command -v conda &> /dev/null; then
-    echo -e "\n Conda not found.\n"
+    echo -e "\n Conda was not found in your system."
 
-    # Detect OS
-    OS_TYPE="$(uname -s)"
-    if [[ "$OS_TYPE" == "Linux" || "$OS_TYPE" == "Darwin" ]]; then
-        read -p " Would you like to install Miniconda automatically? (y/N): " INSTALL_CONDA
-        if [[ "$INSTALL_CONDA" =~ ^[Yy]$ ]]; then
+    # Check if Miniconda is already installed
+    if [[ -x "$HOME/miniconda/bin/conda" ]]; then
+        echo " Detected Miniconda installed at $HOME/miniconda. Using it."
+        export PATH="$HOME/miniconda/bin:$PATH"
+        eval "$($HOME/miniconda/bin/conda shell.bash hook)"
+    else
+        echo " Conda is required to continue."
+        echo " You can install it manually from:"
+        echo "   Anaconda (full): https://www.anaconda.com/products/distribution"
+        echo "   Miniconda (lightweight): https://docs.conda.io/en/latest/miniconda.html"
+        echo
+        read -p " Would you like to automatically install Miniconda now? (y/N): " INSTALL_MINICONDA
+        if [[ "$INSTALL_MINICONDA" =~ ^[Yy]$ ]]; then
+            OS_TYPE="$(uname -s)"
             echo " Downloading Miniconda installer..."
             curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-$([[ $OS_TYPE == "Darwin" ]] && echo "MacOSX" || echo "Linux")-x86_64.sh -o miniconda.sh
 
-            if [[ -d "$HOME/miniconda" ]]; then
-                echo " Miniconda is already installed at $HOME/miniconda."
-                read -p " Do you want to update it? (y/N): " UPDATE_MINICONDA
-                if [[ "$UPDATE_MINICONDA" =~ ^[Yy]$ ]]; then
-                    bash miniconda.sh -b -u -p $HOME/miniconda
-                else
-                    echo " Skipping Miniconda installation."
-                fi
-            else
-                echo " Running Miniconda installer..."
-                bash miniconda.sh -b -p $HOME/miniconda
-            fi
+            echo " Running Miniconda installer..."
+            bash miniconda.sh -b -p "$HOME/miniconda"
 
-            echo " Initializing conda..."
-            eval "$($HOME/miniconda/bin/conda shell.bash hook)"
-            $HOME/miniconda/bin/conda init
-
+            echo " Initializing Miniconda..."
             export PATH="$HOME/miniconda/bin:$PATH"
+            eval "$($HOME/miniconda/bin/conda shell.bash hook)"
+            "$HOME/miniconda/bin/conda" init
             source "$HOME/.bashrc"
         else
-            echo
-            echo " Please install Conda manually from one of the following:"
-            echo "  Anaconda (full): https://www.anaconda.com/products/distribution"
-            echo "  Miniconda (lightweight): https://docs.conda.io/en/latest/miniconda.html"
+            echo " Installation aborted. Please install Conda manually and re-run this script."
             exit 1
         fi
-    else
-        echo " Please install Conda manually:"
-        echo "  Anaconda (full): https://www.anaconda.com/products/distribution"
-        echo "  Miniconda (lightweight): https://docs.conda.io/en/latest/miniconda.html"
-        echo
-        echo " After installing, restart your terminal and re-run this script."
-        exit 1
     fi
 fi
 
@@ -91,5 +79,5 @@ conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh || echo " Some tests f
 echo -e "\n  Installation complete!\n"
 echo -e "  Run: source $SHELL_RC"
 echo -e "  Then load the environment with: geom_load"
-echo -e "  And run the CLI using: geom -h"
+echo -e "  And run the CLI using: geom -h\n"
 
