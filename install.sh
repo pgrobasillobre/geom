@@ -65,7 +65,7 @@ fi
 echo " Installing Python package inside the conda environment..."
 conda run -n $ENV_NAME python -m pip install --upgrade pip setuptools wheel
 conda run -n $ENV_NAME python -m pip install gmsh==4.11.1
-conda run -n $ENV_NAME python -m pip install -e .
+conda run -n $ENV_NAME python -m pip install --editable . --config-settings editable_mode=compat
 
 # Set up shell function (manual activation)
 SHELL_RC="$HOME/.bashrc"
