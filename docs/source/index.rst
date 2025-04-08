@@ -79,6 +79,23 @@ geom -create -sphere Ag 30
 geom -create -graphene rib 50 20
 ```
 
+API Reference
+-------------
+
+The API documentation is generated automatically from the source code. Below are the generated modules, classes, and functions:
+
+.. autoapi:: geom
+   :no-inheritance-diagrams:
+   :members:
+
+.. autoapi:: geom.classes
+   :no-inheritance-diagrams:
+   :members:
+
+.. autoapi:: geom.functions
+   :no-inheritance-diagrams:
+   :members:
+
 Running Tests
 -------------
 
