@@ -1,11 +1,14 @@
 functions/__pycache__
 classes/__pycache__
 __pycache__
+*.pyc
 
 .__main__*
 
 tmp/
 miniconda.sh
+
+docs/build
 
 geom.egg-info/
 build/
