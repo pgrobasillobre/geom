@@ -2,6 +2,9 @@
 include README.md
 include LICENSE
 include install.sh
+include environment.yml
+include pyproject.toml
+
 
 # Include test files (Python and XYZ)
 recursive-include tests *.py
