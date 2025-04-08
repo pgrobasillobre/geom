@@ -5,6 +5,7 @@ __pycache__
 .__main__*
 
 tmp/
+miniconda.sh
 
 geom.egg-info/
 build/
