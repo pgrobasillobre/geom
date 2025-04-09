@@ -1,7 +1,6 @@
 Welcome to GEOM's documentation!
 ===============================
 
-
 **GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
 .. image:: _static/geom-logo.png
@@ -11,20 +10,16 @@ Welcome to GEOM's documentation!
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Table of Contents
 
-   features 
+   features
    installation
    activate_env
    usage
    example
-   code
+   code  # Updated from "API Reference" to "Code"
    tests
    license
    contact
-
-
-
-
 
