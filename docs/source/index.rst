@@ -14,9 +14,7 @@ Welcome to GEOM's documentation!
    :maxdepth: 2
    :caption: Table of Contents
 
-   installation  
-   usage         
-   api_reference 
+   index 
 
 
 Features
