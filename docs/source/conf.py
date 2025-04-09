@@ -18,8 +18,11 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
-    'autoapi.extension',  
+    'autoapi.extension',  # For AutoAPI
 ]
+
+autoapi_type = 'python'
+autoapi_dirs = ['../../geom']  # Path to your code directory
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -36,12 +39,8 @@ html_css_files = [
     'css/custom.css',  # Use your own custom styles
 ]
 
-html_logo = "_static/logo.png"
+html_logo = "_static/geom-logo.png"
 
-
-
-autoapi_type = 'python'
-autoapi_dirs = ['../../geom']
 
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
