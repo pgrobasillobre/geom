@@ -1,10 +1,14 @@
 version: 2
-python:
-  install:
-    - requirements: docs/requirements.txt  # Install dependencies from docs/requirements.txt
 
 build:
   os: ubuntu-20.04
-  commands:
-    - sphinx-build -b html docs/source docs/build/html  # Build the HTML docs
+  tools:
+    python: "3.9"
+
+python:
+  install:
+    - requirements: docs/requirements.txt
+
+sphinx:
+  configuration: docs/source/conf.py
 
