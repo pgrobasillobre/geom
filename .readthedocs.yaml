@@ -1,12 +1,13 @@
 version: 2
 
 python:
+  version: 3.10  # Specify the Python version, or the one you want to use
   install:
-    - requirements: docs/requirements.txt
+    - requirements: docs/requirements.txt  # Install dependencies from the requirements file
 
 build:
-  os: ubuntu-20.04  # Correct OS value
+  os: ubuntu-20.04  # Use a supported OS for building the docs
   commands:
-    - pip install -r docs/requirements.txt  # Install dependencies
-    - sphinx-build -b html docs/source docs/build/html  # Build the HTML documentation
+    - pip install -r docs/requirements.txt  # Install dependencies (should match what's in requirements.txt)
+    - sphinx-build -b html docs/source docs/build/html  # Build the HTML docs using Sphinx
 
