@@ -18,13 +18,6 @@ from .functions import general, translate, rotate, create_geom, various, output
 #                                       Contact: pgrobasillobre@gmail.com                                      #
 # ============================================================================================================ #
 
-# ---------------------------------------------------------
-# PURPOSE: Create XYZ files of metal nanoparticles/graphene
-#          structures and manage geometries
-#
-# EXECUTION details: python3 geom -h 
-# ---------------------------------------------------------
-
 def main():
     """
     Main function to initialize input parameters and execute the appropriate geometry processing task.
