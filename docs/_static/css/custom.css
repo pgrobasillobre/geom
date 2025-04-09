@@ -1,0 +1,4 @@
+/* Add margin below the image */
+.document img {
+    margin-bottom: 30px; /* Adjust the value to increase/decrease spacing */
+}
