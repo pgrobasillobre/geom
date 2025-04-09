@@ -9,8 +9,7 @@ python:
 build:
   os: ubuntu-20.04  # Specify the OS for the build (Ubuntu 20.04 is a common choice)
   commands:
-    - python -m ensurepip --upgrade  # Ensure pip is installed and upgraded
-    - pip install --upgrade pip  # Upgrade pip
-    - pip install -r docs/requirements.txt  # Install dependencies listed in requirements.txt
-    - sphinx-build -b html docs/source docs/build/html  # Build the HTML docs
+    - python -m pip install --upgrade pip  # Ensure pip is installed and upgraded
+    - python -m pip install -r docs/requirements.txt  # Install dependencies listed in requirements.txt
+    - python -m sphinx -b html docs/source docs/build/html  # Build the HTML docs using python -m sphinx
 
