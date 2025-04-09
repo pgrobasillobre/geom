@@ -1,4 +1,4 @@
-# Required dependencies for Sphinx documentation
 sphinx
 sphinx-rtd-theme
 autoapi
+
