@@ -1,13 +1,13 @@
 version: 2
 
-# Python version and installation of dependencies
+# Python installation configuration
 python:
   install:
-    - requirements: docs/requirements.txt  # Install dependencies from docs/requirements.txt
+    - requirements: docs/requirements.txt  # Install dependencies from the requirements file
 
-# Build settings
+# Build configuration
 build:
-  os: ubuntu-20.04  # Specify the OS for the build (you can adjust this if needed)
+  os: ubuntu-20.04  # Specify the OS for the build (Ubuntu 20.04 is a common choice)
   commands:
     - pip install -r docs/requirements.txt  # Install dependencies listed in requirements.txt
     - sphinx-build -b html docs/source docs/build/html  # Build the HTML docs
