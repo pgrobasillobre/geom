@@ -13,3 +13,5 @@ sphinx:
   configuration: docs/source/conf.py
   builder: html
 
+defaults:
+  docs_dir: docs/source
