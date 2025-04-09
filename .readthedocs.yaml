@@ -3,8 +3,6 @@ version: 2
 python:
   install:
     - requirements: docs/requirements.txt  # Install dependencies from requirements.txt
-  tools:
-    sphinx: "4.0"  # Specify the version of Sphinx (optional)
 
 build:
   os: ubuntu-20.04  # Use the OS value for building the docs
