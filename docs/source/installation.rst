@@ -20,16 +20,4 @@ This script will:
 - Set up a Conda virtual environment named **geom_env** with the necessary dependencies.
 - Configure environment variables and aliases for running **GEOM**.
 
-Activate the Environment
--------------------------
-
-After running the install.sh script, you need to load the GEOM environment:
-
-```
-geom_load
-```
-
-
-This will activate the **Conda environment**, set up the necessary aliases, and configure the environment variables needed to run **GEOM**.
-
 
