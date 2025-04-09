@@ -4,9 +4,12 @@ python:
   version: 3.10  # or any other version you prefer
   install:
     - requirements: docs/requirements.txt
-  tools:
-    sphinx: "4.0"  # Optionally specify the version of Sphinx
 
 build:
   os: ubuntu-20.04  # Correct OS value
+  tools:
+    python: "3.10"  # Ensure this matches the Python version you're using
+  commands:
+    - pip install -r docs/requirements.txt  # Install dependencies
+    - sphinx-build -b html docs/source docs/build/html  # Build the HTML documentation
 
