@@ -2,7 +2,6 @@ version: 2
 
 # Python version and installation of dependencies
 python:
-  version: "3.10"  # Specify the Python version (you can change it if needed)
   install:
     - requirements: docs/requirements.txt  # Install dependencies from docs/requirements.txt
 
