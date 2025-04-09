@@ -4,8 +4,9 @@ python:
   version: 3.10  # or any other version you prefer
   install:
     - requirements: docs/requirements.txt
+  tools:
+    sphinx: "4.0"  # Optionally specify the version of Sphinx
 
 build:
   os: ubuntu-20.04  # Correct OS value
-  tools:
-    sphinx: # Define sphinx as a dictionary
+
