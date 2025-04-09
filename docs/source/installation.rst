@@ -16,6 +16,7 @@ To set up your environment, run the following script:
 ```
 
 This script will:
+
 - Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
 - Set up a Conda virtual environment named **geom_env** with the necessary dependencies.
 - Configure environment variables and aliases for running **GEOM**.
