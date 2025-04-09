@@ -3,12 +3,14 @@ version: 2
 # Python installation configuration
 python:
   install:
+    - pip install --upgrade pip  # Ensure pip is installed and upgraded
     - requirements: docs/requirements.txt  # Install dependencies from the requirements file
 
 # Build configuration
 build:
   os: ubuntu-20.04  # Specify the OS for the build (Ubuntu 20.04 is a common choice)
   commands:
+    - pip install --upgrade pip  # Ensure pip is installed and upgraded
     - pip install -r docs/requirements.txt  # Install dependencies listed in requirements.txt
     - sphinx-build -b html docs/source docs/build/html  # Build the HTML docs
 
