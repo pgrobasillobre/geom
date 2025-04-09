@@ -6,7 +6,6 @@ python:
     - requirements: docs/requirements.txt
 
 build:
-  os: ubuntu-20.04  # This should be the correct OS value
+  os: ubuntu-20.04  # Correct OS value
   tools:
-    - sphinx
-
+    sphinx: # Define sphinx as a dictionary
