@@ -1,3 +1,11 @@
+.. toctree::
+   :maxdepth: 2
+   :caption: Table of Contents
+
+   installation  
+   usage         
+   api_reference 
+
 .. image:: _static/geom-logo.png
    :alt: GEOM Logo
    :align: center
@@ -31,8 +39,9 @@ GEOM requires **Python 3.6+** and the following dependencies:
 
 To set up your environment, run the following script:
 
+```
 ./install.sh
-
+```
 
 This script will:
 - Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
@@ -44,8 +53,9 @@ Activate the Environment
 
 After running the install.sh script, you need to load the GEOM environment:
 
+```
 geom_load
-
+```
 
 This will activate the **Conda environment**, set up the necessary aliases, and configure the environment variables needed to run **GEOM**.
 
@@ -54,8 +64,9 @@ Usage
 
 Once the environment is set up, you can run the following command to see all available options:
 
+```
 geom -h
-
+```
 
 This will display the help menu with all the available commands and their descriptions.
 
@@ -64,23 +75,22 @@ Example commands:
 
 - **Rotate geometry 90 degrees** around the Y-axis:
 
+```
 geom -r1 90 geom.xyz origin_CM_yes +y
-
+```
 
 - **Generate a nanoparticle sphere**:
 
+```
 geom -create -sphere Ag 30
-
+```
 
 - **Generate a graphene ribbon**:
 
+```
 geom -create -graphene rib 50 20
+```
 
-
-API Documentation
------------------
-
-The API documentation is generated automatically from the source code. Below are the generated modules, classes, and functions:
 
 .. toctree::
    :maxdepth: 2
@@ -91,12 +101,13 @@ The API documentation is generated automatically from the source code. Below are
 Running Tests
 -------------
 
-The ./install.sh script automatically runs tests to ensure everything is set up correctly.
+The ```install.sh``` script automatically runs tests to ensure everything is set up correctly.
 
 To manually rerun the tests:
 
+```
 ./geom/tests/run_all_tests.sh
-
+```
 
 This will re-run all tests and confirm that your environment is set up correctly.
 
