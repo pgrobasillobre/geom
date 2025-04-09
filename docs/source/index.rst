@@ -1,6 +1,13 @@
+.. image:: _static/geom-logo.png
+   :alt: GEOM Logo
+   :align: center
+   :width: 600px
+
+.. raw:: html
+   <div style="margin-bottom: 50px;"></div>  <!-- Adds space below the logo -->
 
 Welcome to GEOM's documentation!
-===============================
+===============================  
 
 **GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
@@ -27,7 +34,7 @@ GEOM requires **Python 3.6+** and the following dependencies:
 
 To set up your environment, run the following script:
 
-```bash
+```
 ./install.sh
 ```
 
@@ -41,7 +48,7 @@ Activate the Environment
 
 After running the `install.sh` script, you need to load the GEOM environment:
 
-```bash
+```
 geom_load
 ```
 
@@ -52,7 +59,7 @@ Usage
 
 Once the environment is set up, you can run the following command to see all available options:
 
-```bash
+```
 geom -h
 ```
 
@@ -63,38 +70,27 @@ Example commands:
 
 - **Rotate geometry 90 degrees** around the Y-axis:
 
-```bash
+```
 geom -r1 90 geom.xyz origin_CM_yes +y
 ```
 
 - **Generate a nanoparticle sphere**:
 
-```bash
+```
 geom -create -sphere Ag 30
 ```
 
 - **Generate a graphene ribbon**:
 
-```bash
+```
 geom -create -graphene rib 50 20
 ```
 
-API Reference
--------------
+.. toctree::
+   :maxdepth: 2
+   :caption: Code Structure
 
-The API documentation is generated automatically from the source code. Below are the generated modules, classes, and functions:
-
-.. autoapi:: geom
-   :no-inheritance-diagrams:
-   :members:
-
-.. autoapi:: geom.classes
-   :no-inheritance-diagrams:
-   :members:
-
-.. autoapi:: geom.functions
-   :no-inheritance-diagrams:
-   :members:
+   autoapi/index
 
 Running Tests
 -------------
@@ -103,7 +99,7 @@ The `./install.sh` script automatically runs tests to ensure everything is set u
 
 To manually rerun the tests:
 
-```bash
+```
 ./geom/tests/run_all_tests.sh
 ```
 
