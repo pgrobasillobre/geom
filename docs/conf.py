@@ -46,3 +46,7 @@ html_logo = "_static/geom-logo.png"
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
+html_theme_options = {
+    "logo_only": False,
+}
+
