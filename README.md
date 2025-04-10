@@ -2,6 +2,8 @@
 
 **GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
+**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.0.0/)**
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo.png" width="600">
 </p>
