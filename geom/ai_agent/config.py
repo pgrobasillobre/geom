@@ -1,8 +1,23 @@
 # Configurate the LLM model and the API_key to be used
+import os
+import sys
+
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+
+    print("")
+    print("     ❌ Please set your OPENAI_API_KEY environment variable before running the assistant.")
+    print("")
+    print("     --> For that make: export OPENAI_API_KEY=your-key-here")
+    print("")
+
+    sys.exit()
+
 config_list = [
     {
         'model': 'gpt-4.1-nano',
-        'api_key':  
+        'api_key': api_key
     }
 ]
 
