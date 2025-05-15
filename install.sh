@@ -1,4 +1,3 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                       1,1           All
 #!/bin/bash
 
 set -e
