@@ -10,7 +10,8 @@ def make_hooked_reply(run_geom_command, original_reply):
             saved_command = reply if isinstance(reply, str) else reply.get("content", "").strip()
 
             if saved_command:
-                run_geom_command(saved_command)
+                if ('error') not in saved_command.lower():
+                   run_geom_command(saved_command)
                 return {"content": saved_command + "\n\nTERMINATE"}
             else:
                 return reply

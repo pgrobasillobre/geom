@@ -3,14 +3,16 @@ from runner import run_geom_command
 from agents import create_geom_assistant, create_user_proxy
 from validator import make_hooked_reply
 
-if __name__ == "__main__":
+def main():
 
     print("")
     print("     ============================   ")
     print("     Welcome to GEOM AI Assistant   ")
     print("     ============================   ")
     print("")
-    print("     Please type your request (e.g., 'Create a silver sphere of 20 angstroms radius').")
+    print("     Please type your request:")
+    print("")
+    print("     (e.g., 'Create a silver sphere of 20 angstroms radius').")
     print("")
     print("     ============================")
     print("")
@@ -23,5 +25,8 @@ if __name__ == "__main__":
 
     chat = GroupChat(agents=[user_agent, geom_assistant], messages=[], speaker_selection_method="round_robin")
     manager = GroupChatManager(groupchat=chat)
-    user_agent.initiate_chat(manager)
 
+    user_agent.initiate_chat(manager, print_received_message=False)
+
+if __name__ == "__main__":
+    main()
