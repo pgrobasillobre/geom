@@ -30,6 +30,7 @@ def main():
     geom_assistant = create_geom_assistant()
     user_agent = create_user_proxy()
 
+    # Monkey patching
     original_reply = geom_assistant.generate_reply
     geom_assistant.generate_reply = make_hooked_reply(run_geom_command, original_reply)
 
