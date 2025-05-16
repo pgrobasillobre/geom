@@ -1,5 +1,5 @@
 from autogen import AssistantAgent, UserProxyAgent
-from config import config_list, get_system_prompt
+from ai_config import config_list, get_system_prompt
 
 def create_geom_assistant():
     """

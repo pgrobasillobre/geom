@@ -87,7 +87,7 @@ fi
 if ! grep -q "function geom_load" "$SHELL_RC"; then
     echo "Adding geom_load function to $SHELL_RC..."
     
-    MAIN_PATH="$(realpath ./geom/ai_agent/main.py)"
+    MAIN_PATH="$(realpath ./geom/ai_agent/ai_main.py)"
     ENV_PYTHON="$(conda run -n $ENV_NAME which python)"
 
     cat << EOF >> "$SHELL_RC"
