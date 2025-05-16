@@ -32,7 +32,8 @@ def create_user_proxy():
         human_input_mode="ALWAYS",
         max_consecutive_auto_reply=1,
         code_execution_config={"work_dir": ".", "use_docker": False},
-        system_message="Reply TERMINATE if the GEOM command has been solved.",
-        is_termination_msg=lambda msg: msg.get("content", "").strip().endswith("TERMINATE")
+        system_message="Reply TERMINATE if the GEOM command has been solved."
+        # Let the model continue asking the user if wants more structure's to be created
+        #is_termination_msg=lambda msg: msg.get("content", "").strip().endswith("TERMINATE")
     )
 
