@@ -5,9 +5,15 @@ from agents import create_geom_assistant, create_user_proxy
 from validator import make_hooked_reply
 
 # Suppress the OpenAI API key format warning from autogen
+# As far as I have understood, this warning message is due to a bug in autogen
 logging.getLogger("autogen.oai.client").setLevel(logging.ERROR)
 
 def main():
+    """Main function to run the GEOM AI Assistant.
+
+    Sets up the chat environment, initializes agents,
+    and starts the conversational loop.
+    """
 
     print("")
     print("     ============================   ")
