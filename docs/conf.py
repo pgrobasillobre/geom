@@ -40,7 +40,7 @@ html_css_files = [
     'css/custom.css',  # Use your own custom styles
 ]
 
-html_logo = "_static/geom-logo.png"
+html_logo = "_static/geom-logo-autogen.png"
 
 
 napoleon_google_docstring = True
