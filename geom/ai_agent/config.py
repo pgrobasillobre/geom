@@ -27,7 +27,8 @@ config_list = [
 
 # Explanation to LLM on how to use GEOM code
 def get_system_prompt():
-    """Returns the system prompt that guides the GEOM assistant behavior.
+    """
+    Returns the system prompt that guides the GEOM assistant behavior.
 
     This prompt includes strict rules and examples on how to convert natural language
     into specific GEOM CLI commands, including error cases.

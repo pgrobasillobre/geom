@@ -1,7 +1,8 @@
 import subprocess
 
 def run_geom_command(command: str):     
-   """Run the given GEOM CLI command using subprocess.
+   """
+   Run the given GEOM CLI command using subprocess.
 
    Args:
        command (str): The GEOM command string to execute.
