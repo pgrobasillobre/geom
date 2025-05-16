@@ -110,7 +110,7 @@ You’ll be greeted with a chat prompt where you can type requests like:
 
 
 ```
-Create a gold nanorod that is 40 angstroms long and 10 angstroms wide along the z axis.
+Create a gold nanorod along the z axis that is 40 angstroms long and 10 angstroms wide.
 ```
 
 The assistant will automatically create and execute the corresponding GEOM command for you.
