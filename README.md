@@ -34,7 +34,7 @@ GEOM requires **Python 3.8+** and the following dependencies:
 
 ### Setting Up the Virtual Environment
 GEOM uses **Conda** to set up a virtual environment for your project. To install it and set up your environment, run the following:
-```bash
+```
 ./install.sh
 ```
 
@@ -84,13 +84,15 @@ geom -create -graphene rib 50 20
 
 ## Starting the AI Assistant *(new in v1.1.0)*
 
-GEOM now includes an **AI assistant** that understands natural language, translates it into valid GEOM CLI commands, and automatically executes them.
+GEOM now includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
+
+This assistant is built using [Microsoft's AutoGen framework](https://github.com/microsoft/autogen), which enables a multi-agent system to interface with OpenAI’s language models and run commands dynamically.
 
 ### 1. Export your OpenAI API key
 
-The assistant requires access to **OpenAI's LLMs**. Make sure you have an API key:
+The assistant requires access to **OpenAI's LLMs**. Make sure you have your API key set:
 
-```bash
+```
 export OPENAI_API_KEY=your-api-key-here
 ```
 
@@ -98,13 +100,14 @@ export OPENAI_API_KEY=your-api-key-here
 
 ### 2. Start the assistant
 
-To launch the chat-based assistant, load the GEOM environment (i.e., `geom_load`) and run:
+To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_load`) and run:
 
-```bash
+```
 ai_geom
 ```
 
-You can then type natural-language requests like:
+You’ll be greeted with a chat prompt where you can type requests like:
+
 
 ```
 Create a gold nanorod that is 40 angstroms long and 10 angstroms wide along the z axis.

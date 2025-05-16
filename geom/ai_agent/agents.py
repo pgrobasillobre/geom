@@ -2,7 +2,8 @@ from autogen import AssistantAgent, UserProxyAgent
 from config import config_list, get_system_prompt
 
 def create_geom_assistant():
-    """Create and return the GEOM Assistant agent.
+    """
+    Create and return the GEOM Assistant agent.
 
     Returns:
         AssistantAgent: A configured assistant agent capable of translating
@@ -20,7 +21,8 @@ def create_geom_assistant():
     )
 
 def create_user_proxy():
-    """Create and return the user proxy agent for human interaction.
+    """
+    Create and return the user proxy agent for human interaction.
 
     Returns:
         UserProxyAgent: An agent configured to receive human input and

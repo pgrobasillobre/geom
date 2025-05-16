@@ -9,9 +9,17 @@ from validator import make_hooked_reply
 logging.getLogger("autogen.oai.client").setLevel(logging.ERROR)
 
 def main():
-    """Main function to run the GEOM AI Assistant.
+    """
+    Main function to run the GEOM AI Assistant.
 
-    Sets up the chat environment, initializes agents,
+    This script launches a conversational AI assistant for GEOM,
+    implemented using Microsoft's AutoGen framework.
+
+    The assistant interprets natural language user requests and 
+    translates them into executable GEOM CLI commands via a 
+    multi-agent chat interface.
+
+    This function sets up the chat environment, initializes agents,
     and starts the conversational loop.
     """
 
