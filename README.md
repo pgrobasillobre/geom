@@ -5,7 +5,7 @@
 **[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.1.0)**
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo-autogen" width="600">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo-autogen.png" width="600">
 </p>
 
 
