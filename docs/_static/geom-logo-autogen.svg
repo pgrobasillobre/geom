@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="297mm"
+   height="210mm"
+   viewBox="0 0 297 210"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="geom-logo-autogen.svg"
+   inkscape:export-filename="geom-logo.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#cccccc"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.6257446"
+     inkscape:cx="494.61074"
+     inkscape:cy="697.56894"
+     inkscape:window-width="1712"
+     inkscape:window-height="936"
+     inkscape:window-x="803"
+     inkscape:window-y="373"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     inkscape:export-bgcolor="#ffffffff"
+     inkscape:pageshadow="2"
+     showgrid="false" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="swatch1"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#4f00b5;stop-opacity:0.6163522;"
+         offset="0"
+         id="stop4" />
+      <stop
+         style="stop-color:#0600a0;stop-opacity:0;"
+         offset="1"
+         id="stop5" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4"
+       id="linearGradient5"
+       x1="38.591408"
+       y1="146.97603"
+       x2="261.49264"
+       y2="146.97603"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.68151082,0,0,2.9933688,-234.39128,-291.89434)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#swatch1"
+       id="linearGradient1"
+       x1="-194.98981"
+       y1="148.05913"
+       x2="-55.473465"
+       y2="148.05913"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.09971,0,0,0.99965785,5.5824788,0.0506571)" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="opacity:0.876011;fill:url(#linearGradient5);stroke:url(#linearGradient1);stroke-width:2.09697;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4"
+       width="151.22809"
+       height="283.35989"
+       x="-207.75006"
+       y="6.3791857"
+       transform="rotate(-90)"
+       inkscape:export-filename="rect4.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:70.5556px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman,  Bold';opacity:1;fill:#000000;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="38.526615"
+       y="111.47569"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="font-size:70.5556px;fill:#000000;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+         x="38.526615"
+         y="111.47569">GEOM</tspan></text>
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-dasharray:none;stroke-opacity:1"
+       d="M 43.475202,121.44959 H 258.15369"
+       id="path1" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:1"
+       d="m 122.76822,128.91596 h 54.778"
+       id="path1-7" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="M 97.200814,125.48743 H 204.71199"
+       id="path1-7-5" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:70.5556px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman,  Bold';fill:#000000;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="11.686744"
+       y="200.04411"
+       id="text1-3"><tspan
+         sodipodi:role="line"
+         id="tspan1-6"
+         style="font-size:70.5556px;fill:#999999;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+         x="11.686744"
+         y="200.04411">AutoGen</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:35.2778px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman,  Bold';fill:#000000;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="139.60352"
+       y="156.05046"
+       id="text1-3-7"><tspan
+         sodipodi:role="line"
+         id="tspan1-6-5"
+         style="font-size:35.2778px;fill:#999999;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+         x="139.60352"
+         y="156.05046">+</tspan></text>
+  </g>
+</svg>

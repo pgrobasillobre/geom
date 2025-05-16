@@ -2,15 +2,16 @@
 
 **GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
-**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.0.0)**
+**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.1.0)**
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo.png" width="600">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo-autogen" width="600">
 </p>
 
 
 ## Features
 
+- **AI Assistant for nanoparticle and graphene creation** *(new in v1.1.0)*
 - **Geometry Transformations**: Translation, rotation, merging, and specular (mirror) transformations.
 - **Nanoparticle Generation**: Sphere, rod, core-shell, tip, pyramid, cone, icosahedron, and more.
 - **Graphene Structures**: Ribbons, disks, rings, and triangles.
@@ -20,13 +21,16 @@
 
 ## Installation
 
-GEOM requires **Python 3.6+** and the following dependencies:
+GEOM requires **Python 3.8+** and the following dependencies:
 
 - `gmsh==4.11.1`
 - `ase==3.22.1`
 - `numpy==1.24.3`
 - `pytest==8.3.4`
 - `launchpadlib==2.1.0`
+- `pyautogen==0.2.18`
+- `flaml[automl]==2.1.1`
+- `httpx==0.27.2`
 
 ### Setting Up the Virtual Environment
 GEOM uses **Conda** to set up a virtual environment for your project. To install it and set up your environment, run the following:
@@ -77,6 +81,37 @@ geom -create -sphere Ag 30
 ```
 geom -create -graphene rib 50 20
 ```
+
+## Starting the AI Assistant *(new in v1.1.0)*
+
+GEOM now includes an **AI assistant** that understands natural language, translates it into valid GEOM CLI commands, and automatically executes them.
+
+### 1. Export your OpenAI API key
+
+The assistant requires access to **OpenAI's LLMs**. Make sure you have an API key:
+
+```bash
+export OPENAI_API_KEY=your-api-key-here
+```
+
+> You can obtain an API key from https://platform.openai.com/account/api-keys
+
+### 2. Start the assistant
+
+To launch the chat-based assistant, load the GEOM environment (i.e., `geom_load`) and run:
+
+```bash
+ai_geom
+```
+
+You can then type natural-language requests like:
+
+```
+Create a gold nanorod that is 40 angstroms long and 10 angstroms wide along the z axis.
+```
+
+The assistant will automatically create and execute the corresponding GEOM command for you.
+
 
 ## Running Tests
 
