@@ -12,7 +12,7 @@ GEOM requires **Python 3.8+** and the following dependencies:
 - `flaml[automl]==2.1.1`
 - `httpx==0.27.2`
 
-### Setting Up the Virtual Environment
+Setting Up the Virtual Environment
 GEOM uses **Conda** to set up a virtual environment for your project. To install it and set up your environment, run the following:
 ```
 ./install.sh
