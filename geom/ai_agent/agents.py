@@ -2,13 +2,31 @@ from autogen import AssistantAgent, UserProxyAgent
 from config import config_list, get_system_prompt
 
 def create_geom_assistant():
+    """Create and return the GEOM Assistant agent.
+
+    Returns:
+        AssistantAgent: A configured assistant agent capable of translating
+                        user input into GEOM CLI commands.
+    """
+
     return AssistantAgent(
         name="GeomAssistant",
-        llm_config={"config_list": config_list, "temperature": 0.0, "seed": 42},
+        llm_config={
+             "config_list": config_list, 
+             "temperature": 0.0, 
+             "seed": 42
+             },
         system_message=get_system_prompt()
     )
 
 def create_user_proxy():
+    """Create and return the user proxy agent for human interaction.
+
+    Returns:
+        UserProxyAgent: An agent configured to receive human input and
+                        terminate after one assistant response.
+    """
+
     return UserProxyAgent(
         name="User",
         human_input_mode="ALWAYS",
