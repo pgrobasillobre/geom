@@ -2,7 +2,7 @@
 
 **GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
-**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.1.0)**
+**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.2.0)**
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/ai_agent/docs/_static/geom-logo-autogen.png" width="600">
@@ -11,7 +11,7 @@
 
 ## Features
 
-- **AI Assistant for nanoparticle and graphene creation** *(new in v1.1.0)*
+- **AI Assistant for nanoparticle and graphene creation** 
 - **Geometry Transformations**: Translation, rotation, merging, and specular (mirror) transformations.
 - **Nanoparticle Generation**: Sphere, rod, core-shell, tip, pyramid, cone, icosahedron, and more.
 - **Graphene Structures**: Ribbons, disks, rings, and triangles.
@@ -82,7 +82,7 @@ geom -create -sphere Ag 30
 geom -create -graphene rib 50 20
 ```
 
-## Starting the AI Assistant *(new in v1.1.0)*
+## Starting the AI Assistant 
 
 GEOM now includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
 
