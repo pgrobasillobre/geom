@@ -2,6 +2,7 @@ functions/__pycache__
 classes/__pycache__
 __pycache__
 *.pyc
+.cache
 
 .__main__*
 
