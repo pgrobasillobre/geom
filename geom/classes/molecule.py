@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import sys
 
 from geom.classes import parameters
 
@@ -721,6 +722,75 @@ class molecule:
       self.xyz_min = np.min(self.xyz, axis=1)
 
       return(self)
+
+   # -------------------------------------------------------- #
+   # ------- Filter XYZ within hexagonal-base pyramid ------- #
+
+   def filter_xyz_in_hexagonal_pyramid(self, inp, centers, planes):
+    """
+    Filters atoms in the molecular geometry, keeping only those inside a hexagonal-base pyramid.
+
+    Args:
+        inp (input_class): The input parameters containing the atomic type.
+        centers (dict): Dictionary with center coordinates of the pyramid base and apex.
+                        Expected keys: "center_1"..."center_6" (base), "center_7" (apex).
+        planes (dict): Dictionary with normal vectors and offsets for the pyramid planes.
+                       Expected keys: "n_127", "n_237", "n_347", "n_457", "n_567", "n_617".
+
+    Returns:
+        molecule: The molecule object with updated atomic coordinates.
+
+    Notes:
+        - The function first checks whether each atom lies within the bounding box of the pyramid.
+        - Then, the atoms are filtered using the plane equations for each pyramid face.
+        - The molecule is updated with only the atoms that meet these conditions.
+        - Computes the new geometrical center, bounding box limits, and atom count.
+        - The pyramid structure is defined using six planes and a set of center points.
+    """
+
+    x = self.xyz[0, :]
+    y = self.xyz[1, :]
+    z = self.xyz[2, :]
+
+    # Bounding box for the hexagonal base (z between base and apex)
+    z_min = centers["center_1"][2]
+    z_max = centers["center_7"][2]
+    x_min = min(centers[f"center_{i}"][0] for i in range(1, 7))
+    x_max = max(centers[f"center_{i}"][0] for i in range(1, 7))
+    y_min = min(centers[f"center_{i}"][1] for i in range(1, 7))
+    y_max = max(centers[f"center_{i}"][1] for i in range(1, 7))
+
+    condition = (
+        (z_min <= z) & (z <= z_max) &
+        (x_min <= x) & (x <= x_max) &
+        (y_min <= y) & (y <= y_max)
+    )
+
+    # Atoms must be "inside" all 6 planes
+    for key in ["n_127", "n_237", "n_347", "n_457", "n_567", "n_617"]:
+        normal, rhs = planes[key]
+        condition = condition & (normal[0]*x + normal[1]*y + normal[2]*z >= -rhs)
+
+    x_filtered = x[condition]
+    y_filtered = y[condition]
+    z_filtered = z[condition]
+
+    self.nAtoms = len(x_filtered)
+    self.atoms = [inp.atomtype] * self.nAtoms
+
+    self.xyz_center = np.zeros(3)
+    self.xyz_min    = np.zeros(3)
+    self.xyz_max    = np.zeros(3)
+
+    self.xyz = np.zeros((3, self.nAtoms))
+    self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+    if self.nAtoms > 0:
+        self.xyz_center = np.mean(self.xyz, axis=1)
+        self.xyz_max = np.max(self.xyz, axis=1)
+        self.xyz_min = np.min(self.xyz, axis=1)
+
+    return self
 
 
    # -------------------------------------- #

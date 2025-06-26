@@ -146,6 +146,8 @@ def print_help():
 
            Pyramid (square base): -create -pyramid atom_type z_max base_side_length
 
+           Pyramid (hexagonal base): -create -pyramid_hex atom_type z_max radius_of_sphere_containing_hexagon
+
            Cone: -create -cone atom_type z_max base_radius
 
            Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length
@@ -517,6 +519,12 @@ def parse_create(argv, inp):
          inp.create_ase_bulk = True
          inp.z_max = float(argv[4])
          inp.side_length =  float(argv[5])
+
+      elif (argv[2] == '-pyramid_hex'): 
+         inp.gen_pyramid_hex = True
+         inp.create_ase_bulk = True
+         inp.z_max = float(argv[4])
+         inp.radius =  float(argv[5])
 
       elif (argv[2] == '-microscope'): 
          inp.gen_microscope = True

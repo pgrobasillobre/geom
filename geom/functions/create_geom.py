@@ -33,6 +33,7 @@ def select_case(inp):
    if (inp.gen_3d_mesh_rod):       rod_3d_mesh(inp)
    if (inp.gen_tip):               tip(inp)
    if (inp.gen_pyramid):           pyramid(inp)
+   if (inp.gen_pyramid_hex):       pyramid_hex(inp)
    if (inp.gen_cone):              cone(inp)
    if (inp.gen_microscope):        microscope(inp)
    if (inp.gen_icosahedra):        icosahedra(inp)
@@ -537,6 +538,64 @@ def pyramid(inp):
    inp.xyz_output = f'pyramid_{inp.atomtype}_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
+def pyramid_hex(inp):
+   """
+   Generates a pyramid-shaped geometry with hexagonal base.
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated pyramid geometry.
+   """
+
+   # Check input
+   inp.check_input_case()
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Initialize bulk "molecule" and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file, False)
+
+   # Define vertices for the hexagonal base (centered at 0,0,0, base at z=0)
+   centers = {}
+   for i, theta in enumerate(np.linspace(0, 2*np.pi, 7)[:-1], 1):
+       centers[f"center_{i}"] = [inp.radius * np.cos(theta), inp.radius * np.sin(theta), 0.0]
+   centers["center_7"] = [0.0, 0.0, inp.z_max]  # Apex
+
+   # Function to calculate normal and RHS for planes
+   def calculate_normal_and_rhs(center_a, center_b, apex):
+        a = [center_a[i] - apex[i] for i in range(3)]
+        b = [center_b[i] - apex[i] for i in range(3)]
+        normal = np.cross(a, b)
+        rhs = -sum(normal[i] * apex[i] for i in range(3))
+        return normal, rhs
+
+   # Define planes for each face (between each base edge and the apex)
+   planes = {}
+   for i in range(1, 7):
+        key = f"n_{i}{(i%6)+1}7"
+        planes[key] = calculate_normal_and_rhs(
+            centers[f"center_{i}"],
+            centers[f"center_{(i%6)+1}"],
+            centers["center_7"]
+    )
+
+   # Pick only atoms within the defined pyramid
+   mol.filter_xyz_in_hexagonal_pyramid(inp,centers,planes)
+
+   # Remove dangling atom on extreme 
+   mol.remove_dangling_atoms_metals(inp)
+
+   # Alloy
+   if inp.alloy: mol.create_alloy(inp)
+
+   # Save filtered geometry
+   inp.xyz_output = f'pyramid_hex_{inp.atomtype}_radius-{inp.radius}_zmax-{inp.z_max}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
+#
+# -------------------------------------------------------------------------------------
 def cone(inp):
    """
    Generates a conical geometry.
@@ -844,6 +903,20 @@ def get_layers(inp, lattice_constant):
           # If both are equal, apply scaling to L
           H = inp.z_max
           L = 1.5 * structure_scaling * inp.side_length
+
+      return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int(H / lattice_constant) + 2]
+
+   elif inp.gen_pyramid_hex:
+      if inp.z_max > inp.radius:
+          H = 1.5 * structure_scaling * inp.z_max  
+          L = inp.radius  
+      elif inp.radius > inp.z_max:
+          H = inp.z_max  
+          L = 1.5 * structure_scaling * inp.radius  
+      else:
+          # If both are equal, apply scaling to L
+          H = inp.z_max
+          L = 1.5 * structure_scaling * inp.radius
 
       return [int(L / lattice_constant) + 2, int(L / lattice_constant) + 2, int(H / lattice_constant) + 2]
 
