@@ -18,6 +18,7 @@ Welcome to GEOM's documentation!
    activate_env
    usage
    example
+   ai_assistant
    code  # Updated from "API Reference" to "Code"
    tests
    license

@@ -7,21 +7,26 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "geom"
-version = "1.0.0"
-description = "GEOM: A CLI for geometry manipulation"
+version = "1.1.0"
+description = "GEOM: A CLI for geometry manipulation with AI assistant"
 readme = "README.md"
 authors = [
-    { name="Pablo Grobas Illobre", email="pgrobasillobre@gmail.com" }
+    { name = "Pablo Grobas Illobre", email = "pgrobasillobre@gmail.com" }
 ]
 license = { text = "GPL-3.0-or-later" }
+requires-python = ">=3.8"
+
 dependencies = [
     "gmsh==4.11.1",
     "ase==3.22.1",
     "numpy==1.24.3",
     "pytest==8.3.4",
-    "launchpadlib==2.1.0"
+    "launchpadlib==2.1.0",
+    "openai==1.3.8",
+    "pyautogen==0.2.18",
+    "flaml[automl]==2.1.1",
+    "httpx==0.27.2"
 ]
-requires-python = ">=3.6"
 
 [project.urls]
 Homepage = "https://github.com/pgrobasillobre/geom"

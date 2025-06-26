@@ -415,10 +415,10 @@ def parse_create(argv, inp):
             inp.gen_sphere_core_shell = True
             inp.create_ase_bulk = True
 
-            inp.atomtype_in  = argv[4]
+            inp.atomtype_in  = argv[4].lower()
             inp.radius_in    = float(argv[5])
 
-            inp.atomtype_out = argv[7]
+            inp.atomtype_out = argv[7].lower()
             inp.radius_out   = float(argv[8])
 
             if (inp.atomtype_in not in inp.atomtypes_core_shell):
