@@ -5,9 +5,8 @@
 **[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.1.0)**
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/ai_agent/docs/_static/geom-logo-autogen.png" width="600">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/branch-v1.1.0/docs/_static/geom-logo-autogen.png" width="600">
 </p>
-
 
 ## Features
 
