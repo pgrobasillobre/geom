@@ -41,6 +41,8 @@ def read_command_line(argv, inp):
         parse_create(argv, inp)
     elif command == '-merge':
         parse_merge(argv,inp)
+    elif command == '-rdkit':
+        parse_rdkit(argv,inp)
     else:
         output.error(f'Option "{command}" not recognized. Try python3 geom -h')
 # -------------------------------------------------------------------------------------
@@ -299,6 +301,24 @@ def parse_merge(argv, inp):
    inp.geom1_file = str(argv[2])
    inp.geom2_file = str(argv[3])
    inp.merge_cutoff = float(argv[4])
+# -------------------------------------------------------------------------------------
+def parse_rdkit(argv, inp):
+    """
+        TO DO
+    """
+
+    # Sanitary check
+    if "-i" not in argv: output.error('Missing "-i" option for parsing input.')
+
+    inp.rdkit = True
+
+    if "-vis2d" in argv: inp.rdkit_visualize_2d = True
+    if "-vis3d" in argv: inp.rdkit_visualize_3d = True
+    if "-stereo" in argv: inp.stereo_annotations = True
+    if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
+
+    inp.rdkit_mol_file = argv[3]
+    inp.rdkit_mol_file_extensions = inp.rdkit_mol_file[-4:]
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
@@ -787,6 +807,20 @@ def check_file_extension(infile,extension):
 
    i = len(extension)
    if (infile[-i:] != extension): output.error('extension "' + extension + '" not found in file "' + infile + '"' )
+# -------------------------------------------------------------------------------------
+def check_file_extension_rdkit(infile,accepted_extensions):
+    """ 
+    debugpgi    
+    """
+   
+    file_extension = infile[-4:].lower()
+    if file_extension not in accepted_extensions:
+        msg = (
+            f"File extension '{file_extension}' for RDKit not supported.\n\n"
+            "   Accepted file extensions:"
+            + "".join(f"\n     - {ext}" for ext in accepted_extensions)
+        )
+        output.error(msg)
 # -------------------------------------------------------------------------------------
 def check_dir_axis(inp):
    """ 

@@ -1,3 +1,4 @@
+from geom.classes import parameters
 from geom.functions import general, output
 
 class input_class:
@@ -30,6 +31,16 @@ class input_class:
           - Geometric parameters (distances, angles, lattice properties).
           - Structure-specific settings (graphene edge type, core-shell configuration, alloy composition).
       """
+
+      # -- RDKit options
+      self.rdkit = False
+      self.rdkit_visualize = False
+      self.rdkit_visualize_2d = False
+      self.rdkit_visualize_3d = False
+      self.stereo_annotations = False
+
+      self.rdkit_mol_file = ''
+      self.rdkit_mol_file_extension = ''
 
       # -- Small tasks
       self.small_tasks = False
@@ -220,6 +231,14 @@ class input_class:
       elif (self.geom_specular):
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
+
+      elif (self.rdkit):
+         general.check_file_exists(self.rdkit_mol_file)
+
+         # Extract parameters to check extension
+         param = parameters.parameters()
+         general.check_file_extension_rdkit(self.rdkit_mol_file, param.rdkit_file_extensions)
+
 
       elif (self.create_geom):
          if (not self.gen_graphene          and
