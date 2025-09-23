@@ -33,7 +33,7 @@ def visualize(inp):
   mol = load_rdkit_file(inp)
 
   # Visualize 2D or 3D
-  if (inp.rdkit_visualize_2d): plot_2d_molecule(mol, inp.stereo_annotations)
+  if (inp.rdkit_visualize_2d): plot_2d_molecule(mol, inp)
   if (inp.rdkit_visualize_3d): plot_3d_molecule(mol)
 # -------------------------------------------------------------------------------------
 def load_rdkit_file(inp):
@@ -77,44 +77,46 @@ def load_rdkit_file(inp):
         )
         output.error(msg)
 # -------------------------------------------------------------------------------------
-def plot_2d_molecule(mol, stereo_annotations, 
-                     size=(800, 700), annotate_atom_indices=False, kekulize = True):
+def plot_2d_molecule(mol, inp, size=(800, 700)):
     """
     Compute 2D coords and render as an image, then show it.
-    - stereo_annotations=True adds R/S and E/Z labels.
+    - stereo_annotations: R/S and E/Z labels
+    - annotate_atom_indices: overlays atom indices (does not replace element symbols)
     """
-    m2d = Chem.Mol(mol)  # Avoid overwritting
+    stereo_annotations = inp.stereo_annotations
+    annotate_atom_indices = inp.atom_index
+
+    m2d = Chem.Mol(mol)  # Avoid overwriting original
     rdDepictor.Compute2DCoords(m2d)
     Chem.AssignStereochemistry(m2d, cleanIt=True, force=True, flagPossibleStereoCenters=True)
 
-    atom_labels = None
-    if annotate_atom_indices:
-        atom_labels = {i: str(i) for i in range(m2d.GetNumAtoms())}
+    use_draw2d = stereo_annotations or annotate_atom_indices
 
-    if not stereo_annotations:
+    if not use_draw2d:
         # Simple path: wedge bonds, no extra labels
         img = Draw.MolToImage(
-            m2d, size=size, kekulize=True,
-            atomLabels=atom_labels, wedgeBonds=True
+            m2d, size=size, kekulize=True, wedgeBonds=True
         )
     else:
-        # rdMolDraw2D path with stereo labels
+        # rdMolDraw2D path with optional stereo + atom indices overlays
         w, h = size
         drawer = rdMolDraw2D.MolDraw2DCairo(w, h)
         opts = drawer.drawOptions()
-        opts.addStereoAnnotation = True
-        opts.addAtomIndices = annotate_atom_indices
+        opts.addStereoAnnotation = bool(stereo_annotations)
+        opts.addAtomIndices = bool(annotate_atom_indices)
         opts.padding = 0.05
-        if kekulize:
-            try:
-                Chem.Kekulize(m2d, clearAromaticFlags=True)
-            except Exception:
-                pass
+
+        # Kekulize for nicer aromatic display (ignore failures)
+        try:
+            Chem.Kekulize(m2d, clearAromaticFlags=True)
+        except Exception:
+            pass
+
         rdMolDraw2D.PrepareAndDrawMolecule(drawer, m2d)
         drawer.FinishDrawing()
 
         png = drawer.GetDrawingText()
-        import PIL.Image as Image
+        import PIL.Image as Image, io
         img = Image.open(io.BytesIO(png))
 
     plt.imshow(img)
