@@ -105,4 +105,4 @@ class parameters:
       self.metal_atomtypes = list(self.lattice_constant.keys())
 
       # RDKit accepted file extensions
-      self.rdkit_file_extensions = [".smi",".sdf", ".mol", ".pdb"]
+      self.rdkit_file_extensions = [".smi",".sdf", ".mol", ".pdb", ".xyz"]

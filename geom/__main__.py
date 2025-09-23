@@ -1,7 +1,7 @@
 import sys 
 
-from classes import input_class
-from functions import general, translate, rotate, create_geom, various, rdkit_module, output
+from .classes import input_class
+from .functions import general, translate, rotate, create_geom, various, rdkit_module, output
 
 
 #                    ██████╗ ███████╗ ██████╗ ███╗   ███╗     ██████╗ ██████╗ ██████╗ ███████╗                
