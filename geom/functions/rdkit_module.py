@@ -1,14 +1,13 @@
-import io
-import os
+import io, sys, os, shutil
+import webbrowser, tempfile
 import py3Dmol
-import webbrowser
-import tempfile
 import matplotlib.pyplot as plt
 
-from geom.classes import molecule, parameters
+from geom.classes import parameters, molecule
 from geom.functions import output 
+
 from rdkit import Chem
-from rdkit.Chem import Draw, rdDepictor, AllChem
+from rdkit.Chem import Draw, rdDepictor, AllChem, rdDetermineBonds
 from rdkit.Chem.Draw import rdMolDraw2D
 # -------------------------------------------------------------------------------------
 def select_case(inp):
@@ -17,6 +16,9 @@ def select_case(inp):
   """
 
   if (inp.rdkit_visualize): visualize(inp)
+
+  # Eliminate tmp folder containing xyz to pdb structure
+  if (inp.rdkit_mol_file_extension==".xyz"): shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
 def visualize(inp):
   """
@@ -28,18 +30,20 @@ def visualize(inp):
   #general.create_results_geom()
  
   # Read geometry
-  mol = load_rdkit_file(inp.rdkit_mol_file)
+  mol = load_rdkit_file(inp)
 
   # Visualize 2D or 3D
   if (inp.rdkit_visualize_2d): plot_2d_molecule(mol, inp.stereo_annotations)
   if (inp.rdkit_visualize_3d): plot_3d_molecule(mol)
 # -------------------------------------------------------------------------------------
-def load_rdkit_file(filename):
+def load_rdkit_file(inp):
     """
     debugpgi
     Return a single RDKit Mol for .smi/.sdf/.mol/.pdb files.
     """
     param = parameters.parameters()
+
+    filename = inp.rdkit_mol_file
     ext = filename[-4:].lower()
 
     if ext == ".smi":
@@ -58,6 +62,11 @@ def load_rdkit_file(filename):
         return None  # if no valid entries
 
     elif ext == ".pdb":
+        return Chem.MolFromPDBFile(filename, removeHs=False, sanitize=True)
+    
+    elif ext == ".xyz":
+        xyz_to_pdb(inp)
+        filename = inp.rdkit_mol_file # It has been changed within xyz_to_pdb
         return Chem.MolFromPDBFile(filename, removeHs=False, sanitize=True)
 
     else:
@@ -147,4 +156,76 @@ def plot_3d_molecule(mol, style="ballstick", width=1600, height=900, background=
         temp_html_path = f.name
 
     webbrowser.open("file://" + os.path.abspath(temp_html_path))
+# -------------------------------------------------------------------------------------
+def xyz_to_pdb(inp):
+    """
+    Convert XYZ -> PDB .
+    Steps:
+      1) Read XYZ with ASE (symbols + 3D coords)
+      2) Build an RDKit mol with those atoms/coords
+      3) Infer bonds from geometry (DetermineBonds)
+      4) Sanitize and assign stereochemistry (R/S, E/Z)
+      5) Write PDB with CONECT records
+
+    Returns:
+      inp with inp.rdkit_mol_file pointing to the generated PDB.
+    """
+
+    # Determine the script's location
+    script_path = os.path.abspath(__file__)
+    script_dir  = os.path.dirname(script_path)
+    base_dir    = os.path.dirname(script_dir)
+
+    # Create tmp folder
+    inp.tmp_folder = os.path.join(base_dir, 'tmp')
+    if os.path.exists(inp.tmp_folder):
+        shutil.rmtree(inp.tmp_folder)
+    os.mkdir(inp.tmp_folder)
+
+    # --- 1) Read XYZ ---
+    tmp_mol = molecule.molecule()
+    tmp_mol.read_geom(inp.rdkit_mol_file,False)
+
+    symbols = tmp_mol.atoms
+    coords   = tmp_mol.xyz.T      # (N, 3) in Å
+
+    # --- 2) Build an RDKit molecule with those atoms & coordinates ---
+    rw = Chem.RWMol()
+    for sym in symbols:
+        rw.AddAtom(Chem.Atom(sym))
+    mol = rw.GetMol()
+
+    conf = Chem.Conformer(len(symbols))
+    for i, (x, y, z) in enumerate(coords):
+        conf.SetAtomPosition(i, (float(x), float(y), float(z)))
+    mol.AddConformer(conf, assignId=True)
+
+    # --- 3) Infer bonds from 3D geometry (since XYZ has none) ---
+    # Adds bonds (and proposes bond orders) by comparing inter-atomic distances to element-specific covalent radii and common valence patterns.
+    rdDetermineBonds.DetermineBonds(mol)
+
+    # --- 4) Sanitize & assign stereochemistry from structure ---
+    
+    # Makes the graph chemically consistent so stereo perception won’t fail:
+    #    - checks valences, assigns formal charges, sets implicit H counts,
+    #    - perceives aromaticity/kekulization, normalizes bond types, etc.
+
+    Chem.SanitizeMol(mol)
+
+    # Assign tetrahedral chirality from 3D and E/Z on double bonds
+
+    # Tag potential tetrahedral centers as clockwise/counterclockwise
+    Chem.rdmolops.AssignAtomChiralTagsFromStructure(mol)
+
+    # Converts those tags into CIP R/S assignments and/or E/Z (cis/trans) to double bonds 
+    Chem.AssignStereochemistry(mol, cleanIt=True, force=True) # cleanIt=True: Before assigning new stereo info, RDKit clears any old/stale stereo flags that might already be present in the molecule. 
+                                                              # force = True: Recomputes even if something was set
+
+    # --- 5) Write PDB with CONNECT records ---
+    pdb_out = os.path.join(inp.tmp_folder, os.path.splitext(os.path.basename(inp.rdkit_mol_file))[0] + ".pdb")
+    Chem.MolToPDBFile(mol, pdb_out)
+
+    # Update the input object to point to the new PDB
+    inp.rdkit_mol_file = pdb_out
+    return inp
 # -------------------------------------------------------------------------------------
