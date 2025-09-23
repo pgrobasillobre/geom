@@ -178,6 +178,15 @@ def print_help():
 
          Note: Alloying, core-shell, dimer, and bowtie options are only available for Ag and Au-based nanoparticles.
 
+
+         ------
+         RDKit:
+         ------
+
+         Visualization:
+
+           -rdkit -i file.[pdb|sdf|mol|smi|xyz] -vis2d/-vis3d [optional for -vis2d: -stereo (show stereochemistry labels)]
+
     '''
     print(help_text)
     sys.exit()
