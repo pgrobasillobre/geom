@@ -122,23 +122,14 @@ def plot_2d_molecule(mol, stereo_annotations,
     plt.tight_layout()
     plt.show()
 # -------------------------------------------------------------------------------------
-def ensure_3d_conformer(mol):
-    """
-    Add Hs and embed a 3D conformer with ETKDG.
-    """
-
-    m3d = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(m3d, AllChem.ETKDGv3())
-
-    return m3d
-# -------------------------------------------------------------------------------------
 def plot_3d_molecule(mol, style="ballstick", width=1600, height=900, background="1xFFFFFF"):
     """
     Interactive 3D using py3Dmol.
     In CLI: generates a temporary HTML file and opens it in the default browser.
     """
-    # Ensure we have a 3D conformer
-    m3d = ensure_3d_conformer(mol)
+    # Ensure we have a 3D conformer. Add Hs and embed a 3D conformer with ETKDG.
+    m3d = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(m3d, AllChem.ETKDGv3())
 
     mblock = Chem.MolToMolBlock(m3d)
     view = py3Dmol.view(width=width, height=height)
