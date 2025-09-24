@@ -27,7 +27,6 @@ def visualize(inp):
 
   # Check input
   inp.check_input_case()   
-  #general.create_results_geom()
  
   # Read geometry
   mol = load_rdkit_file(inp)
@@ -93,16 +92,23 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
     annotate_atom_indices = inp.atom_index
     black_and_white = inp.rdkit_bw
 
+    legend_text = ""
+
     hl_atoms = hl_bonds = hatom = hbond = None
 
     m2d = Chem.Mol(mol)  # Avoid overwriting original
     rdDepictor.Compute2DCoords(m2d)
     Chem.AssignStereochemistry(m2d, cleanIt=True, force=True, flagPossibleStereoCenters=True)
-
     
     # --- Substructure match ---
     if inp.rdkit_match:
-        hl_atoms, hl_bonds, hatom, hbond = match_substructure(m2d, inp.match_smiles)
+        ra, rb, rac, rbc = match_substructure(m2d, inp.match_smiles)  # your function (returns atoms/bonds + color maps)
+        hl_atoms, hl_bonds, hatom, hbond = _merge_highlights(hl_atoms, hl_bonds, hatom, hbond, ra, rb, rac, rbc)
+
+    # --- Aromaticity ---
+    if inp.check_aromaticity:
+        aa, ab, aac, abc = find_aromatic_highlights(m2d)  
+        hl_atoms, hl_bonds, hatom, hbond = _merge_highlights(hl_atoms, hl_bonds, hatom, hbond, aa, ab, aac, abc)
 
     # --- Abbreviations ---
     if inp.rdkit_abbreviations:
@@ -131,12 +137,34 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
         highlightBonds=hl_bonds,
         highlightAtomColors=hatom,
         highlightBondColors=hbond,
+        legend=legend_text
     )
+
     drawer.FinishDrawing()
 
     png = drawer.GetDrawingText()
     import PIL.Image as Image, io
     img = Image.open(io.BytesIO(png))
+
+    # --- Pretty gnuplot-like legend to distinguish aromatic atoms/bond and matched structure ---
+    if inp.check_aromaticity and inp.rdkit_match:
+        
+        pale_green = (153, 230, 153)  # ~ (0.6, 1.0, 0.6)
+        pale_blue  = (153, 204, 255)  # ~ (0.6, 0.8, 1.0)
+
+        entries = [
+            ("Aromaticity", pale_green),
+            (f'SMILES match: {getattr(inp, "match_smiles", "") or ""}'.strip(), pale_blue),
+        ]
+        img = _draw_gnuplot_legend_pillow(
+            img,
+            entries,
+            corner="top_left",     
+            box_alpha=190,            
+            pad=14,
+            swatch_size=(28, 28),
+            row_gap=12,
+        )
 
     plt.imshow(img)
     plt.axis("off")
@@ -275,4 +303,116 @@ def match_substructure(mol, pattern):
     hbond = {i: pale_blue for i in bond_ids}
 
     return sorted(atom_ids), sorted(bond_ids), hatom, hbond
+# -------------------------------------------------------------------------------------
+def _merge_highlights(a_atoms, a_bonds, a_atomCols, a_bondCols,
+                      b_atoms, b_bonds, b_atomCols, b_bondCols):
+    """Union of two highlight sets; later colors override earlier on overlap."""
+    if a_atoms is None: a_atoms, a_bonds, a_atomCols, a_bondCols = [], [], {}, {}
+    if b_atoms is None: b_atoms, b_bonds, b_atomCols, b_bondCols = [], [], {}, {}
+    atoms = sorted(set(a_atoms) | set(b_atoms))
+    bonds = sorted(set(a_bonds) | set(b_bonds))
+    atomCols = {**a_atomCols, **b_atomCols}
+    bondCols = {**a_bondCols, **b_bondCols}
+    return atoms or None, bonds or None, atomCols or None, bondCols or None
+# -------------------------------------------------------------------------------------
+def find_aromatic_highlights(m):
+    """Return atom/bond ids and pale-blue color maps for aromatic atoms/bonds."""
+    arom_atoms = [a.GetIdx() for a in m.GetAtoms() if a.GetIsAromatic()]
+    arom_bonds = [b.GetIdx() for b in m.GetBonds() if b.GetIsAromatic()]
+    
+    if not arom_atoms and not arom_bonds:
+        return None, None, None, None
+    
+    pale_green = (0.6, 1.0, 0.6)
+    hatom = {i: pale_green for i in arom_atoms}
+    hbond = {i: pale_green for i in arom_bonds}
+    
+    return arom_atoms, arom_bonds, hatom, hbond
+# -------------------------------------------------------------------------------------
+def _draw_gnuplot_legend_pillow(
+    img,  # PIL.Image
+    entries,  # list of (label:str, rgb_tuple)
+    corner="bottom_right",
+    box_alpha=180,
+    pad=14,
+    swatch_size=(28, 28),
+    row_gap=12,
+    font_name_candidates=("Times New Roman", "Times.ttf", "Times", "DejaVuSerif.ttf")
+):
+    """
+    Draw a gnuplot-like legend onto a PIL image.
+    entries: [("Aromaticity", (153, 230, 153)), ("SMILES match", (153, 204, 255))]
+    """
+    from PIL import ImageDraw, ImageFont, Image
+
+    draw = ImageDraw.Draw(img, "RGBA")
+
+    # Pick a font size relative to image height
+    H = img.height
+    base_pt = max(12, int(H * 0.04)) 
+    font = None
+    for name in font_name_candidates:
+        try:
+            font = ImageFont.truetype(name, base_pt)
+            break
+        except Exception:
+            continue
+    if font is None:
+        font = ImageFont.load_default()
+
+    # Measure legend block
+    text_w = 0
+    text_h_total = 0
+    sw, sh = swatch_size
+    for label, _ in entries:
+        tw, th = draw.textbbox((0, 0), label, font=font)[2:]
+        text_w = max(text_w, tw)
+        text_h_total += max(th, sh)
+
+    # Total size with padding, swatch + gap
+    label_gap = 10
+    row_h = max(sh, int(base_pt * 1.1))
+    height = pad*2 + len(entries)*row_h + (len(entries)-1)*row_gap
+    width = pad*2 + sw + label_gap + text_w
+
+    # Position box
+    inset = 18
+    if corner == "bottom_right":
+        x0 = img.width - width - inset
+        y0 = img.height - height - inset
+    elif corner == "bottom_left":
+        x0 = inset
+        y0 = img.height - height - inset
+    elif corner == "top_right":
+        x0 = img.width - width - inset
+        y0 = inset
+    else:  # top_left
+        x0 = inset
+        y0 = inset
+
+    # Background (semi-transparent) + border
+    box_bg = (245, 245, 245, box_alpha)  # light gray, semi-transparent
+    box_border = (100, 100, 100, 255)
+    draw.rounded_rectangle(
+        [x0, y0, x0+width, y0+height],
+        radius=10,
+        fill=box_bg,
+        outline=box_border,
+        width=1
+    )
+
+    # Draw rows: swatch + label
+    y = y0 + pad
+    for label, rgb in entries:
+        # swatch
+        sx0, sy0 = x0 + pad, y + (row_h - sh)//2
+        sx1, sy1 = sx0 + sw, sy0 + sh
+        draw.rectangle([sx0, sy0, sx1, sy1], fill=rgb+(255,), outline=(60, 60, 60, 255))
+        # label
+        tx = sx1 + label_gap
+        ty = y + (row_h - base_pt)//2 - 2
+        draw.text((tx, ty), label, fill=(0, 0, 0, 255), font=font)
+        y += row_h + row_gap
+
+    return img
 # -------------------------------------------------------------------------------------

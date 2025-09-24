@@ -194,10 +194,10 @@ def print_help():
                 -bw       Black and white rendering
                 -rm_H     Remove hydrogens
                 -abbrevs  Abbreviate ligands
+                -aromatic Highlight in pale green aromatic atoms/bonds
                 -match    "smiles/smarts"
-                          Highlight a substructure parsed from a SMILES or SMARTS string
+                          If present, highlight in pale blue a substructure parsed from a SMILES or SMARTS string
                 
-
     '''
     print(help_text)
     sys.exit()
@@ -339,6 +339,7 @@ def parse_rdkit(argv, inp):
     if "-bw" in argv: inp.rdkit_bw = True
     if "-rm_H" or "-rm_h" in argv: inp.remove_H = True
     if "-abbrevs" in argv: inp.rdkit_abbreviations = True
+    if "-aromatic" in argv: inp.check_aromaticity = True
 
     if "-match" in argv:
         inp.rdkit_match = True
