@@ -39,6 +39,7 @@ class input_class:
       self.rdkit_visualize_3d = False
       self.rdkit_bw = False
       self.rdkit_match = False
+      self.rdkit_abbreviations = False
       self.stereo_annotations = False
       self.atom_index = False
       self.remove_H = False

@@ -7,7 +7,7 @@ from geom.classes import parameters, molecule
 from geom.functions import output 
 
 from rdkit import Chem
-from rdkit.Chem import Draw, rdDepictor, AllChem, rdDetermineBonds
+from rdkit.Chem import Draw, rdDepictor, AllChem, rdDetermineBonds, rdAbbreviations
 from rdkit.Chem.Draw import rdMolDraw2D
 # -------------------------------------------------------------------------------------
 def select_case(inp):
@@ -104,6 +104,10 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
     if inp.rdkit_match:
         hl_atoms, hl_bonds, hatom, hbond = match_substructure(m2d, inp.match_smiles)
 
+    # --- Abbreviations ---
+    if inp.rdkit_abbreviations:
+        abbrevs = rdAbbreviations.GetDefaultAbbreviations()
+        m2d = rdAbbreviations.CondenseMolAbbreviations(m2d, abbrevs, maxCoverage=0.8)
 
     w, h = size
     drawer = rdMolDraw2D.MolDraw2DCairo(w, h)
