@@ -85,39 +85,35 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
     """
     stereo_annotations = inp.stereo_annotations
     annotate_atom_indices = inp.atom_index
+    black_and_white = inp.rdkit_bw
 
     m2d = Chem.Mol(mol)  # Avoid overwriting original
     rdDepictor.Compute2DCoords(m2d)
     Chem.AssignStereochemistry(m2d, cleanIt=True, force=True, flagPossibleStereoCenters=True)
 
-    use_draw2d = stereo_annotations or annotate_atom_indices
+    # rdMolDraw2D: labels for stereo + atom indices
+    w, h = size
+    drawer = rdMolDraw2D.MolDraw2DCairo(w, h)
+    opts = drawer.drawOptions()
+    opts.addStereoAnnotation = bool(stereo_annotations)
+    opts.addAtomIndices = bool(annotate_atom_indices)
+    
+    if black_and_white: opts.useBWAtomPalette()
 
-    if not use_draw2d:
-        # Simple path: wedge bonds, no extra labels
-        img = Draw.MolToImage(
-            m2d, size=size, kekulize=True, wedgeBonds=True
-        )
-    else:
-        # rdMolDraw2D path with optional stereo + atom indices overlays
-        w, h = size
-        drawer = rdMolDraw2D.MolDraw2DCairo(w, h)
-        opts = drawer.drawOptions()
-        opts.addStereoAnnotation = bool(stereo_annotations)
-        opts.addAtomIndices = bool(annotate_atom_indices)
-        opts.padding = 0.05
+    opts.padding = 0.05
 
-        # Kekulize for nicer aromatic display (ignore failures)
-        try:
-            Chem.Kekulize(m2d, clearAromaticFlags=True)
-        except Exception:
-            pass
+    # Kekulize for nicer aromatic display (ignore failures)
+    try:
+        Chem.Kekulize(m2d, clearAromaticFlags=True)
+    except Exception:
+        pass
 
-        rdMolDraw2D.PrepareAndDrawMolecule(drawer, m2d)
-        drawer.FinishDrawing()
+    rdMolDraw2D.PrepareAndDrawMolecule(drawer, m2d)
+    drawer.FinishDrawing()
 
-        png = drawer.GetDrawingText()
-        import PIL.Image as Image, io
-        img = Image.open(io.BytesIO(png))
+    png = drawer.GetDrawingText()
+    import PIL.Image as Image, io
+    img = Image.open(io.BytesIO(png))
 
     plt.imshow(img)
     plt.axis("off")
