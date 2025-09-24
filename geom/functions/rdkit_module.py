@@ -51,23 +51,29 @@ def load_rdkit_file(inp):
         with open(filename, "r") as f:
             line = f.readline().strip()
         smiles = line.split()[0] if line else ""
-        return Chem.MolFromSmiles(smiles)
+
+        if (inp.remove_H):
+            mol = Chem.RemoveHs(Chem.MolFromSmiles(smiles))
+        else:
+            mol = Chem.MolFromSmiles(smiles)
+
+        return mol
 
     elif ext in (".sdf", ".mol"):
         # Return the first valid molecule from the supplier
-        supp = Chem.SDMolSupplier(filename, removeHs=False)
+        supp = Chem.SDMolSupplier(filename, removeHs=inp.remove_H)
         for m in supp:
             if m is not None:
                 return m
         return None  # if no valid entries
 
     elif ext == ".pdb":
-        return Chem.MolFromPDBFile(filename, removeHs=False, sanitize=True)
+        return Chem.MolFromPDBFile(filename, removeHs=inp.remove_H, sanitize=True)
     
     elif ext == ".xyz":
         xyz_to_pdb(inp)
         filename = inp.rdkit_mol_file # It has been changed within xyz_to_pdb
-        return Chem.MolFromPDBFile(filename, removeHs=False, sanitize=True)
+        return Chem.MolFromPDBFile(filename, removeHs=inp.remove_H, sanitize=True)
 
     else:
         msg = (
@@ -97,7 +103,7 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
     opts = drawer.drawOptions()
     opts.addStereoAnnotation = bool(stereo_annotations)
     opts.addAtomIndices = bool(annotate_atom_indices)
-    
+
     if black_and_white: opts.useBWAtomPalette()
 
     opts.padding = 0.05
