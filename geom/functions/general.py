@@ -189,8 +189,9 @@ def print_help():
 
              optional for -vis2d (incremental options): 
                 -stereo (show stereochemistry labels)
-                -index (show atom indexes)
-                -bw (black and white)
+                -index  (show atom indexes)
+                -bw     (black and white)
+                -rm_H   (remove Hs)
                 
 
     '''
@@ -332,6 +333,7 @@ def parse_rdkit(argv, inp):
     if "-stereo" in argv: inp.stereo_annotations = True
     if "-index" in argv: inp.atom_index = True
     if "-bw" in argv: inp.rdkit_bw = True
+    if "rm_H" or "rm_h" in argv: inp.remove_H = True
     
     if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
 
