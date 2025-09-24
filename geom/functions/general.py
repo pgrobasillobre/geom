@@ -187,9 +187,10 @@ def print_help():
 
            -rdkit -i file.[pdb|sdf|mol|smi|xyz] -vis2d/-vis3d 
 
-             optional for -vis2d: 
+             optional for -vis2d (incremental options): 
                 -stereo (show stereochemistry labels)
                 -index (show atom indexes)
+                -bw (black and white)
                 
 
     '''
@@ -330,6 +331,8 @@ def parse_rdkit(argv, inp):
     if "-vis3d" in argv: inp.rdkit_visualize_3d = True
     if "-stereo" in argv: inp.stereo_annotations = True
     if "-index" in argv: inp.atom_index = True
+    if "-bw" in argv: inp.rdkit_bw = True
+    
     if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
 
     inp.rdkit_mol_file = argv[3]

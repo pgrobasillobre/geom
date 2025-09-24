@@ -39,6 +39,7 @@ class input_class:
       self.rdkit_visualize_3d = False
       self.stereo_annotations = False
       self.atom_index = False
+      self.rdkit_bw = False
 
       self.rdkit_mol_file = ''
       self.rdkit_mol_file_extension = ''
