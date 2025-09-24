@@ -43,6 +43,7 @@ class input_class:
       self.stereo_annotations = False
       self.atom_index = False
       self.remove_H = False
+      self.check_aromaticity = False
       
       self.match_smiles = ''
       self.rdkit_mol_file = ''
