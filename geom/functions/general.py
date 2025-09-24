@@ -341,7 +341,6 @@ def parse_rdkit(argv, inp):
     if "-match" in argv:
         inp.rdkit_match = True
         inp.match_smiles = extract_string(argv, "-match")
-        print(inp.match_smiles)
     
     if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
 
