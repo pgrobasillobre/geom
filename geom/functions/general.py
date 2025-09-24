@@ -1,5 +1,6 @@
 import sys
 import os
+import ast
 
 from geom.classes import parameters
 from geom.functions import output, create_geom
@@ -185,13 +186,15 @@ def print_help():
 
          Visualization:
 
-           -rdkit -i file.[pdb|sdf|mol|smi|xyz] -vis2d/-vis3d 
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz] -vis2d | -vis3d
 
-             optional for -vis2d (incremental options): 
-                -stereo (show stereochemistry labels)
-                -index  (show atom indexes)
-                -bw     (black and white)
-                -rm_H   (remove Hs)
+            Options (for -vis2d, can be combined):
+                -stereo   Show stereochemistry labels (R/S, E/Z)
+                -index    Show atom indices
+                -bw       Black and white rendering
+                -rm_H     Remove hydrogens
+                -match    "smiles/smarts"
+                          Highlight a substructure parsed from a SMILES or SMARTS string
                 
 
     '''
@@ -333,7 +336,12 @@ def parse_rdkit(argv, inp):
     if "-stereo" in argv: inp.stereo_annotations = True
     if "-index" in argv: inp.atom_index = True
     if "-bw" in argv: inp.rdkit_bw = True
-    if "rm_H" or "rm_h" in argv: inp.remove_H = True
+    if "-rm_H" or "-rm_h" in argv: inp.remove_H = True
+
+    if "-match" in argv:
+        inp.rdkit_match = True
+        inp.match_smiles = extract_string(argv, "-match")
+        print(inp.match_smiles)
     
     if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
 
@@ -906,4 +914,79 @@ def create_results_geom():
    #      sys.exit()
 
    if (not(os.path.exists('results_geom'))): os.system('mkdir results_geom')
+# -------------------------------------------------------------------------------------
+def extract_string_or_list(argv, flag):
+    """
+    Extract the argument(s) that follow a CLI flag.
+
+    Accepts:
+      - <flag> CO             -> ["CO"]
+      - <flag> "CO"           -> ["CO"]
+      - <flag> CO,OH          -> ["CO","OH"]
+      - <flag> ["CO","OH"]    -> ["CO","OH"]   (quoted or unquoted list)
+      - <flag> [CO, OH]       -> ["CO","OH"]   (bare items)
+
+    Returns a list of strings.
+    """
+    if flag not in argv:
+        return []
+
+    i = argv.index(flag)
+    if i + 1 >= len(argv):
+        raise ValueError(f'Missing argument after "{flag}"')
+
+    # Grab everything after the flag
+    tokens = argv[i+1:]
+
+    # Reassemble if it's a list starting with '['
+    if tokens[0].startswith('['):
+        depth = 0
+        parts = []
+        for tok in tokens:
+            depth += tok.count('[')
+            depth -= tok.count(']')
+            parts.append(tok)
+            if depth <= 0:
+                break
+        raw = ' '.join(parts).strip()
+    else:
+        raw = tokens[0].strip()
+
+    # Try Python literal eval
+    try:
+        if raw.startswith('['):
+            val = ast.literal_eval(raw)
+            if isinstance(val, (list, tuple)):
+                return [str(x).strip().strip('"').strip("'") for x in val]
+            return [str(val)]
+        else:
+            if ',' in raw:
+                return [p.strip().strip('"').strip("'") for p in raw.split(',') if p.strip()]
+            return [raw.strip().strip('"').strip("'")]
+    except Exception:
+        # Fallback for [CO, OH] without quotes
+        if raw.startswith('[') and raw.endswith(']'):
+            inner = raw[1:-1]
+            items = [p.strip().strip('"').strip("'") for p in inner.split(',') if p.strip()]
+            return items
+        return [raw.strip().strip('"').strip("'")]
+# -------------------------------------------------------------------------------------
+def extract_string(argv, flag):
+    """
+    Extract the argument(s) that follow a CLI flag.
+
+    Returns a strings.
+    """
+    if flag not in argv:
+        output.error(f'Requested flag "{flag}" not found')
+
+
+    i = argv.index(flag)
+    if i + 1 >= len(argv):
+        raise ValueError(f'Missing argument after "{flag}"')
+
+    # Grab everything after the flag
+    token = argv[i+1:][0]
+
+    return token
 # -------------------------------------------------------------------------------------

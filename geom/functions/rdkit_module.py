@@ -93,11 +93,18 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
     annotate_atom_indices = inp.atom_index
     black_and_white = inp.rdkit_bw
 
+    hl_atoms = hl_bonds = hatom = hbond = None
+
     m2d = Chem.Mol(mol)  # Avoid overwriting original
     rdDepictor.Compute2DCoords(m2d)
     Chem.AssignStereochemistry(m2d, cleanIt=True, force=True, flagPossibleStereoCenters=True)
 
-    # rdMolDraw2D: labels for stereo + atom indices
+    
+    # --- Substructure match ---
+    if inp.rdkit_match:
+        hl_atoms, hl_bonds, hatom, hbond = match_substructure(m2d, inp.match_smiles)
+
+
     w, h = size
     drawer = rdMolDraw2D.MolDraw2DCairo(w, h)
     opts = drawer.drawOptions()
@@ -114,7 +121,13 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
     except Exception:
         pass
 
-    rdMolDraw2D.PrepareAndDrawMolecule(drawer, m2d)
+    rdMolDraw2D.PrepareAndDrawMolecule(
+        drawer, m2d,
+        highlightAtoms=hl_atoms,
+        highlightBonds=hl_bonds,
+        highlightAtomColors=hatom,
+        highlightBondColors=hbond,
+    )
     drawer.FinishDrawing()
 
     png = drawer.GetDrawingText()
@@ -223,4 +236,39 @@ def xyz_to_pdb(inp):
     # Update the input object to point to the new PDB
     inp.rdkit_mol_file = pdb_out
     return inp
+# -------------------------------------------------------------------------------------
+def match_substructure(mol, pattern):
+    """
+    patterns: 
+        str (SMARTS/SMILES). 
+    Returns:
+        highlightAtoms, highlightBonds, highlightAtomColors, highlightBondColors
+    """
+
+    atom_ids, bond_ids = set(), set()
+
+    """Try SMARTS first (for things like [CH2][OH1]); fall back to SMILES."""
+    q = Chem.MolFromSmarts(pattern)
+    if q is None: q = Chem.MolFromSmiles(pattern)
+
+    if q is None: output.error(f'in substructure match cannot parse query: {pattern}')
+    for m in mol.GetSubstructMatches(q, useChirality=True):
+        atom_ids.update(m)
+        # map query bonds to target bonds
+        for qb in q.GetBonds():
+            a1 = m[qb.GetBeginAtomIdx()]
+            a2 = m[qb.GetEndAtomIdx()]
+            b = mol.GetBondBetweenAtoms(a1, a2)
+            if b is not None:
+                bond_ids.add(b.GetIdx())
+
+    if not atom_ids and not bond_ids:
+        return None, None, None, None
+
+
+    pale_blue = (0.6, 0.8, 1.0)
+    hatom = {i: pale_blue for i in atom_ids}
+    hbond = {i: pale_blue for i in bond_ids}
+
+    return sorted(atom_ids), sorted(bond_ids), hatom, hbond
 # -------------------------------------------------------------------------------------
