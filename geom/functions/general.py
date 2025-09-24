@@ -193,6 +193,7 @@ def print_help():
                 -index    Show atom indices
                 -bw       Black and white rendering
                 -rm_H     Remove hydrogens
+                -abbrevs  Abbreviate ligands
                 -match    "smiles/smarts"
                           Highlight a substructure parsed from a SMILES or SMARTS string
                 
@@ -337,6 +338,7 @@ def parse_rdkit(argv, inp):
     if "-index" in argv: inp.atom_index = True
     if "-bw" in argv: inp.rdkit_bw = True
     if "-rm_H" or "-rm_h" in argv: inp.remove_H = True
+    if "-abbrevs" in argv: inp.rdkit_abbreviations = True
 
     if "-match" in argv:
         inp.rdkit_match = True
