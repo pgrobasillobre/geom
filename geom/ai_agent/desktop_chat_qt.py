@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # desktop_chat_qt.py
-# Native ChatGPT-like desktop app (Qt) for your AutoGen-based ai_agent.
+# ChatGPT-like native desktop app for your AutoGen-based ai_agent (PySide6 / Qt).
 
 import os
 import sys
@@ -12,41 +12,56 @@ from dotenv import load_dotenv
 
 # Qt
 from PySide6.QtCore import Qt, QThread, Signal, Slot
-from PySide6.QtGui import QAction, QIcon, QTextCursor
+from PySide6.QtGui import QAction, QFont, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTextBrowser, QPlainTextEdit, QPushButton, QLabel, QSplitter, QFileDialog,
-    QMessageBox
+    QTextBrowser, QPlainTextEdit, QPushButton, QLabel, QFrame,
+    QFileDialog, QMessageBox
 )
 
-# Your project imports
+# --- Your project imports ---
 from ai_agents import create_geom_assistant
 from ai_runner import run_geom_command
 from ai_validator import make_hooked_reply
 
-# ------------- Utilities -------------
+APP_TITLE = "GEOM AI Assistant"
+
+# ---------- helpers ----------
 def escape(s: str) -> str:
+    # Keep basic markdown code fences readable; we’ll rely on QTextBrowser for monospace rendering
     return html.escape(s, quote=True).replace("\n", "<br>")
 
-def role_color(role: str) -> str:
-    return {"user": "#1f6feb", "assistant": "#16a34a", "system": "#6b7280"}.get(role, "#374151")
-
 def render_msg(role: str, content: str) -> str:
-    # minimal HTML message bubble
-    color = role_color(role)
-    who = role.capitalize()
-    return f"""
-    <div style="margin:8px 0; padding:10px; border-radius:12px; background:#f8fafc;">
-      <div style="font-weight:600; color:{color}; margin-bottom:6px;">{who}</div>
-      <div style="white-space:wrap; line-height:1.45; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu;">
-        {escape(content)}
-      </div>
-    </div>
-    """
+    # Qt's HTML/CSS support is limited: avoid flexbox, rely on text-align.
+    is_user = (role == "user")
+    align = "right" if is_user else "left"
+    bg = "#E8F0FF" if is_user else "#F7F7F8"
 
-# ------------- Worker thread that calls your assistant -------------
+    # Note: Qt accepts background-color, padding, border; border-radius support varies by platform/theme.
+    # We still include it because it often works; worst-case you'll just get square corners.
+    return f"""
+<div style="text-align:{align}; margin:8px 0;">
+  <span style="
+    display:inline-block;
+    text-align:left;
+    background-color:{bg};
+    border: 1px solid #E5E7EB;
+    border-radius:12px;
+    padding:10px 12px;
+    max-width: 90%;
+    line-height:1.5;
+    font-size:16px;
+    color:#0B0F19;
+    white-space:normal;
+    word-wrap:break-word;
+  ">{escape(content)}</span>
+</div>
+"""
+
+
+# ---------- background worker that queries your agent ----------
 class AgentWorker(QThread):
-    finished_with_reply = Signal(dict, str)  # reply_message (role/content), tool_output
+    finished_with_reply = Signal(dict)  # {"role":"assistant","content": ...}
 
     def __init__(self, assistant, messages: List[Dict], parent=None):
         super().__init__(parent)
@@ -60,74 +75,133 @@ class AgentWorker(QThread):
                 content = reply["content"]
             else:
                 content = str(reply)
-            # tool output captured by your hook, if set that way
-            tool_output = getattr(self.assistant, "last_tool_output", "")
-            self.finished_with_reply.emit({"role": "assistant", "content": content}, tool_output)
+            self.finished_with_reply.emit({"role": "assistant", "content": content})
         except Exception as e:
             err = f"{type(e).__name__}: {e}\n\n" + traceback.format_exc()
-            self.finished_with_reply.emit({"role": "assistant", "content": f"⚠️ {err}"}, "")
+            self.finished_with_reply.emit({"role": "assistant", "content": f"⚠️ {err}"})
 
-# ------------- Main Window -------------
+
+# ---------- main window ----------
 class ChatWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("GEOM AI Assistant (Desktop)")
-        self.resize(1100, 720)
+        self.setWindowTitle(APP_TITLE)
+        self.resize(1000, 760)
 
-        load_dotenv()  # load OPENAI_API_KEY, OPENAI_BASE_URL, etc.
+        load_dotenv()  # picks up OPENAI_API_KEY / OPENAI_BASE_URL if you use a .env
 
-        # Build assistant and hook command execution the same way as console
+        # Build your AutoGen assistant and hook command execution
         self.assistant = create_geom_assistant()
         original_reply = self.assistant.generate_reply
         self.assistant.generate_reply = make_hooked_reply(run_geom_command, original_reply)
 
-        # State: OpenAI-style messages
+        # Chat state (OpenAI-style role/content)
         self.messages: List[Dict[str, str]] = []
-        self.system_prompt = "You are a helpful assistant for GEOM. Propose safe shell commands only when appropriate."
+        self.system_prompt = (
+            "You are a helpful assistant for GEOM. "
+            "Propose safe shell commands only when appropriate; when you do, execute them."
+        )
+        if self.system_prompt:
+            self.messages.append({"role": "system", "content": self.system_prompt})
 
-        # UI
-        central = QWidget(self)
-        root = QVBoxLayout(central)
-        self.setCentralWidget(central)
+        # Global font (ChatGPT-ish)
+        app_font = QFont()
+        app_font.setFamily("system-ui")  # Qt will fall back sensibly on each OS
+        app_font.setPointSize(12)        # base font; content areas override to 15–16px via CSS
+        self.setFont(app_font)
 
-        # Splitter: chat (left) and tool output (right)
-        splitter = QSplitter(Qt.Orientation.Horizontal)
+        # Root container
+        root = QWidget(self)
+        root_layout = QVBoxLayout(root)
+        root_layout.setContentsMargins(16, 14, 16, 14)
+        root_layout.setSpacing(12)
+        self.setCentralWidget(root)
 
-        # Left: conversation
-        left = QWidget()
-        lv = QVBoxLayout(left)
+        # --- Conversation container (rounded frame) ---
+        self.chat_frame = QFrame()
+        self.chat_frame.setObjectName("chatFrame")
+        self.chat_frame.setStyleSheet("""
+            #chatFrame {
+                background: #FFFFFF;
+                border: 1px solid #E5E7EB;
+                border-radius: 16px;
+            }
+        """)
+        chat_layout = QVBoxLayout(self.chat_frame)
+        chat_layout.setContentsMargins(16, 16, 16, 16)
+        chat_layout.setSpacing(0)
+
         self.chat_view = QTextBrowser()
         self.chat_view.setOpenExternalLinks(True)
-        self.chat_view.setStyleSheet("QTextBrowser { background: #ffffff; padding: 10px; }")
-        lv.addWidget(self.chat_view)
-        splitter.addWidget(left)
+        self.chat_view.setStyleSheet("""
+            QTextBrowser {
+                border: none;
+                background: transparent;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+                font-size: 17px;  /* 16 -> 17 for readability */
+                color: #0B0F19;
+            }
+        """)
+        chat_layout.addWidget(self.chat_view)
 
-        # Right: tool output
-        right = QWidget()
-        rv = QVBoxLayout(right)
-        rv.addWidget(QLabel("Last Tool Output"))
-        self.tool_out = QPlainTextEdit()
-        self.tool_out.setReadOnly(True)
-        self.tool_out.setStyleSheet("QPlainTextEdit { background: #0b1020; color: #e5e7eb; font-family: Menlo, Consolas, monospace; }")
-        rv.addWidget(self.tool_out)
-        splitter.addWidget(right)
-        splitter.setSizes([700, 400])
+        # --- Input container (rounded frame) ---
+        self.input_frame = QFrame()
+        self.input_frame.setObjectName("inputFrame")
+        self.input_frame.setStyleSheet("""
+            #inputFrame {
+                background: #FFFFFF;
+                border: 1px solid #E5E7EB;
+                border-radius: 14px;
+            }
+        """)
+        input_layout = QHBoxLayout(self.input_frame)
+        input_layout.setContentsMargins(12, 10, 12, 10)
+        input_layout.setSpacing(8)
 
-        root.addWidget(splitter)
-
-        # Input row
-        input_row = QHBoxLayout()
         self.input_box = QPlainTextEdit()
-        self.input_box.setPlaceholderText("Type your request… (Shift+Enter for newline, Enter to send)")
+        self.input_box.setPlaceholderText("Type your request…  (Enter to send, Shift+Enter for newline)")
+        self.input_box.setStyleSheet("""
+            QPlainTextEdit {
+                border: none;
+                background: transparent;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans";
+                font-size: 15px;
+                color: #0B0F19;
+            }
+        """)
+        # nicer initial height
+        self.input_box.setFixedHeight(72)
         self.input_box.installEventFilter(self)
-        send_btn = QPushButton("Send")
-        send_btn.clicked.connect(self.send_message)
 
-        input_row.addWidget(self.input_box, 1)
-        input_row.addWidget(send_btn, 0)
-        root.addLayout(input_row)
+        self.send_btn = QPushButton("Send")
+        self.send_btn.setCursor(Qt.PointingHandCursor)
+        self.send_btn.setStyleSheet("""
+            QPushButton {
+                background: #10A37F;
+                color: white;
+                border: none;
+                border-radius: 10px;
+                padding: 10px 16px;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: #0E906F;
+            }
+            QPushButton:pressed {
+                background: #0C7F61;
+            }
+        """)
+        self.send_btn.clicked.connect(self.send_message)
 
-        # Menus: Save/Load chat
+        input_layout.addWidget(self.input_box, 1)
+        input_layout.addWidget(self.send_btn, 0, Qt.AlignBottom)
+
+        # Add to root: conversation (big) then input (small)
+        root_layout.addWidget(self.chat_frame, 1)
+        root_layout.addWidget(self.input_frame, 0)
+
+        # Menu (Save / Load chat)
         bar = self.menuBar()
         file_menu = bar.addMenu("&File")
         save_action = QAction("Save Chat…", self)
@@ -137,37 +211,29 @@ class ChatWindow(QMainWindow):
         save_action.triggered.connect(self.save_chat)
         load_action.triggered.connect(self.load_chat)
 
-        # Seed with a system message (not rendered, but used in context)
-        if self.system_prompt:
-            self.messages.append({"role": "system", "content": self.system_prompt})
-
         # Welcome message
-        self.append_chat({"role": "assistant", "content": "Hi! I’m ready. Try: `create a silver sphere of radius 10`."})
+        self.append_chat({"role": "assistant", "content": "Hi! I’m ready. Try: “create a silver sphere of radius 10”. 👋"})
 
-    # Intercept Enter vs Shift+Enter in the input
+    # ----- UI behavior -----
     def eventFilter(self, obj, event):
         if obj is self.input_box and event.type() == event.Type.KeyPress:
             if event.key() in (Qt.Key_Return, Qt.Key_Enter):
                 if event.modifiers() & Qt.ShiftModifier:
-                    return False  # allow newline
+                    return False  # newline
                 else:
                     self.send_message()
                     return True
         return super().eventFilter(obj, event)
 
     def append_chat(self, message: Dict[str, str]):
-        # Render to chat_view
         role = message.get("role", "assistant")
         content = message.get("content", "")
         html_chunk = render_msg(role, content)
-        self.chat_view.moveCursor(QTextCursor.End)
-        self.chat_view.insertHtml(html_chunk)
+        # append() adds a new paragraph; this fixes the “same line” effect
+        self.chat_view.append(html_chunk)
         self.chat_view.moveCursor(QTextCursor.End)
         self.chat_view.ensureCursorVisible()
-
-        # Keep in memory (do not duplicate assistant welcome if already added)
-        if not (self.messages and self.messages[-1] is message):
-            self.messages.append({"role": role, "content": content})
+        self.messages.append({"role": role, "content": content})
 
     @Slot()
     def send_message(self):
@@ -175,30 +241,18 @@ class ChatWindow(QMainWindow):
         if not user_text:
             return
         self.input_box.clear()
+        self.append_chat({"role": "user", "content": user_text})
 
-        user_msg = {"role": "user", "content": user_text}
-        self.append_chat(user_msg)
-
-        # Launch worker thread to avoid blocking UI
-        # Build context: include system prompt (already in self.messages[0] if set)
-        # and current chat including the latest user message (now appended).
-        ctx = list(self.messages)
-
+        ctx = list(self.messages)  # include system + history + latest user
         self.worker = AgentWorker(self.assistant, ctx, self)
         self.worker.finished_with_reply.connect(self.on_agent_reply)
         self.worker.start()
 
-    @Slot(dict, str)
-    def on_agent_reply(self, reply_message: Dict[str, str], tool_output: str):
+    @Slot(dict)
+    def on_agent_reply(self, reply_message: Dict[str, str]):
         self.append_chat(reply_message)
-        if tool_output:
-            self.tool_out.setPlainText(tool_output)
-        else:
-            # Don't clear useful logs accidentally; append a divider
-            current = self.tool_out.toPlainText().strip()
-            if current:
-                self.tool_out.appendPlainText("\n---\n(no new tool output)")
 
+    # ----- Save / Load -----
     def save_chat(self):
         path, _ = QFileDialog.getSaveFileName(self, "Save Chat", "chat.json", "JSON (*.json)")
         if not path:
@@ -218,13 +272,12 @@ class ChatWindow(QMainWindow):
         try:
             with open(path, "r", encoding="utf-8") as f:
                 msgs = json.load(f)
-            # reset UI
+            # Reset
             self.messages = []
             self.chat_view.clear()
-            self.tool_out.clear()
+            # Rebuild UI; system messages are kept in state but not rendered
             for m in msgs:
                 if m.get("role") == "system":
-                    # keep as context but don't render
                     self.messages.append(m)
                 else:
                     self.append_chat(m)
@@ -232,7 +285,6 @@ class ChatWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to load chat:\n{e}")
 
 def main():
-    # macOS: high-DPI / menu fixes
     os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
     app = QApplication(sys.argv)
     win = ChatWindow()
