@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="243.99867mm"
+   height="147.2524mm"
+   viewBox="0 0 243.99867 147.2524"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="geom-logo-desktop.svg"
+   inkscape:export-filename="geom-logo-dekstop.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#cccccc"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.2560714"
+     inkscape:cx="20.301394"
+     inkscape:cy="209.78107"
+     inkscape:window-width="5048"
+     inkscape:window-height="1376"
+     inkscape:window-x="72"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:export-bgcolor="#ffffffff"
+     inkscape:pageshadow="2"
+     showgrid="false" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="swatch1"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="0"
+         id="stop1" />
+    </linearGradient>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-29.118484,-87.423307)">
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:70.5556px;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman,  Bold';opacity:1;fill:#000000;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+       x="38.526615"
+       y="175.5049"
+       id="text1"
+       inkscape:export-filename="./rect35.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="font-size:70.5556px;fill:#000000;fill-opacity:1;stroke:#090000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
+         x="38.526615"
+         y="175.5049">GEOM</tspan></text>
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-dasharray:none;stroke-opacity:1"
+       d="M 43.475202,185.4788 H 258.15369"
+       id="path1"
+       inkscape:export-filename="./rect35.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:1"
+       d="m 122.76822,192.94517 h 54.778"
+       id="path1-7"
+       inkscape:export-filename="./rect35.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       d="M 97.200814,189.51664 H 204.71199"
+       id="path1-7-5"
+       inkscape:export-filename="./rect35.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <rect
+       style="opacity:0.730687;fill:#0000ff;fill-opacity:0;stroke:#0000fe;stroke-width:2.1637;stroke-linejoin:round;stroke-opacity:9.13732e-05"
+       id="rect35"
+       width="241.83498"
+       height="145.0887"
+       x="30.200335"
+       y="88.505157"
+       ry="2.4868133"
+       inkscape:export-filename="./rect35.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+  </g>
+</svg>

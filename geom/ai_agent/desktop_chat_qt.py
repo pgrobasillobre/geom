@@ -52,7 +52,7 @@ def render_msg(role: str, content: str) -> str:
   display:inline-block;
   text-align:left;
   background-color:{bubble_bg};
-  border: 1px solid {border};
+  border: 4px solid {border};
   border-radius:22px;          /* rounder corners */
   padding:16px 20px;           /* extra spacing to the text */
   max-width: 96%;              /* wider bubble */
@@ -206,7 +206,7 @@ class ChatWindow(QMainWindow):
         self.title_label.setStyleSheet("""
             QLabel {
                 color: #0B0F19;
-                font-size: 20px;
+                font-size: 35px;
                 font-weight: 700;
                 background: transparent;
             }
@@ -233,8 +233,9 @@ class ChatWindow(QMainWindow):
 
         # Typewriter settings (slow + stop)
         self._samples = [
-            '"Create a silver sphere with 20 angstroms radius"',
             '"Create a gold nanorod"',
+            '"I want a graphene disk of 3 nm radius"',
+            '"Create a dimer of silver spheres along the z axis"',
         ]
         self._sample_index = 0
         self._type_pos = 0
