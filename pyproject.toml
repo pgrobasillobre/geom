@@ -1,24 +1,13 @@
-[tool.setuptools]
-include-package-data = true
-
-[build-system]
-requires = ["setuptools>=64", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "geom"
 version = "2.0.0"
 description = "Include RDKit for molecular manipulation."
 readme = "README.md"
-authors = [
-    { name = "Pablo Grobas Illobre", email = "pgrobasillobre@gmail.com" }
-]
+authors = [{ name = "Pablo Grobas Illobre", email = "pgrobasillobre@gmail.com" }]
 license = { text = "GPL-3.0-or-later" }
 requires-python = ">=3.8"
 
 dependencies = [
-    "gmsh==4.11.1",
-    "ase==3.22.1",
     "numpy==1.24.3",
     "pytest==8.3.4",
     "launchpadlib==2.1.0",
@@ -26,11 +15,14 @@ dependencies = [
     "pyautogen==0.2.18",
     "flaml[automl]==2.1.1",
     "httpx==0.27.2",
-    "rdkit",
-    "py3Dmol",
-    "PySide6>=6.7.0",
     "python-dotenv>=1.0.1"
 ]
+
+[project.optional-dependencies]
+ui = ["PySide6>=6.7.0"]
+viz = ["py3Dmol"]
+cad = ["gmsh==4.11.1"]
+chem = ["rdkit-pypi"]  # only if you *really* want a PyPI fallback; otherwise omit
 
 [project.urls]
 Homepage = "https://github.com/pgrobasillobre/geom"
@@ -40,5 +32,13 @@ Documentation = "https://github.com/pgrobasillobre/geom/wiki"
 [project.scripts]
 geom = "geom.__main__:main"
 
+[tool.setuptools]
+include-package-data = true
+
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools.packages.find]
 include = ["geom", "geom.*"]
+
