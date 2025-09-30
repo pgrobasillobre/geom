@@ -19,6 +19,7 @@ def select_case(inp):
 
    if (inp.translate_controlled_distance): translate_controlled_distance(inp)
    if (inp.translate_1):                   translate_1(inp)
+   if (inp.translate_center):              translate_center(inp)
 # -------------------------------------------------------------------------------------
 def translate_controlled_distance(inp):
    """ 
@@ -208,6 +209,34 @@ def translate_1(inp):
    file_geom_translated = f"{inp.geom_file[:-4]}_{inp.dir_axis_input}_d_{shift_rounded:.2f}"
 
    output.print_geom(mol, file_geom_translated)
+
+   # Close and save logfile
+   #output.logfile_close(out_log)
+# -------------------------------------------------------------------------------------
+def translate_center(inp):
+   """ 
+   Translates a single molecule geometrical center to the origin of coordinates.
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the translated geometry.
+
+   Notes:
+       - Reads the molecular geometry from an input file.
+       - Translates the molecule geometrical center to the origin of coordinates.
+       - Saves the new geometry after translation.
+   """
+
+   # Check input, create results folder, initialize logfile
+   inp.check_input_case()   
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Initialize molecule and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file,True)
 
    # Close and save logfile
    #output.logfile_close(out_log)
