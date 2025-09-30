@@ -56,6 +56,7 @@ class input_class:
       self.translate = False 
       self.translate_controlled_distance = False
       self.translate_1 = False
+      self.translate_center = False
      
       self.move_geom_to_000   = False
       self.move_geom_1_to_000 = False

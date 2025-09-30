@@ -28,7 +28,7 @@ def read_command_line(argv, inp):
     command = argv[1]
     if command in ['-h', '-help']:
         print_help()
-    elif command == '-t' or command =='-t1':
+    elif command == '-t' or command =='-t1' or command == '-tc':
         parse_translation(argv, inp)
     elif command == '-r' or command =='-r1':
         parse_rotation(argv, inp)
@@ -74,6 +74,10 @@ def print_help():
          One translation:
 
            -t1 shift geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}
+
+         Translation to center of coordinates:
+
+           -tc geom.xyz
 
 
          ---------
@@ -214,7 +218,8 @@ def parse_translation(argv, inp):
        None: Sets translation-related attributes in `inp`.
 
    Notes:
-       - Handles both controlled distance translation (`-t`) and simple shift translation (`-t1`).
+       - Handles both controlled distance translation (`-t`), simple shift translation (`-t1`),
+         and translation of geometrical center to the center of coordinates (`-tc`).
        - Extracts input filenames, translation parameters, and verbosity settings.
    """
 
@@ -244,6 +249,10 @@ def parse_translation(argv, inp):
       inp.dir_axis_input = str(argv[5])
 
       if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
+
+   elif argv[1] == '-tc':
+      inp.translate_center = True
+      inp.geom_file      = str(argv[2]) 
 # -------------------------------------------------------------------------------------
 def parse_rotation(argv, inp):
    """
