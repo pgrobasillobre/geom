@@ -40,6 +40,9 @@ class input_class:
       self.rdkit_bw = False
       self.rdkit_match = False
       self.rdkit_abbreviations = False
+      self.rdkit_file_conversion = False
+      self.rdkit_opt = False
+      
       self.stereo_annotations = False
       self.atom_index = False
       self.remove_H = False
@@ -246,6 +249,10 @@ class input_class:
          # Extract parameters to check extension
          param = parameters.parameters()
          general.check_file_extension_rdkit(self.rdkit_mol_file, param.rdkit_file_extensions)
+
+         if (self.rdkit_file_conversion): 
+            general.check_file_extension_rdkit(self.rdkit_output_file, param.rdkit_file_extensions)
+            general.check_equal_extensions(self.rdkit_mol_file_extension, self.rdkit_output_file)  
 
 
       elif (self.create_geom):
