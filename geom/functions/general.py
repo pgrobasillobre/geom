@@ -201,6 +201,10 @@ def print_help():
                 -aromatic Highlight in pale green aromatic atoms/bonds
                 -match    "smiles/smarts"
                           If present, highlight in pale blue a substructure parsed from a SMILES or SMARTS string
+
+         File conversion:
+
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz] -o file.[pdb|sdf|mol|smi|xyz]
                 
     '''
     print(help_text)
@@ -341,6 +345,8 @@ def parse_rdkit(argv, inp):
 
     inp.rdkit = True
 
+    # Visualization
+
     if "-vis2d" in argv: inp.rdkit_visualize_2d = True
     if "-vis3d" in argv: inp.rdkit_visualize_3d = True
     if "-stereo" in argv: inp.stereo_annotations = True
@@ -357,7 +363,12 @@ def parse_rdkit(argv, inp):
     if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
 
     inp.rdkit_mol_file = argv[3]
-    inp.rdkit_mol_file_extensions = inp.rdkit_mol_file[-4:]
+    inp.rdkit_mol_file_extension = inp.rdkit_mol_file[-4:]
+
+    # File conversion
+    if "-o" in argv:
+        inp.rdkit_file_conversion = True
+        inp.rdkit_output_file = extract_string(argv, "-o")
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
@@ -1000,4 +1011,18 @@ def extract_string(argv, flag):
     token = argv[i+1:][0]
 
     return token
+# -------------------------------------------------------------------------------------
+def check_equal_extensions(infile1,infile2):
+   """ 
+   Checks if two input files have the same extension. If yes, raises an error.
+
+   Args:
+       infile1 (str): Path to the first input file.
+       infile2 (str): Path to the second input file.
+    """
+   
+   ext1 = infile1[-4:].lower()
+   ext2 = infile2[-4:].lower()
+
+   if (ext1 == ext2): output.error('input files must have different extensions ("' + ext1 + '" found in both files)')
 # -------------------------------------------------------------------------------------

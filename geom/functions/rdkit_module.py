@@ -4,7 +4,7 @@ import py3Dmol
 import matplotlib.pyplot as plt
 
 from geom.classes import parameters, molecule
-from geom.functions import output 
+from geom.functions import output, general
 
 from rdkit import Chem
 from rdkit.Chem import Draw, rdDepictor, AllChem, rdDetermineBonds, rdAbbreviations
@@ -16,6 +16,7 @@ def select_case(inp):
   """
 
   if (inp.rdkit_visualize): visualize(inp)
+  if (inp.rdkit_file_conversion): file_conversion(inp)
 
   # Eliminate tmp folder containing xyz to pdb structure
   if (inp.rdkit_mol_file_extension==".xyz"): shutil.rmtree(inp.tmp_folder)
@@ -34,6 +35,72 @@ def visualize(inp):
   # Visualize 2D or 3D
   if (inp.rdkit_visualize_2d): plot_2d_molecule(mol, inp)
   if (inp.rdkit_visualize_3d): plot_3d_molecule(mol)
+# -------------------------------------------------------------------------------------
+def file_conversion(inp):
+    """
+    debugpgi
+    """
+    param = parameters.parameters()    
+
+    # Check input and create results folder
+    inp.check_input_case()   
+    general.create_results_geom()
+
+    # Read geometry
+    mol = load_rdkit_file(inp)
+    
+    # Ensure we have a 3D conformer
+    embed_3d(mol)
+    
+    # Write to output file
+    out_file = os.path.join("results_geom",inp.rdkit_output_file)
+    ext = out_file[-4:].lower()
+    
+    if ext == ".smi":
+        with open(out_file, "w") as f:
+            smi = Chem.MolToSmiles(mol)
+            f.write(smi + "\n")
+    
+    elif ext in (".sdf", ".mol"):
+        writer = Chem.SDWriter(out_file)
+        writer.write(mol)
+        writer.close()
+    
+    elif ext == ".pdb":
+        Chem.MolToPDBFile(mol, out_file)
+
+    elif ext == ".xyz":
+        Chem.MolToXYZFile(mol, out_file)
+    
+    else:
+        msg = (
+            f"File extension '{ext}' for RDKit not supported.\n\n"
+            "   Accepted file extensions:"
+            + "".join(f"\n     - {extension}" for extension in param.rdkit_file_extensions)
+        )
+        output.error(msg)
+# -------------------------------------------------------------------------------------
+def embed_3d(mol):
+    """
+    Ensure the given RDKit molecule has hydrogens and a 3D conformer.
+    - Adds hydrogens (if not already present).
+    - If no conformer exists, generates one with ETKDGv3.
+    """
+    if mol is None:
+        raise ValueError("embed_3d_inplace: input molecule is None.")
+
+    # Add hydrogens (returns a new molecule)
+    mol_with_h = Chem.AddHs(mol, addCoords=True)
+
+    # If no conformer, embed one in place
+    if mol_with_h.GetNumConformers() == 0:
+        if AllChem.EmbedMolecule(mol_with_h, AllChem.ETKDGv3()) == -1:
+            raise RuntimeError("ETKDGv3 embedding failed for molecule.")
+
+    # Copy back to original reference (in case AddHs returned a new object)
+    mol.__init__(mol_with_h)
+
+    return mol
 # -------------------------------------------------------------------------------------
 def load_rdkit_file(inp):
     """
@@ -176,11 +243,10 @@ def plot_3d_molecule(mol, style="ballstick", width=1600, height=900, background=
     Interactive 3D using py3Dmol.
     In CLI: generates a temporary HTML file and opens it in the default browser.
     """
-    # Ensure we have a 3D conformer. Add Hs and embed a 3D conformer with ETKDG.
-    m3d = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(m3d, AllChem.ETKDGv3())
+    # Ensure we have a 3D conformer.
+    embed_3d(mol)
 
-    mblock = Chem.MolToMolBlock(m3d)
+    mblock = Chem.MolToMolBlock(mol)
     view = py3Dmol.view(width=width, height=height)
     view.addModel(mblock, 'mol')
 
