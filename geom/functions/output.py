@@ -19,6 +19,23 @@ def error(error_message):
    print("")
    sys.exit()
 # -------------------------------------------------------------------------------------
+def warn(warning_message):
+   """
+   Prints an warning message and terminates execution.
+
+   Args:
+       warn_message (str): The warning message to be displayed.
+
+   Returns:
+       None: The function prints a warning message.
+   """
+
+   print("")
+   print("")
+   print("   WARNING: " + warning_message)
+   print("")
+   print("")
+# -------------------------------------------------------------------------------------
 def error_dir_axis(dir_axis_input):
    """
    Prints an error message related to an unsupported axis input and exits.
