@@ -205,6 +205,10 @@ def print_help():
          File conversion:
 
             -rdkit -i file.[pdb|sdf|mol|smi|xyz] -o file.[pdb|sdf|mol|smi|xyz]
+        
+         Force field geometry optimization:
+
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz] -opt [mmff94(default)|mmff94s|uff] [-maxIters N] [-o file.[pdb|sdf|xyz]]
                 
     '''
     print(help_text)
@@ -369,6 +373,19 @@ def parse_rdkit(argv, inp):
     if "-o" in argv:
         inp.rdkit_file_conversion = True
         inp.rdkit_output_file = extract_string(argv, "-o")
+
+    # Force field optimization
+    if "-opt" in argv:
+        inp.rdkit_opt = True
+        inp.rdkit_force_field = extract_string_or_default(argv,"-opt",default="mmff94") 
+
+        if "-o" in argv: 
+            inp.rdkit_file_conversion = False # Turn off file conversion
+        else:
+            inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + "_opt.pdb"
+
+        if any(arg.lower() == "-maxiters" for arg in argv):
+            inp.rdkit_max_iters = extract_integer(argv, "-maxIters")
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
@@ -872,6 +889,19 @@ def check_file_extension_rdkit(infile,accepted_extensions):
         )
         output.error(msg)
 # -------------------------------------------------------------------------------------
+def check_accepted_parameters(param,accepted_params,label="Parameter"):
+    """ 
+    debugpgi    
+    """
+   
+    if param not in accepted_params:
+        msg = (
+            f"{label.capitalize()} '{param}' not supported.\n\n"
+            "   Accepted entries:"
+            + "".join(f"\n     - {parameter}" for parameter in accepted_params)
+        )
+        output.error(msg)
+# -------------------------------------------------------------------------------------
 def check_dir_axis(inp):
    """ 
    Validates the direction axis input for translation or rotation.
@@ -1011,6 +1041,66 @@ def extract_string(argv, flag):
     token = argv[i+1:][0]
 
     return token
+# -------------------------------------------------------------------------------------
+def extract_integer(argv, flag):
+    """
+    Extract an integer argument that follows a CLI flag (case-insensitive).
+
+    Raises:
+        ValueError: if the flag is present but has no value,
+                    or if the value cannot be converted to int.
+    """
+    # Normalize everything to lowercase for comparison
+    argv_lower = [arg.lower() for arg in argv]
+    flag_lower = flag.lower()
+
+    if flag_lower not in argv_lower:
+        output.error(f'Requested flag "{flag}" not found')
+
+    i = argv_lower.index(flag_lower)
+    if i + 1 >= len(argv):
+        raise ValueError(f'Missing integer argument after "{flag}"')
+
+    token = argv[i + 1]
+
+    # If the next token looks like another flag
+    if token.startswith("-"):
+        raise ValueError(f'Missing integer argument after "{flag}" (found another flag \"{token}\")')
+
+    try:
+        value = int(token)
+    except ValueError:
+        raise ValueError(f'Expected an integer after "{flag}", got "{token}"')
+
+    return value
+# -------------------------------------------------------------------------------------
+def extract_string_or_default(argv, flag, default):
+    """
+    Extract the argument that follows a CLI flag, or return the provided default.
+
+    Args:
+        argv (list): Command-line arguments.
+        flag (str): Flag to search for.
+        default (str): Default value if no argument follows the flag.
+
+    Returns:
+        str: The string found after the flag, or the default.
+    """
+    if flag not in argv:
+        return default
+
+    i = argv.index(flag)
+
+    # Case 1: flag is last in argv → no value provided
+    if i + 1 >= len(argv):
+        return default
+
+    # Case 2: next token looks like another flag → treat as no argument
+    next_token = argv[i + 1]
+    if next_token.startswith("-"):
+        return default
+
+    return next_token.lower()
 # -------------------------------------------------------------------------------------
 def check_equal_extensions(infile1,infile2):
    """ 

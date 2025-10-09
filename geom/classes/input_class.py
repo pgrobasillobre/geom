@@ -51,6 +51,9 @@ class input_class:
       self.match_smiles = ''
       self.rdkit_mol_file = ''
       self.rdkit_mol_file_extension = ''
+      self.rdkit_force_field = ''
+
+      self.rdkit_max_iters = 200
 
       # -- Small tasks
       self.small_tasks = False
@@ -253,7 +256,11 @@ class input_class:
          if (self.rdkit_file_conversion): 
             general.check_file_extension_rdkit(self.rdkit_output_file, param.rdkit_file_extensions)
             general.check_equal_extensions(self.rdkit_mol_file_extension, self.rdkit_output_file)  
-
+         
+         if (self.rdkit_opt):
+            general.check_accepted_parameters(self.rdkit_force_field, param.rdkit_force_fields, label='Force field')
+            general.check_accepted_parameters(self.rdkit_output_file[-4:], param.rdkit_file_extensions_opt, label='Optimization saved to file extension')
+            general.check_equal_extensions(self.rdkit_mol_file_extension, self.rdkit_output_file)  
 
       elif (self.create_geom):
          if (not self.gen_graphene          and

@@ -17,6 +17,7 @@ def select_case(inp):
 
   if (inp.rdkit_visualize): visualize(inp)
   if (inp.rdkit_file_conversion): file_conversion(inp)
+  if (inp.rdkit_opt): force_field_optimization(inp)
 
   # Eliminate tmp folder containing xyz to pdb structure
   if (inp.rdkit_mol_file_extension==".xyz"): shutil.rmtree(inp.tmp_folder)
@@ -40,22 +41,92 @@ def file_conversion(inp):
     """
     debugpgi
     """
+
+    # Check input and create results folder
+    inp.check_input_case()   
+    general.create_results_geom()
+
+    # Read geometry and ensure we have a 3D conformer
+    mol = load_rdkit_file(inp)
+    mol = embed_3d(mol)
+    
+    # Write to output file
+    out_file = os.path.join("results_geom",inp.rdkit_output_file)
+    save_rdkit_file(mol, out_file)
+# -------------------------------------------------------------------------------------
+def force_field_optimization(inp):
+    """
+    debugpgi
+    """   
     param = parameters.parameters()    
 
     # Check input and create results folder
     inp.check_input_case()   
     general.create_results_geom()
 
-    # Read geometry
+    # Read geometry and ensure we have a 3D conformer
     mol = load_rdkit_file(inp)
-    
-    # Ensure we have a 3D conformer
-    embed_3d(mol)
-    
-    # Write to output file
-    out_file = os.path.join("results_geom",inp.rdkit_output_file)
+    mol = embed_3d(mol)
+
+    # Construct force field
+    ff_name = inp.rdkit_force_field
+    ff = None
+
+    if ff_name in ("mmff94", "mmff94s"):
+        props = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant=ff_name)
+        if props is not None:
+            ff = AllChem.MMFFGetMoleculeForceField(mol, props)
+        else:
+            output.error(f'MMFF parameters unavailable for "{inp.rdkit_mol_file}" with "{ff_name} force field".')
+    elif ff_name == "uff":
+        ff = AllChem.UFFGetMoleculeForceField(mol)
+    else:
+        msg = ( 
+            f"Force field '{ff_name}' not supported.\n\n"
+              " Accepted entries:" 
+              + "".join(f"\n - {entry}" for entry in param.rdkit_file_extensions_opt) 
+        ) 
+        output.error(msg)
+
+    # If force field could not be constructed, stop
+    if ff is None:
+        output.error(f'Could not set up "{ff_name}" force field for "{inp.rdkit_mol_file}".')
+
+    # Optimize
+    max_iters = inp.rdkit_max_iters
+    ff.Initialize()
+    iters = ff.Minimize(maxIts=max_iters)   # runs the convergence loop, save the number of iterations
+    energy = float(ff.CalcEnergy())
+
+    # Check convergence
+    if iters >= max_iters:
+        output.error(
+            f'Geometry optimization did not converge after {max_iters} iterations '
+            f'for "{inp.rdkit_mol_file}" using "{ff_name} force field".'
+        )
+
+    # Store metadata (handy for SDF output)
+    try:
+        mol.SetProp("_FF", ff_name)
+        mol.SetProp("_FF_Energy_kcalmol", f"{energy:.6f}")
+        mol.SetProp("_FF_MaxIters", str(max_iters))
+        mol.SetProp("_FF_Iters", str(iters))
+        mol.SetProp("_FF_Converged", "true" if iters < max_iters else "false")
+    except Exception:
+        pass
+
+    # Save to requested output
+    out_file = os.path.join("results_geom", inp.rdkit_output_file)
+    save_rdkit_file(mol, out_file)
+# -------------------------------------------------------------------------------------
+def save_rdkit_file(mol, out_file):
+    """
+    Save an RDKit Mol to a file with the specified extension.
+    """
+    param = parameters.parameters()  
+
     ext = out_file[-4:].lower()
-    
+
     if ext == ".smi":
         with open(out_file, "w") as f:
             smi = Chem.MolToSmiles(mol)
@@ -84,22 +155,39 @@ def embed_3d(mol):
     """
     Ensure the given RDKit molecule has hydrogens and a 3D conformer.
     - Adds hydrogens (if not already present).
+    - If there is no conformer or only a 2D conformer, (re)embed with ETKDGv3.
     - If no conformer exists, generates one with ETKDGv3.
     """
     if mol is None:
-        raise ValueError("embed_3d_inplace: input molecule is None.")
+        raise ValueError("embed_3d: input molecule is None.")
 
     # Add hydrogens (returns a new molecule)
-    mol_with_h = Chem.AddHs(mol, addCoords=True)
+    mH = Chem.AddHs(mol, addCoords=True)
 
-    # If no conformer, embed one in place
-    if mol_with_h.GetNumConformers() == 0:
-        if AllChem.EmbedMolecule(mol_with_h, AllChem.ETKDGv3()) == -1:
-            raise RuntimeError("ETKDGv3 embedding failed for molecule.")
+    def _has_true_3d(mm: Chem.Mol) -> bool:
+        if mm.GetNumConformers() == 0:
+            return False
+        conf = mm.GetConformer()
+        try:
+            return conf.Is3D()
+        except Exception:
+            # Fallback: check if any z is meaningfully non-zero
+            zs = [conf.GetAtomPosition(i).z for i in range(mm.GetNumAtoms())]
+            return any(abs(z) > 1e-6 for z in zs)
 
-    # Copy back to original reference (in case AddHs returned a new object)
-    mol.__init__(mol_with_h)
+    # Re-embed only if no conformer or the conformer is 2D
+    if not _has_true_3d(mH):
+        if mH.GetNumConformers() > 0:
+            mH.RemoveAllConformers()
+        rc = AllChem.EmbedMolecule(mH, AllChem.ETKDGv3())
+        if rc == -1:
+            # Optional minimal fallback; no optimization
+            rc = AllChem.EmbedMolecule(mH, useRandomCoords=True)
+            if rc == -1:
+                raise RuntimeError("embed_3d: failed ETKDGv3 and random embedding.")
 
+    # Copy back into the original object (keep callers' reference)
+    mol.__init__(mH)
     return mol
 # -------------------------------------------------------------------------------------
 def load_rdkit_file(inp):
@@ -244,7 +332,7 @@ def plot_3d_molecule(mol, style="ballstick", width=1600, height=900, background=
     In CLI: generates a temporary HTML file and opens it in the default browser.
     """
     # Ensure we have a 3D conformer.
-    embed_3d(mol)
+    mol = embed_3d(mol)
 
     mblock = Chem.MolToMolBlock(mol)
     view = py3Dmol.view(width=width, height=height)
@@ -266,15 +354,7 @@ def plot_3d_molecule(mol, style="ballstick", width=1600, height=900, background=
 def xyz_to_pdb(inp):
     """
     Convert XYZ -> PDB .
-    Steps:
-      1) Read XYZ with ASE (symbols + 3D coords)
-      2) Build an RDKit mol with those atoms/coords
-      3) Infer bonds from geometry (DetermineBonds)
-      4) Sanitize and assign stereochemistry (R/S, E/Z)
-      5) Write PDB with CONECT records
-
-    Returns:
-      inp with inp.rdkit_mol_file pointing to the generated PDB.
+     debugpgi
     """
 
     # Determine the script's location
