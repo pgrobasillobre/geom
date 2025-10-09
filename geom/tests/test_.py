@@ -9,16 +9,16 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "."))
 test_folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 from geom.classes import input_class
-from geom.functions import general, various, translate, rotate, create_geom
+from geom.functions import general, various, translate, rotate, create_geom, rdkit_module
 
 # -------------------------------------------------------------------------------------
-def move_input_geom(folder, xyz_file, optional_file=None):
+def move_input_geom(folder, geom_file, optional_file=None):
    """
    Moves the input geometry file into the scratch folder.
 
    Args:
        folder (str): The folder where the input file is located.
-       xyz_file (str): The name of the input XYZ file to be moved.
+       geom_file (str): The name of the input geometry file to be moved.
        optional_file (str, optional): An additional file to move if provided.
 
    Returns:
@@ -29,9 +29,9 @@ def move_input_geom(folder, xyz_file, optional_file=None):
        - If an optional file is provided, it is also copied.
    """
 
-   file_path_xyz = os.path.join(os.path.dirname(__file__), folder, xyz_file)
+   file_path = os.path.join(os.path.dirname(__file__), folder, geom_file)
 
-   os.system(f'cp {file_path_xyz} .')
+   os.system(f'cp {file_path} .')
 
    if optional_file:
       file_path_optional = os.path.join(os.path.dirname(__file__), folder, optional_file)
@@ -175,44 +175,51 @@ def test_create_sphere(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
-##def test_create_sphere_continuum(monkeypatch):
-##   """
-##   Tests the generation of a sphere 3D continuum mesh and compares it with a reference file.
-##
-##   Args:
-##       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
-##
-##   Returns:
-##       None: Uses assertions to validate the generated `.msh` file.
-##
-##   Notes:
-##       - Mocks command-line arguments for sphere continuum creation.
-##       - Runs the geometry creation process.
-##       - Compares the generated `.msh` file with an expected reference file.
-##   """
-##
-##   # Test folder
-##   test_folder = 'sphere_continuum'
-##   
-##   # Mock sys.argv to simulate the command line input
-##   mock_args = ["dummy", "-create", "-sphere", "-continuum", "50.0", "10.0"]
-##   monkeypatch.setattr(sys, "argv", mock_args)
-##   
-##   # Manually create and populate the input class
-##   inp = input_class.input_class()
-##   general.read_command_line(sys.argv, inp)
-##   
-##   # Run the geometry creation
-##   create_geom.select_case(inp)
-##   
-##   # Define the expected and actual output files
-##   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "sphere_r_50.0_mesh_size_10.0.msh")
-##   generated_file = f"{test_folder}/sphere_r_{inp.radius}_mesh_size_{inp.mesh_size}.msh"
-##
-##   move_created_geom(test_folder)
-##   
-##   # Compare the generated file with the reference
-##   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
+def test_rdkit_optimization(monkeypatch):
+   """
+   Tests the optimization of a molecular structure using RDKit and compares the result with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate that the optimized molecular structure matches the expected reference output.
+
+   Notes:
+       - Mocks command-line arguments to perform an RDKit-based molecular optimization.
+       - Temporarily moves the input `.smi` file into the test directory.
+       - Executes the optimization routine using the specified force field (e.g., MMFF94s).
+       - Moves the generated files back to their managed location after execution.
+       - Compares the generated `.sdf` file with an expected reference file.
+   """
+
+   # Test folder
+   test_folder       = 'rdkit_opt'
+   rdkit_input_file  = 'tyrosine.smi'
+   rdkit_output_file = 'tyrosine_opt.sdf'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", "-rdkit", "-i", rdkit_input_file,"-opt", "mmff94s", "-o", rdkit_output_file] 
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+
+   # Temporaly move input file
+   move_input_geom(test_folder,rdkit_input_file)
+   
+   # Run the geometry creation
+   rdkit_module.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "tyrosine_opt.sdf")
+   generated_file = f"{test_folder}/{inp.rdkit_output_file}"
+
+   move_managed_geom(test_folder, remove_optional_file = rdkit_input_file)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated RDKit file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_sphere_core_shell(monkeypatch):
    """
@@ -293,45 +300,6 @@ def test_create_rod(monkeypatch):
    
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
-# -------------------------------------------------------------------------------------
-##def test_create_rod_continuum(monkeypatch):
-##   """
-##   Tests the generation of a rod 3D continuum mesh and compares it with a reference file.
-##
-##   Args:
-##       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
-##
-##   Returns:
-##       None: Uses assertions to validate the generated `.msh` file.
-##
-##   Notes:
-##       - Mocks command-line arguments for rod continuum creation.
-##       - Runs the geometry creation process.
-##       - Compares the generated `.msh` file with an expected reference file.
-##   """
-##
-##   # Test folder
-##   test_folder = 'rod_continuum'
-##   
-##   # Mock sys.argv to simulate the command line input
-##   mock_args = ["dummy", "-create", "-rod", "-continuum", "Z", "100.0", "30.0", "5.0"]
-##   monkeypatch.setattr(sys, "argv", mock_args)
-##   
-##   # Manually create and populate the input class
-##   inp = input_class.input_class()
-##   general.read_command_line(sys.argv, inp)
-##   
-##   # Run the geometry creation
-##   create_geom.select_case(inp)
-##   
-##   # Define the expected and actual output files
-##   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "rod_Z_l_100.0_w_30.0_mesh_size_5.0.msh")
-##   generated_file = f"{test_folder}/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
-##
-##   move_created_geom(test_folder)
-##   
-##   # Compare the generated file with the reference
-##   assert compare_mesh_files(generated_file, expected_file), "Generated Mesh file does not match the expected output"
 # -------------------------------------------------------------------------------------
 def test_create_rod_core_shell(monkeypatch):
    """
