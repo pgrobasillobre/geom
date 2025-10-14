@@ -17,7 +17,7 @@ def select_case(inp):
 
   if (inp.rdkit_visualize): visualize(inp)
   if (inp.rdkit_file_conversion): file_conversion(inp)
-  if (inp.rdkit_opt): force_field_optimization(inp)
+  if (inp.rdkit_opt and not inp.rdkit_conformers): force_field_optimization(inp)
 
   # Eliminate tmp folder containing xyz to pdb structure
   if (inp.rdkit_mol_file_extension==".xyz"): shutil.rmtree(inp.tmp_folder)

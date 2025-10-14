@@ -208,8 +208,22 @@ def print_help():
         
          Force field geometry optimization:
 
-            -rdkit -i file.[pdb|sdf|mol|smi|xyz] -opt [mmff94(default)|mmff94s|uff] [-maxIters N] [-o file.[pdb|sdf|xyz]]
-                
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz]
+                    -opt [mmff94|mmff94s|uff] (default=mmff94)
+                    [-maxIters N(default=200)]
+                    [-o file.[pdb|sdf|mol2|xyz](default=pdb)]
+
+         Conformers generation:
+
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz] 
+                    -confs [N] (default=50)
+                    [-opt [mmff94|mmff94s|uff] (default=mmff94)]
+                    [-maxIters N] (default=200)
+                    [-ext [pdb|sdf|xyz] (default=pdb)]
+                    [-maxAttempts N] (default=1000)
+                    [-pruneRms RMS] (default=0.75)
+                    [-multi [single|split] (default=single)] --> single: all conformers in one file; split: one file per conformer
+
     '''
     print(help_text)
     sys.exit()
@@ -386,6 +400,34 @@ def parse_rdkit(argv, inp):
 
         if any(arg.lower() == "-maxiters" for arg in argv):
             inp.rdkit_max_iters = extract_integer(argv, "-maxIters")
+
+    # Conformers generation
+    if "-confs" in argv:
+        inp.rdkit_conformers = True
+        inp.rdkit_confs = extract_integer_or_default(argv,"-confs",default=50) 
+        inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + "_conf%"
+        if "-ext" in argv: 
+            inp.rdkit_confs_ext = extract_string(argv,"-ext")
+        if any(arg.lower() == "-maxattempts" for arg in argv):
+            inp.rdkit_max_attempts = extract_integer(argv,"-maxAttempts")
+        if any(arg.lower() == "-pruneRms" for arg in argv):
+            inp.rdkit_confs_prune_rms == extract_float(argv,"-pruneRms")
+        if "-multi" in argv:
+            inp.rdkit_confs_multi = extract_string(argv,"-multi")
+
+    print(inp.rdkit_conformers)
+    print(inp.rdkit_confs)
+    print(inp.rdkit_opt)
+    print(inp.rdkit_max_iters)
+    print(inp.rdkit_confs_ext)
+    print(inp.rdkit_output_file)
+    print(inp.rdkit_max_attempts)
+    print(inp.rdkit_confs_prune_rms)
+    print(inp.rdkit_confs_multi)
+
+    sys.exit()
+
+        
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
@@ -1074,6 +1116,38 @@ def extract_integer(argv, flag):
 
     return value
 # -------------------------------------------------------------------------------------
+def extract_float(argv, flag):
+    """
+    Extract an float argument that follows a CLI flag (case-insensitive).
+
+    Raises:
+        ValueError: if the flag is present but has no value,
+                    or if the value cannot be converted to float.
+    """
+    # Normalize everything to lowercase for comparison
+    argv_lower = [arg.lower() for arg in argv]
+    flag_lower = flag.lower()
+
+    if flag_lower not in argv_lower:
+        output.error(f'Requested flag "{flag}" not found')
+
+    i = argv_lower.index(flag_lower)
+    if i + 1 >= len(argv):
+        raise ValueError(f'Missing float argument after "{flag}"')
+
+    token = argv[i + 1]
+
+    # If the next token looks like another flag
+    if token.startswith("-"):
+        raise ValueError(f'Missing float argument after "{flag}" (found another flag \"{token}\")')
+
+    try:
+        value = float(token)
+    except ValueError:
+        raise ValueError(f'Expected an float after "{flag}", got "{token}"')
+
+    return value
+# -------------------------------------------------------------------------------------
 def extract_string_or_default(argv, flag, default):
     """
     Extract the argument that follows a CLI flag, or return the provided default.
@@ -1101,6 +1175,43 @@ def extract_string_or_default(argv, flag, default):
         return default
 
     return next_token.lower()
+# -------------------------------------------------------------------------------------
+def extract_integer_or_default(argv, flag, default):
+    """
+    Extract an integer argument that follows a CLI flag, or return the provided default.
+
+    Args:
+        argv (list): Command-line arguments.
+        flag (str): Flag to search for.
+        default (int): Default value if the flag is missing or has no argument.
+
+    Returns:
+        int: The integer found after the flag, or the default if the flag is absent.
+
+    Raises:
+        ValueError: If the flag is present but the following value is not a valid integer.
+    """
+    if flag not in argv:
+        return default
+
+    i = argv.index(flag)
+
+    # Case 1: flag is last in argv → no value provided
+    if i + 1 >= len(argv):
+        return default
+
+    # Case 2: next token looks like another flag → treat as no argument
+    next_token = argv[i + 1]
+    if next_token.startswith("-"):
+        return default
+
+    # Try converting to integer; raise if invalid
+    try:
+        return int(next_token)
+    except ValueError as e:
+        raise ValueError(
+            f'Invalid integer value "{next_token}" provided for flag "{flag}".'
+        ) from e
 # -------------------------------------------------------------------------------------
 def check_equal_extensions(infile1,infile2):
    """ 
