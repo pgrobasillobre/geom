@@ -143,7 +143,6 @@ def generate_conformers(inp):
     params.numThreads = 0          # Use all available cores
 
     params.pruneRmsThresh   = inp.rdkit_confs_prune_rms # default = 0.75
-    params.maxAttempts      = inp.rdkit_max_attempts    # default = 1000
     
     # Embed multiple conformers with ETKDGv3
     conf_ids = AllChem.EmbedMultipleConfs(mol, numConfs=int(inp.rdkit_confs), params=params)

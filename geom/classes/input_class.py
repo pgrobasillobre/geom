@@ -57,7 +57,6 @@ class input_class:
       self.rdkit_confs_ext = '.pdb'
 
       self.rdkit_max_iters = 200
-      self.rdkit_max_attempts = 1000
       self.rdkit_confs = 50
    
       self.rdkit_confs_prune_rms = 0.75      
