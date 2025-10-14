@@ -376,7 +376,7 @@ def parse_rdkit(argv, inp):
 
     if "-match" in argv:
         inp.rdkit_match = True
-        inp.match_smiles = extract_string(argv, "-match")
+        inp.match_smiles = extract_value(argv, "-match",value_type=str)
     
     if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
 
@@ -386,12 +386,12 @@ def parse_rdkit(argv, inp):
     # File conversion
     if "-o" in argv:
         inp.rdkit_file_conversion = True
-        inp.rdkit_output_file = extract_string(argv, "-o")
+        inp.rdkit_output_file = extract_value(argv, "-o",value_type=str)
 
     # Force field optimization
     if "-opt" in argv:
         inp.rdkit_opt = True
-        inp.rdkit_force_field = extract_string_or_default(argv,"-opt",default="mmff94") 
+        inp.rdkit_force_field = extract_value_or_default(argv,"-opt",value_type=str,default="mmff94") 
 
         if "-o" in argv: 
             inp.rdkit_file_conversion = False # Turn off file conversion
@@ -399,35 +399,21 @@ def parse_rdkit(argv, inp):
             inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + "_opt.pdb"
 
         if any(arg.lower() == "-maxiters" for arg in argv):
-            inp.rdkit_max_iters = extract_integer(argv, "-maxIters")
+            inp.rdkit_max_iters = extract_value(argv, "-maxIters",value_type=int)
 
     # Conformers generation
     if "-confs" in argv:
         inp.rdkit_conformers = True
-        inp.rdkit_confs = extract_integer_or_default(argv,"-confs",default=50) 
-        inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + "_conf%"
+        inp.rdkit_confs = extract_value_or_default(argv,"-confs",value_type=int,default=50) 
+        inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + "_conf%.pdb"
         if "-ext" in argv: 
-            inp.rdkit_confs_ext = extract_string(argv,"-ext")
+            inp.rdkit_confs_ext = extract_value(argv,"-ext",value_type=str)
         if any(arg.lower() == "-maxattempts" for arg in argv):
-            inp.rdkit_max_attempts = extract_integer(argv,"-maxAttempts")
-        if any(arg.lower() == "-pruneRms" for arg in argv):
-            inp.rdkit_confs_prune_rms == extract_float(argv,"-pruneRms")
+            inp.rdkit_max_attempts = extract_value(argv,"-maxAttempts",value_type=int)
+        if any(arg.lower() == "-prunerms" for arg in argv):
+            inp.rdkit_confs_prune_rms = extract_value(argv, "-pruneRms", value_type=float)
         if "-multi" in argv:
-            inp.rdkit_confs_multi = extract_string(argv,"-multi")
-
-    print(inp.rdkit_conformers)
-    print(inp.rdkit_confs)
-    print(inp.rdkit_opt)
-    print(inp.rdkit_max_iters)
-    print(inp.rdkit_confs_ext)
-    print(inp.rdkit_output_file)
-    print(inp.rdkit_max_attempts)
-    print(inp.rdkit_confs_prune_rms)
-    print(inp.rdkit_confs_multi)
-
-    sys.exit()
-
-        
+            inp.rdkit_confs_multi = extract_value(argv,"-multi",value_type=str)
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
@@ -1065,152 +1051,120 @@ def extract_string_or_list(argv, flag):
             return items
         return [raw.strip().strip('"').strip("'")]
 # -------------------------------------------------------------------------------------
-def extract_string(argv, flag):
+def extract_value(argv, flag, value_type):
     """
-    Extract the argument(s) that follow a CLI flag.
+    Extract the argument that follows a CLI flag and cast it to a given type.
 
-    Returns a strings.
+    Args:
+        argv (list): Command-line arguments.
+        flag (str): Flag to search for (case-insensitive).
+        value_type (type): Expected Python type (e.g., str, int, float).
+
+    Returns:
+        The value converted to the expected type.
+
+    Raises:
+        ValueError: If the flag is present but has no value, 
+                    or if the value cannot be converted to the expected type.
+        SystemExit: If the flag is not found (via output.error()).
     """
-    if flag not in argv:
+    # Normalize for case-insensitive search
+    argv_lower = [arg.lower() for arg in argv]
+    flag_lower = flag.lower()
+
+    if flag_lower not in argv_lower:
         output.error(f'Requested flag "{flag}" not found')
 
+    i = argv_lower.index(flag_lower)
 
-    i = argv.index(flag)
+    # Case 1: flag is last in argv → no value provided
     if i + 1 >= len(argv):
         raise ValueError(f'Missing argument after "{flag}"')
 
-    # Grab everything after the flag
-    token = argv[i+1:][0]
-
-    return token
-# -------------------------------------------------------------------------------------
-def extract_integer(argv, flag):
-    """
-    Extract an integer argument that follows a CLI flag (case-insensitive).
-
-    Raises:
-        ValueError: if the flag is present but has no value,
-                    or if the value cannot be converted to int.
-    """
-    # Normalize everything to lowercase for comparison
-    argv_lower = [arg.lower() for arg in argv]
-    flag_lower = flag.lower()
-
-    if flag_lower not in argv_lower:
-        output.error(f'Requested flag "{flag}" not found')
-
-    i = argv_lower.index(flag_lower)
-    if i + 1 >= len(argv):
-        raise ValueError(f'Missing integer argument after "{flag}"')
-
     token = argv[i + 1]
 
-    # If the next token looks like another flag
+    # Case 2: next token looks like another flag → treat as missing
     if token.startswith("-"):
-        raise ValueError(f'Missing integer argument after "{flag}" (found another flag \"{token}\")')
+        raise ValueError(f'Missing argument after "{flag}" (found another flag \"{token}\")')
 
+    # Type validation
     try:
-        value = int(token)
+        if value_type is str:
+            value = token
+        elif value_type is int:
+            value = int(token)
+        elif value_type is float:
+            value = float(token)
+        else:
+            raise TypeError(f'Unsupported value_type "{value_type.__name__}". '
+                            'Allowed: str, int, float.')
     except ValueError:
-        raise ValueError(f'Expected an integer after "{flag}", got "{token}"')
+        raise ValueError(f'Expected a {value_type.__name__} after "{flag}", got "{token}"')
 
     return value
 # -------------------------------------------------------------------------------------
-def extract_float(argv, flag):
+def extract_value_or_default(argv, flag, value_type=str, default=None):
     """
-    Extract an float argument that follows a CLI flag (case-insensitive).
+    Extract the argument that follows a CLI flag and cast it to a given type.
+    If the flag is absent or has no following value, return the provided default.
+    If the flag is present but the value is not convertible to the requested type, raise ValueError.
+
+    Args:
+        argv (list[str]): Command-line arguments.
+        flag (str): Flag to search for (case-insensitive).
+        value_type (type): One of {str, int, float}.
+        default (Any): Default value if the flag is missing or has no argument.
+                       If not None, its type must match `value_type`.
+
+    Returns:
+        Any: The value converted to `value_type`, or `default` when appropriate.
 
     Raises:
-        ValueError: if the flag is present but has no value,
-                    or if the value cannot be converted to float.
+        TypeError: If `value_type` is unsupported, or `default`'s type doesn't match `value_type`.
+        ValueError: If the flag is present but the following token can't be converted to `value_type`.
     """
-    # Normalize everything to lowercase for comparison
-    argv_lower = [arg.lower() for arg in argv]
+    # Validate requested type
+    if value_type not in (str, int, float):
+        raise TypeError(f'Unsupported value_type "{getattr(value_type, "__name__", value_type)}". Allowed: str, int, float.')
+
+    # Validate default type (allow None)
+    if default is not None and not isinstance(default, value_type):
+        raise TypeError(
+            f'Default value type mismatch for flag "{flag}": '
+            f'expected {value_type.__name__}, got {type(default).__name__}.'
+        )
+
+    # Case-insensitive search for the flag
+    argv_lower = [a.lower() for a in argv]
     flag_lower = flag.lower()
 
+    # If flag not present → return default
     if flag_lower not in argv_lower:
-        output.error(f'Requested flag "{flag}" not found')
+        return default
 
     i = argv_lower.index(flag_lower)
+
+    # Flag is last token → no value provided → return default
     if i + 1 >= len(argv):
-        raise ValueError(f'Missing float argument after "{flag}"')
+        return default
 
     token = argv[i + 1]
 
-    # If the next token looks like another flag
+    # Next token looks like another flag → treat as missing → return default
     if token.startswith("-"):
-        raise ValueError(f'Missing float argument after "{flag}" (found another flag \"{token}\")')
+        return default
 
+    # Cast to the requested type
     try:
-        value = float(token)
-    except ValueError:
-        raise ValueError(f'Expected an float after "{flag}", got "{token}"')
-
-    return value
-# -------------------------------------------------------------------------------------
-def extract_string_or_default(argv, flag, default):
-    """
-    Extract the argument that follows a CLI flag, or return the provided default.
-
-    Args:
-        argv (list): Command-line arguments.
-        flag (str): Flag to search for.
-        default (str): Default value if no argument follows the flag.
-
-    Returns:
-        str: The string found after the flag, or the default.
-    """
-    if flag not in argv:
-        return default
-
-    i = argv.index(flag)
-
-    # Case 1: flag is last in argv → no value provided
-    if i + 1 >= len(argv):
-        return default
-
-    # Case 2: next token looks like another flag → treat as no argument
-    next_token = argv[i + 1]
-    if next_token.startswith("-"):
-        return default
-
-    return next_token.lower()
-# -------------------------------------------------------------------------------------
-def extract_integer_or_default(argv, flag, default):
-    """
-    Extract an integer argument that follows a CLI flag, or return the provided default.
-
-    Args:
-        argv (list): Command-line arguments.
-        flag (str): Flag to search for.
-        default (int): Default value if the flag is missing or has no argument.
-
-    Returns:
-        int: The integer found after the flag, or the default if the flag is absent.
-
-    Raises:
-        ValueError: If the flag is present but the following value is not a valid integer.
-    """
-    if flag not in argv:
-        return default
-
-    i = argv.index(flag)
-
-    # Case 1: flag is last in argv → no value provided
-    if i + 1 >= len(argv):
-        return default
-
-    # Case 2: next token looks like another flag → treat as no argument
-    next_token = argv[i + 1]
-    if next_token.startswith("-"):
-        return default
-
-    # Try converting to integer; raise if invalid
-    try:
-        return int(next_token)
+        if value_type is str:
+            return token
+        elif value_type is int:
+            return int(token)
+        elif value_type is float:
+            return float(token)
     except ValueError as e:
         raise ValueError(
-            f'Invalid integer value "{next_token}" provided for flag "{flag}".'
+            f'Invalid {value_type.__name__} value "{token}" provided for flag "{flag}".'
         ) from e
 # -------------------------------------------------------------------------------------
 def check_equal_extensions(infile1,infile2):

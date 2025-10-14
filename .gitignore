@@ -38,4 +38,7 @@ geom/tests/r1_rotation/doxorubicin_-y_degree_30.0.xyz
 
 geom/tests/rod*/*msh
 geom/tests/sphere*/*msh
+
+tests/rdkit_opt/*sdf
+
 geom/.DS_Store
