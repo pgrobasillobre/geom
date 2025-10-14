@@ -159,11 +159,98 @@ def generate_conformers(inp):
             "Try increasing -confs, or relaxing -pruneRms"
         )
 
+    # Optimize each conformer with the selected force field
+    if inp.rdkit_opt:
+        conformers_force_field_optimization(mol, inp)
+
     # Cosmetic alignment
     AllChem.AlignMolConformers(mol)
 
     # Save each conformer
-    save_rdkit_conformers(mol, inp.rdkit_output_file)
+    save_rdkit_conformers(mol, inp)
+# -------------------------------------------------------------------------------------
+def conformers_force_field_optimization(mol, inp, retry_factor=2):
+    """
+    debugpgi
+    """
+    if mol is None or mol.GetNumConformers() == 0:
+        output.error("optimize_conformers_batch: no conformers to optimize.")
+
+    ff_name   = inp.rdkit_force_field   
+    max_iters = inp.rdkit_max_iters     
+
+    # ---- First pass: batch with the requested FF ----
+    if ff_name in ("mmff94", "mmff94s"):
+        if not AllChem.MMFFHasAllMoleculeParams(mol):
+            output.error(
+                f"MMFF parameters unavailable for '{inp.rdkit_mol_file}' with '{ff_name}'."
+            )
+            return
+        variant = "MMFF94s" if ff_name == "mmff94s" else "MMFF94"
+        results = AllChem.MMFFOptimizeMoleculeConfs(
+            mol, maxIters=int(max_iters), numThreads=0, mmffVariant=variant
+        )
+    elif ff_name == "uff":
+        results = AllChem.UFFOptimizeMoleculeConfs(
+            mol, maxIters=int(max_iters), numThreads=0
+        )
+    else:
+        param = parameters.parameters()
+        msg = (
+            f"Force field '{ff_name}' not supported.\n\n"
+            " Accepted entries:"
+            + "".join(f"\n - {entry}" for entry in param.rdkit_file_extensions_opt)
+        )
+        output.error(msg)
+        return
+
+    converged = [bool(c) for c, _ in results]
+    energies  = [float(e) for _, e in results]
+
+    # ---- Optional: SAME-FF retry for non-converged conformers ----
+    hard = [i for i, ok in enumerate(converged) if not ok]
+    if hard and retry_factor and retry_factor > 1:
+        extra_iters = int(max_iters) * int(retry_factor)
+
+        if ff_name in ("mmff94", "mmff94s"):
+            variant = "MMFF94s" if ff_name == "mmff94s" else "MMFF94"
+            props = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant=variant)
+            if props is not None:
+                for cid in hard:
+                    ff2 = AllChem.MMFFGetMoleculeForceField(mol, props, confId=cid)
+                    if ff2 is None:
+                        continue
+                    ff2.Initialize()
+                    it2 = ff2.Minimize(maxIts=extra_iters)
+                    energies[cid]  = float(ff2.CalcEnergy())
+                    converged[cid] = (it2 < extra_iters)
+        else:  # UFF
+            for cid in hard:
+                ff2 = AllChem.UFFGetMoleculeForceField(mol, confId=cid)
+                if ff2 is None:
+                    continue
+                ff2.Initialize()
+                it2 = ff2.Minimize(maxIts=extra_iters)
+                energies[cid]  = float(ff2.CalcEnergy())
+                converged[cid] = (it2 < extra_iters)
+
+    # ---- Annotate molecule & conformers ----
+    try:
+        mol.SetProp("_FF", str(ff_name))
+        mol.SetProp("_FF_MaxIters", str(max_iters))
+        for i, (E, ok) in enumerate(zip(energies, converged)):
+            mol.SetProp(f"_Conf_{i:07d}_FF_Energy_kcalmol", f"{E:.6f}")
+            mol.SetProp(f"_Conf_{i:07d}_FF_Converged", "true" if ok else "false")
+    except Exception:
+        pass
+
+    # Warn if some still didn’t converge
+    n_fail = sum(not ok for ok in converged)
+    if n_fail:
+        output.warn(
+            f"Warning: {n_fail}/{len(converged)} conformers did not converge within "
+            f"{max_iters} (and {max_iters*retry_factor if retry_factor>1 else max_iters} on retry) using '{ff_name}'."
+        )
 # -------------------------------------------------------------------------------------
 def save_rdkit_file(mol, out_file):
     """
@@ -198,30 +285,14 @@ def save_rdkit_file(mol, out_file):
         output.error(msg)
 
 # -------------------------------------------------------------------------------------
-def save_rdkit_conformers(mol, base_out, out_dir="results_geom", max_digits=7):
+def save_rdkit_conformers(mol, inp, out_dir="results_geom", max_digits=7):
     """
-    Save each conformer of an RDKit Mol as separate files named: stem_conf_########.ext
+    Save each conformer as:
+      - if inp.rdkit_opt:  {stem}_opt_{CONV|NOTCONV}_{FF}_conf_########{ext}
+      - else:              {stem}_conf_########{ext}
 
-    Examples:
-        molecule.sdf -> results_geom/molecule_conf_0000000.sdf, molecule_conf_0000001.sdf, ...
-
-    Supports:
-      - .sdf (one record per file)
-      - .pdb (one MODEL per file)
-      - .xyz (one block per file)
-
-    Args:
-        mol: RDKit molecule with ≥1 conformer.
-        base_out (str): Output filename template; only stem and extension are used.
-        out_dir (str): Target directory (created if needed).
-        max_digits (int): Zero-padding width (default 7).
-
-    Side effects:
-        - Writes files to disk.
-        - Prints each written path and a final summary.
-
-    Notes:
-        - This function does not return anything.
+    Reads per-conformer convergence from:
+      _Conf_{index:07d}_FF_Converged  (set earlier during optimization)
     """
     param = parameters.parameters()
 
@@ -232,7 +303,7 @@ def save_rdkit_conformers(mol, base_out, out_dir="results_geom", max_digits=7):
     if nconfs == 0:
         output.error("save_rdkit_conformers: the molecule has no conformers to save.")
 
-    stem, ext = os.path.splitext(base_out)
+    stem, ext = os.path.splitext(inp.rdkit_output_file)
     ext = ext.lower()
 
     if ext not in (".sdf", ".pdb", ".xyz"):
@@ -242,14 +313,33 @@ def save_rdkit_conformers(mol, base_out, out_dir="results_geom", max_digits=7):
             + "".join(f"\n     - {extension}" for extension in param.rdkit_file_extensions_confs)
         )
         output.error(msg)
-        return
 
-    # Fixed padding width up to max_digits (default 7 → up to 9,999,999)
+
+    def _conf_converged(m, idx: int):
+        # Try zero-padded then plain index
+        for k in (f"_Conf_{idx:07d}_FF_Converged", f"_Conf_{idx}_FF_Converged"):
+            if m.HasProp(k):
+                v = m.GetProp(k).strip().lower()
+                return v in ("true", "1", "yes", "y")
+        return None  # unknown
+
+    # padding width (up to max_digits)
     width = max(3, min(max_digits, len(str(max(0, nconfs - 1)))))
 
+    tag_opt = bool(getattr(inp, "rdkit_opt", False))
+    ff_tag  = str(getattr(inp, "rdkit_force_field", "")).strip()
+
     for i in range(nconfs):
-        idx = f"{i+1:0{width}d}"
-        out_path = os.path.join(out_dir, f"{stem}_conf_{idx}{ext}")
+        idx_str = f"{i:0{width}d}"  # 1-based index in filenames
+
+        if tag_opt:
+            conv = _conf_converged(mol, i)
+            status = "CONV" if conv is True else ("NOTCONV" if conv is False else "UNKNOWN")
+            stem_i = f"{stem}_opt_{status}_{ff_tag}"
+        else:
+            stem_i = stem
+
+        out_path = os.path.join(out_dir, f"{stem_i}_conf_{idx_str}{ext}")
 
         if ext == ".sdf":
             w = Chem.SDWriter(out_path)
@@ -269,12 +359,6 @@ def save_rdkit_conformers(mol, base_out, out_dir="results_geom", max_digits=7):
             block = Chem.MolToXYZBlock(mol, confId=int(i))
             with open(out_path, "w") as f:
                 f.write(block if block.endswith("\n") else block + "\n")
-
-    #print(
-    #    f"Saved {nconfs} conformers to '{out_dir}' as "
-    #    f"{os.path.basename(stem)}_conf_{(1):0{width}d}{ext} .. "
-    #    f"{os.path.basename(stem)}_conf_{(nconfs):0{width}d}{ext}"
-    #)
 # -------------------------------------------------------------------------------------
 def embed_3d(mol):
     """
