@@ -42,6 +42,7 @@ class input_class:
       self.rdkit_abbreviations = False
       self.rdkit_file_conversion = False
       self.rdkit_opt = False
+      self.rdkit_conformers = False
       
       self.stereo_annotations = False
       self.atom_index = False
@@ -52,8 +53,13 @@ class input_class:
       self.rdkit_mol_file = ''
       self.rdkit_mol_file_extension = ''
       self.rdkit_force_field = ''
+      self.rdkit_confs_ext = 'pdb'
+      self.rdkit_confs_multi = 'single'
 
       self.rdkit_max_iters = 200
+      self.rdkit_max_attempts = 1000
+      self.rdkit_confs = 50
+      self.rdkit_confs_prune_rms = 0.75      
 
       # -- Small tasks
       self.small_tasks = False
