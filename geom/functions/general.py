@@ -220,7 +220,6 @@ def print_help():
                     [-opt [mmff94|mmff94s|uff] (default=mmff94)]
                     [-maxIters N] (default=200)
                     [-ext [pdb|sdf|xyz] (default=pdb)]
-                    [-maxAttempts N] (default=1000)
                     [-pruneRms RMS] (default=0.75)
 
     '''
@@ -406,8 +405,6 @@ def parse_rdkit(argv, inp):
         inp.rdkit_confs = extract_value_or_default(argv,"-confs",value_type=int,default=50) 
         if "-ext" in argv: 
             inp.rdkit_confs_ext = "." + extract_value(argv,"-ext",value_type=str)
-        if any(arg.lower() == "-maxattempts" for arg in argv):
-            inp.rdkit_max_attempts = extract_value(argv,"-maxAttempts",value_type=int)
         if any(arg.lower() == "-prunerms" for arg in argv):
             inp.rdkit_confs_prune_rms = extract_value(argv, "-pruneRms", value_type=float)
         inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + inp.rdkit_confs_ext
