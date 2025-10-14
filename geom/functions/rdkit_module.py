@@ -120,6 +120,52 @@ def force_field_optimization(inp):
     out_file = os.path.join("results_geom", inp.rdkit_output_file)
     save_rdkit_file(mol, out_file)
 # -------------------------------------------------------------------------------------
+def generate_conformers(inp):
+    """
+    debugpgi
+    """
+
+    # Check input and create results folder
+    inp.check_input_case()
+    general.create_results_geom()
+
+    # Read geometry and add hydrogens
+    base = load_rdkit_file(inp)
+    mol  = Chem.AddHs(base, addCoords=True)
+
+    if mol.GetNumConformers() > 0:
+        mol.RemoveAllConformers()
+
+    # ETKDGv3 params from CLI
+    params = AllChem.ETKDGv3()
+    params.enforceChirality = True # Keep stereochemistry
+    params.randomSeed = 42         # For reproducibility
+    params.numThreads = 0          # Use all available cores
+
+    params.pruneRmsThresh   = inp.rdkit_confs_prune_rms # default = 0.75
+    params.maxAttempts      = inp.rdkit_max_attempts    # default = 1000
+    
+    # Embed multiple conformers with ETKDGv3
+    conf_ids = AllChem.EmbedMultipleConfs(mol, numConfs=int(inp.rdkit_confs), params=params)
+
+    # Fallback: embed using random coords if ETKDG failed
+    if not conf_ids:
+        params.useRandomCoords = True
+        conf_ids = AllChem.EmbedMultipleConfs(mol, numConfs=int(inp.rdkit_confs), params=params)
+
+    # If still no conformers, raise error
+    if not conf_ids:
+        return output.error(
+            f"Conformer generation failed for '{inp.rdkit_mol_file}'. "
+            "Try increasing -confs, or relaxing -pruneRms"
+        )
+
+    # Cosmetic alignment
+    AllChem.AlignMolConformers(mol)
+
+    # Save each conformer
+    save_rdkit_conformers(mol, inp.rdkit_output_file)
+# -------------------------------------------------------------------------------------
 def save_rdkit_file(mol, out_file):
     """
     Save an RDKit Mol to a file with the specified extension.
@@ -151,22 +197,85 @@ def save_rdkit_file(mol, out_file):
             + "".join(f"\n     - {extension}" for extension in param.rdkit_file_extensions)
         )
         output.error(msg)
+
 # -------------------------------------------------------------------------------------
-def generate_conformers(inp):
+def save_rdkit_conformers(mol, base_out, out_dir="results_geom", max_digits=7):
     """
-    debugpgi
+    Save each conformer of an RDKit Mol as separate files named: stem_conf_########.ext
+
+    Examples:
+        molecule.sdf -> results_geom/molecule_conf_0000000.sdf, molecule_conf_0000001.sdf, ...
+
+    Supports:
+      - .sdf (one record per file)
+      - .pdb (one MODEL per file)
+      - .xyz (one block per file)
+
+    Args:
+        mol: RDKit molecule with ≥1 conformer.
+        base_out (str): Output filename template; only stem and extension are used.
+        out_dir (str): Target directory (created if needed).
+        max_digits (int): Zero-padding width (default 7).
+
+    Side effects:
+        - Writes files to disk.
+        - Prints each written path and a final summary.
+
+    Notes:
+        - This function does not return anything.
     """
+    param = parameters.parameters()
 
-    # Check input and create results folder
-    inp.check_input_case()   
-    general.create_results_geom()
+    if mol is None:
+        output.error("save_rdkit_conformers: input molecule is None.")
 
-    # Read geometry and ensure we have a 3D conformer
-    mol = load_rdkit_file(inp)
-    mol = embed_3d(mol)
+    nconfs = mol.GetNumConformers()
+    if nconfs == 0:
+        output.error("save_rdkit_conformers: the molecule has no conformers to save.")
 
-    print("conformers generation...")
+    stem, ext = os.path.splitext(base_out)
+    ext = ext.lower()
 
+    if ext not in (".sdf", ".pdb", ".xyz"):
+        msg = (
+            f"File extension '{ext}' for RDKit not supported.\n\n"
+            "   Accepted file extensions:"
+            + "".join(f"\n     - {extension}" for extension in param.rdkit_file_extensions_confs)
+        )
+        output.error(msg)
+        return
+
+    # Fixed padding width up to max_digits (default 7 → up to 9,999,999)
+    width = max(3, min(max_digits, len(str(max(0, nconfs - 1)))))
+
+    for i in range(nconfs):
+        idx = f"{i+1:0{width}d}"
+        out_path = os.path.join(out_dir, f"{stem}_conf_{idx}{ext}")
+
+        if ext == ".sdf":
+            w = Chem.SDWriter(out_path)
+            try:
+                mol.SetIntProp("_ConfId", int(i))
+            except Exception:
+                pass
+            w.write(mol, confId=int(i))
+            w.close()
+
+        elif ext == ".pdb":
+            block = Chem.MolToPDBBlock(mol, confId=int(i))
+            with open(out_path, "w") as f:
+                f.write(block if block.endswith("\n") else block + "\n")
+
+        elif ext == ".xyz":
+            block = Chem.MolToXYZBlock(mol, confId=int(i))
+            with open(out_path, "w") as f:
+                f.write(block if block.endswith("\n") else block + "\n")
+
+    #print(
+    #    f"Saved {nconfs} conformers to '{out_dir}' as "
+    #    f"{os.path.basename(stem)}_conf_{(1):0{width}d}{ext} .. "
+    #    f"{os.path.basename(stem)}_conf_{(nconfs):0{width}d}{ext}"
+    #)
 # -------------------------------------------------------------------------------------
 def embed_3d(mol):
     """

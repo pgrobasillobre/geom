@@ -107,6 +107,8 @@ class parameters:
       # RDKit accepted file extensions for load/conversion and optimization
       self.rdkit_file_extensions = [".smi",".sdf", ".mol", ".pdb", ".xyz"]
       self.rdkit_file_extensions_opt = [".pdb", ".xyz", ".sdf"]
+      self.rdkit_file_extensions_confs = [".pdb", ".xyz", ".sdf"]
+
 
       # RDKit accepted force fields
       self.rdkit_force_fields = ['mmff94','mmff94s','uff']

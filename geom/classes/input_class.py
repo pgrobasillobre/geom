@@ -54,8 +54,7 @@ class input_class:
       self.rdkit_mol_file_extension = ''
       self.rdkit_force_field = ''
       self.rdkit_output_file = ''
-      self.rdkit_confs_ext = 'pdb'
-      self.rdkit_confs_multi = 'single'
+      self.rdkit_confs_ext = '.pdb'
 
       self.rdkit_max_iters = 200
       self.rdkit_max_attempts = 1000
@@ -268,9 +267,6 @@ class input_class:
          if (self.rdkit_opt):
             general.check_accepted_parameters(self.rdkit_force_field, param.rdkit_force_fields, label='Force field')
             general.check_accepted_parameters(self.rdkit_output_file[-4:], param.rdkit_file_extensions_opt, label='Optimization saved to file extension')
-
-         if (self.rdkit_conformers):
-            general.check_accepted_parameters(self.rdkit_confs_multi, ["multi","single"], label='Conformers saving option')
 
       elif (self.create_geom):
          if (not self.gen_graphene          and
