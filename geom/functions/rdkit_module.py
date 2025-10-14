@@ -18,6 +18,7 @@ def select_case(inp):
   if (inp.rdkit_visualize): visualize(inp)
   if (inp.rdkit_file_conversion): file_conversion(inp)
   if (inp.rdkit_opt and not inp.rdkit_conformers): force_field_optimization(inp)
+  if (inp.rdkit_conformers): generate_conformers(inp)
 
   # Eliminate tmp folder containing xyz to pdb structure
   if (inp.rdkit_mol_file_extension==".xyz"): shutil.rmtree(inp.tmp_folder)
@@ -151,6 +152,22 @@ def save_rdkit_file(mol, out_file):
         )
         output.error(msg)
 # -------------------------------------------------------------------------------------
+def generate_conformers(inp):
+    """
+    debugpgi
+    """
+
+    # Check input and create results folder
+    inp.check_input_case()   
+    general.create_results_geom()
+
+    # Read geometry and ensure we have a 3D conformer
+    mol = load_rdkit_file(inp)
+    mol = embed_3d(mol)
+
+    print("conformers generation...")
+
+# -------------------------------------------------------------------------------------
 def embed_3d(mol):
     """
     Ensure the given RDKit molecule has hydrogens and a 3D conformer.
@@ -192,42 +209,50 @@ def embed_3d(mol):
 # -------------------------------------------------------------------------------------
 def load_rdkit_file(inp):
     """
-    debugpgi
-    Return a single RDKit Mol for .smi/.sdf/.mol/.pdb files.
+    Load a single RDKit Mol and keep only the first conformer.
+
+    Supports .smi, .sdf, .mol, .pdb, and .xyz (converted to PDB).
+
+    Args:
+        inp: Object with:
+            - ``rdkit_mol_file`` (str): Path to the input file.
+            - ``remove_H`` (bool): Whether to remove explicit hydrogens.
+
+    Returns:
+        Chem.Mol | None: Loaded molecule (trimmed to a single conformer if needed),
+        or triggers an error if loading fails.
     """
     param = parameters.parameters()
-
     filename = inp.rdkit_mol_file
     ext = filename[-4:].lower()
 
+    mol = None
+
     if ext == ".smi":
-        # Read the first SMILES from the file
+        # Read the first SMILES from the file.
         with open(filename, "r") as f:
             line = f.readline().strip()
         smiles = line.split()[0] if line else ""
-
-        if (inp.remove_H):
-            mol = Chem.RemoveHs(Chem.MolFromSmiles(smiles))
-        else:
-            mol = Chem.MolFromSmiles(smiles)
-
-        return mol
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is not None and inp.remove_H:
+            mol = Chem.RemoveHs(mol)
 
     elif ext in (".sdf", ".mol"):
-        # Return the first valid molecule from the supplier
+        # Return the first valid molecule from the supplier.
         supp = Chem.SDMolSupplier(filename, removeHs=inp.remove_H)
         for m in supp:
             if m is not None:
-                return m
-        return None  # if no valid entries
+                mol = m
+                break
 
     elif ext == ".pdb":
-        return Chem.MolFromPDBFile(filename, removeHs=inp.remove_H, sanitize=True)
-    
+        mol = Chem.MolFromPDBFile(filename, removeHs=inp.remove_H, sanitize=True)
+
     elif ext == ".xyz":
+        # Convert to PDB; xyz_to_pdb updates inp.rdkit_mol_file.
         xyz_to_pdb(inp)
-        filename = inp.rdkit_mol_file # It has been changed within xyz_to_pdb
-        return Chem.MolFromPDBFile(filename, removeHs=inp.remove_H, sanitize=True)
+        filename = inp.rdkit_mol_file
+        mol = Chem.MolFromPDBFile(filename, removeHs=inp.remove_H, sanitize=True)
 
     else:
         msg = (
@@ -235,7 +260,36 @@ def load_rdkit_file(inp):
             "   Accepted file extensions:"
             + "".join(f"\n     - {extension}" for extension in param.rdkit_file_extensions)
         )
-        output.error(msg)
+        return output.error(msg)
+
+    if mol is None:
+        # Raise error if loading failed.
+        return output.error(
+            f"Could not load a molecule from '{filename}'. The file may be empty, "
+            "malformed, or incompatible with the selected options."
+        )
+
+    # Keep only the first conformer if multiple exist.
+    return keep_first_conformer(mol)
+# -------------------------------------------------------------------------------------
+def keep_first_conformer(mol):
+    """Return a copy of the molecule keeping only conformer 0 (if multiple exist).
+
+    Args:
+        mol: RDKit molecule.
+
+    Returns:
+        The same molecule if it has ≤1 conformer; otherwise a copy
+        containing only conformer 0.
+    """
+    if mol.GetNumConformers() <= 1:
+        return mol
+    
+    out = Chem.Mol(mol)  # copies atoms/bonds/properties
+    out.RemoveAllConformers()
+    out.AddConformer(mol.GetConformer(0), assignId=True)
+
+    return out
 # -------------------------------------------------------------------------------------
 def plot_2d_molecule(mol, inp, size=(800, 700)):
     """
