@@ -222,7 +222,6 @@ def print_help():
                     [-ext [pdb|sdf|xyz] (default=pdb)]
                     [-maxAttempts N] (default=1000)
                     [-pruneRms RMS] (default=0.75)
-                    [-multi [single|split] (default=single)] --> single: all conformers in one file; split: one file per conformer
 
     '''
     print(help_text)
@@ -405,15 +404,13 @@ def parse_rdkit(argv, inp):
     if "-confs" in argv:
         inp.rdkit_conformers = True
         inp.rdkit_confs = extract_value_or_default(argv,"-confs",value_type=int,default=50) 
-        inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + "_conf%.pdb"
         if "-ext" in argv: 
-            inp.rdkit_confs_ext = extract_value(argv,"-ext",value_type=str)
+            inp.rdkit_confs_ext = "." + extract_value(argv,"-ext",value_type=str)
         if any(arg.lower() == "-maxattempts" for arg in argv):
             inp.rdkit_max_attempts = extract_value(argv,"-maxAttempts",value_type=int)
         if any(arg.lower() == "-prunerms" for arg in argv):
             inp.rdkit_confs_prune_rms = extract_value(argv, "-pruneRms", value_type=float)
-        if "-multi" in argv:
-            inp.rdkit_confs_multi = extract_value(argv,"-multi",value_type=str)
+        inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + inp.rdkit_confs_ext
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
