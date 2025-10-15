@@ -13,7 +13,7 @@
 
 GEOM has been used in the following research paper(s):
 
-- Giovannini, T., **Grobas Illobre, P.**, Lafiosca, P., Nicoli, L., Bonatti, L., Corni, S., & Cappelli, C. (2025). *plasmonX: an open-source code for nanoplasmonics (Version 1)*. arXiv. https://arxiv.org/abs/2510.12731
+- Giovannini, T., **Grobas Illobre, P.**, Lafiosca, P., Nicoli, L., Bonatti, L., Corni, S., & Cappelli, C. (2025). *plasmonX: an open-source code for nanoplasmonics*. arXiv. https://arxiv.org/abs/2510.12731
 
 
 ## Features
