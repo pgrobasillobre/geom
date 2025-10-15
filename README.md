@@ -9,6 +9,13 @@
 </p>
 
 
+## Publications
+
+GEOM has been used in the following research paper(s):
+
+- Giovannini, T., **Grobas Illobre, P.**, Lafiosca, P., Nicoli, L., Bonatti, L., Corni, S., & Cappelli, C. (2025). *plasmonX: an open-source code for nanoplasmonics (Version 1)*. arXiv. https://arxiv.org/abs/2510.12731
+
+
 ## Features
 
 - **AI Assistant for nanoparticle and graphene creation** *(new in v1.1.0)*
