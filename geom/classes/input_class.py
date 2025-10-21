@@ -59,7 +59,7 @@ class input_class:
       self.rdkit_max_iters = 200
       self.rdkit_confs = 50
    
-      self.rdkit_confs_prune_rms = 0.75      
+      self.rdkit_confs_prune_rms = 0.30      
 
       # -- Small tasks
       self.small_tasks = False
