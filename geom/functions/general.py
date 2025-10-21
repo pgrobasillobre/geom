@@ -220,7 +220,7 @@ def print_help():
                     [-opt [mmff94|mmff94s|uff] (default=mmff94)]
                     [-maxIters N] (default=200)
                     [-ext [pdb|sdf|xyz] (default=pdb)]
-                    [-pruneRms RMS] (default=0.75)
+                    [-pruneRms RMS] (default=0.30)
 
     '''
     print(help_text)
