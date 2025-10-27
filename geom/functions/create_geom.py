@@ -38,6 +38,7 @@ def select_case(inp):
    if (inp.gen_icosahedra):        icosahedra(inp)
    if (inp.gen_cto):               cto(inp)
    if (inp.gen_idh):               idh(inp)
+   if (inp.gen_pencil):            pencil(inp)
 
    # Creation of dimer and bowtie structures
    if (inp.create_dimer):  tools.create_dimer(inp)
@@ -750,6 +751,84 @@ def idh(inp):
    inp.xyz_output = f'decahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
+def pencil(inp):
+   """
+    debugpgi
+   """
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Extract merge cutoff 
+   param = parameters.parameters()
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
+ 
+   # Initialize bulk "molecule" and read geometry
+   mol_sphere_1 = molecule.molecule()
+   mol_sphere_2 = molecule.molecule()
+   mol_cylinder = molecule.molecule()
+
+   mol_sphere_1.read_geom(inp.geom_file,False)
+   mol_sphere_2.read_geom(inp.geom_file,False)
+   mol_cylinder.read_geom(inp.geom_file,False)
+
+   # ----------------------- #
+   # --------- Out --------- #
+
+   # Populate input class
+   inp.atomtype = inp.atomtype_out
+
+   # Create individual sphere at the extremes of the rods 
+   tools.determine_sphere_center(inp,'+')
+   mol_sphere_1.filter_xyz_in_sphere(inp)
+
+   tools.determine_sphere_center(inp,'-')
+   mol_sphere_2.filter_xyz_in_sphere(inp)
+
+   # Create cylinder
+   mol_cylinder.filter_xyz_in_cylinder(inp)
+
+   # Merge cylinder and spheres geometries
+   mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
+   mol_out = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
+
+   # ---------------------- #
+   # --------- In --------- #
+
+   # Copy mol_out as initial guess, change atomtype, and populate input class
+   mol_in = copy.deepcopy(mol_out)
+   mol_in.change_atomtype(inp.atomtype_in)
+
+   mol_in_rot = molecule.molecule()
+
+   # Create core
+   mol_in.create_icosahedra(inp)
+   mol_in_rot = tools.rotate(mol_in,125,"+x",mol_in_rot) # Rotate core to align ico extremes with z axis
+
+   # Create shell by subtracting core geometry
+   mol_shell = tools.subtract_geoms(inp,mol_in_rot,mol_out)
+
+   # Alloy core and shell
+   if inp.alloy: 
+      inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
+
+      inp.atomtype = inp.atomtype_out
+      inp.atomtype_alloy = inp.atomtype_in
+      mol_shell.create_alloy(inp)
+
+      inp.atomtype = inp.atomtype_in
+      inp.atomtype_alloy = inp.atomtype_out
+      mol_in.create_alloy(inp)
+
+   # Merge to create core-shell
+   mol_core_shell = tools.merge_geoms(inp,mol_in_rot,mol_shell)
+
+   # Save filtered geometry
+   inp.xyz_output = f'pencil_core_{inp.atomtype_in}_r_in_{inp.radius_in}_shell_rod_{inp.atomtype_out}_w_{inp.rod_width}_l_{inp.rod_length}{inp.alloy_string}'
+   output.print_geom(mol_core_shell, inp.xyz_output)
+# -------------------------------------------------------------------------------------
 def create_ase_bulk_metal(inp, base_dir):
    """
    Creates a temporary bulk metal XYZ file using ASE.
@@ -816,6 +895,20 @@ def get_layers(inp, lattice_constant):
 
        R = inp.rod_width / 2.0
        L = 2.0 * structure_scaling * inp.rod_length
+
+       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
+
+       axis_index = {"x": 0, "y": 1, "z": 2}[axis]
+       layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
+
+       return layers
+   
+   elif inp.gen_pencil:
+
+       axis = inp.main_axis.lower()
+
+       R = (inp.radius_in + 20.0) / 2.0
+       L = 2.0 * structure_scaling * (inp.radius_out+ 20.0)
 
        layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
 
