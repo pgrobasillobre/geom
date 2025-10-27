@@ -163,6 +163,8 @@ def print_help():
 
            Decahedron: -create -idh atom_type radius
 
+           Pencil: -create -pencil -core atom_type radius -{full/half}shell atom_type length
+
          -----------------------------
          Additional Options
          -----------------------------
@@ -512,6 +514,9 @@ def parse_create(argv, inp):
 
       elif ('-continuum') in argv:
          inp.gen_3d_mesh = True
+    
+      elif ("-pencil") in argv:
+          inp.gen_pencil = True
 
       else:
          inp.atomtype = argv[3].lower()
@@ -563,11 +568,11 @@ def parse_create(argv, inp):
             inp.create_ase_bulk = True
 
             inp.main_axis = argv[3].lower()
-            inp.atomtype_in = argv[5]
+            inp.atomtype_in = argv[5].lower()
             inp.rod_length_in = float(argv[6])
             inp.rod_width_in = float(argv[7])
 
-            inp.atomtype_out = argv[9]
+            inp.atomtype_out = argv[9].lower()
             inp.rod_length_out = float(argv[10])
             inp.rod_width_out = float(argv[11])
 
@@ -654,9 +659,43 @@ def parse_create(argv, inp):
          inp.gen_idh = True
          inp.radius = float(argv[4])
 
+      elif (inp.gen_pencil): 
+         inp.create_ase_bulk = True
+         inp.atomtype_in = argv[4].lower()
+         inp.radius_in = float(argv[5])
+         inp.atomtype_out = argv[7].lower()
+         inp.radius_out = float(argv[8])
+             
+         if inp.radius_in >= inp.radius_out: output.error(f"Pencil shell outer radius must be greater than core inner radius.")
+
+         if any("-fullshell" in arg.lower() for arg in argv):
+             inp.pencil_type = "fullshell"
+         elif any("-halfshell" in arg.lower() for arg in argv):
+             inp.pencil_type = "halfshell"
+         else:
+             output.error("Pencil shell type not recognised. \n\n" 
+                          "   Options: \n\n"
+                          "     -fullshell\n\n" \
+                          "     -halfshell")
+        
+         if (inp.atomtype_in not in inp.atomtypes_core_shell):
+             output.error(f'Core atom type "{inp.atomtype_in}" not supported.')
+         elif (inp.atomtype_out not in inp.atomtypes_core_shell):
+             output.error(f'Shell atom type "{inp.atomtype_out}" not supported.')
+         elif (inp.atomtype_in == inp.atomtype_out):
+             output.error(f"Core and shell atom types coincide.")
+        
+         # Set to create bulk ase geometry and create_icosahedral core
+         inp.radius = inp.radius_in
+
+         inp.atomtype   = inp.atomtype_out
+         inp.rod_width  = inp.radius_in*2.0 + 10.0 # Add additional atomic layers between core and shell
+         inp.rod_length = inp.radius_out 
+         inp.main_axis  = "z"
+
+
       else:
          output.error(f'Create nanoparticle option "{argv[2]}" not recognized. Try python3 geom -h')
-
 
       # Create bulk metal dynamically
       if inp.create_ase_bulk: create_geom.create_ase_bulk_metal(inp, base_dir)
