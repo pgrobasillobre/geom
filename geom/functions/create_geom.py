@@ -577,11 +577,11 @@ def bipyramid(inp):
    #   
 
    # Calculate circumradius from apothem: R = a / cos(π/5)
-   apothem = inp.bipyramid_width  
+   apothem = inp.bipyramid_width - inp.radius # Eliminate the sphere radius to be included at the vertices from the apothem
    R = apothem / math.cos(math.pi/5)
 
-   # Calculate pentagon vertices (angles offset by -90° to have a flat side at bottom)
-   angles = [math.radians(-90 + i * 72) for i in range(5)]  # 72° between vertices
+   # Calculate pentagon vertices (angles offset by 90° to have a flat side at bottom)
+   angles = [math.radians(90 + i * 72) for i in range(5)]  # 72° between vertices
 
    centers = {}
    # Pentagon base vertices
@@ -593,10 +593,44 @@ def bipyramid(inp):
        ]
 
    # Apex point at the top (half of total length from base to apex)
-   centers["center_6"] = [0.0, 0.0, inp.bipyramid_length]
+   centers["center_6"] = [0.0, 0.0, inp.bipyramid_length - inp.radius]  # z coordinate (top apex)
+
+   # Include spheres at each of the bipyramid vertices
+   mol_spheres_tmp    = molecule.molecule()
+   mol_spheres_merged = molecule.molecule()
+
+   for i in range(1,7):
+       print(i, inp.radius)
+       inp.sphere_center = centers[f"center_{i}"]
+       mol_spheres_tmp.read_geom(inp.geom_file,False)
+       mol_spheres_tmp.filter_xyz_in_sphere(inp)
+       mol_spheres_merged = tools.merge_geoms(inp,mol_spheres_merged,mol_spheres_tmp)
 
 
+   # Include cylinders between adjacent vertices
+   mol_cylinders_merged = molecule.molecule()
+   mol_cylinders_tmp = molecule.molecule()
 
+   edges = [
+       (1, 2), (1, 5), (1, 6),
+       (2, 3), (2, 6),
+       (3, 4), (3, 6),
+       (4, 5), (4, 6),
+       (5, 6),
+   ]
+
+   for i, j in edges:
+       start = centers[f"center_{i}"]
+       end   = centers[f"center_{j}"]
+
+       # reload the base geometry each time because the filter mutates in-place
+       mol_cylinders_tmp.read_geom(inp.geom_file, False)
+       mol_cylinders_tmp.filter_xyz_in_cylinder_between_two_points(inp, start, end)  # set include_endcaps=True if you want rounded ends
+       mol_cylinders_merged = tools.merge_geoms(inp, mol_cylinders_merged, mol_cylinders_tmp)
+
+   # debugpgi
+   mol_spheres_merged = tools.merge_geoms(inp,mol_spheres_merged,mol_cylinders_merged)
+   
 #   # Function to calculate normal and RHS for planes
 #   def calculate_normal_and_rhs(center_a, center_b, apex):
 #       a = [center_a[i] - apex[i] for i in range(3)]
@@ -625,7 +659,7 @@ def bipyramid(inp):
 
 #   # Save filtered geometry
 #   inp.xyz_output = f'pyramid_{inp.atomtype}_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
-#   output.print_geom(mol, inp.xyz_output)
+   output.print_geom(mol_spheres_merged, "oli")
 # -------------------------------------------------------------------------------------
 def cone(inp):
    """
@@ -978,12 +1012,26 @@ def get_layers(inp, lattice_constant):
 
        return [int(structure_scaling * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
 
-   elif inp.gen_rod or inp.gen_rod_core_shell or inp.gen_bipyramid:
+   elif inp.gen_rod or inp.gen_rod_core_shell:
 
        axis = inp.main_axis.lower()
 
        R = inp.rod_width / 2.0
        L = 2.0 * structure_scaling * inp.rod_length
+
+       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
+
+       axis_index = {"x": 0, "y": 1, "z": 2}[axis]
+       layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
+
+       return layers
+
+   elif inp.gen_bipyramid:
+
+       axis = "z"
+
+       R = inp.bipyramid_width
+       L = 2.0 * structure_scaling * inp.bipyramid_length
 
        layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
 

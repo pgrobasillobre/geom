@@ -667,8 +667,8 @@ def parse_create(argv, inp):
          inp.bipyramid_width = float(argv[4])
          inp.bipyramid_length = float(argv[5])
 
+         inp.radius = inp.bipyramid_width / 3.0 # Set radius of spheres in vertices for smoothing structure
          if inp.bipyramid_width >= inp.bipyramid_length: output.error(f"Bipyramid width must be smaller than length.")
-
 
          # Set to create bulk ase geometry
          inp.rod_width  = inp.bipyramid_width
