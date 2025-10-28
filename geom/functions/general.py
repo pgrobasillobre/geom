@@ -163,6 +163,8 @@ def print_help():
 
            Decahedron: -create -idh atom_type radius
 
+           Bipyramid: -create -bipyramid atom_type width length
+           
            Pencil: -create -pencil -core atom_type radius -{full/half}shell atom_type length
 
          -----------------------------
@@ -603,7 +605,7 @@ def parse_create(argv, inp):
             inp.rod_width = float(argv[6])
             inp.mesh_size = float(argv[7])
 
-            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be greater than length.")
+            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be smaller than length.")
 
             inp.mesh_output = f"results_geom/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
          else:
@@ -614,7 +616,7 @@ def parse_create(argv, inp):
             inp.rod_length = float(argv[5])
             inp.rod_width = float(argv[6])
 
-            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be greater than length.")
+            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be smaller than length.")
 
          if inp.main_axis not in inp.axes: output.error(f"Axis {inp.main_axis} not recognized.") 
 
@@ -658,6 +660,20 @@ def parse_create(argv, inp):
       elif (argv[2] == '-idh'): 
          inp.gen_idh = True
          inp.radius = float(argv[4])
+
+      elif (argv[2] == '-bipyramid'):
+         inp.gen_bipyramid = True
+         inp.create_ase_bulk = True
+         inp.bipyramid_width = float(argv[4])
+         inp.bipyramid_length = float(argv[5])
+
+         if inp.bipyramid_width >= inp.bipyramid_length: output.error(f"Bipyramid width must be smaller than length.")
+
+
+         # Set to create bulk ase geometry
+         inp.rod_width  = inp.bipyramid_width
+         inp.rod_length = inp.bipyramid_length
+         inp.main_axis  = "z"
 
       elif (inp.gen_pencil): 
          inp.create_ase_bulk = True
