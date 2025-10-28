@@ -39,6 +39,7 @@ def select_case(inp):
    if (inp.gen_cto):               cto(inp)
    if (inp.gen_idh):               idh(inp)
    if (inp.gen_pencil):            pencil(inp)
+   if (inp.gen_bipyramid):         bipyramid(inp)
 
    # Creation of dimer and bowtie structures
    if (inp.create_dimer):  tools.create_dimer(inp)
@@ -538,6 +539,94 @@ def pyramid(inp):
    inp.xyz_output = f'pyramid_{inp.atomtype}_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
+def bipyramid(inp):
+   """
+   Generates a bipyramid-shaped geometry with a pentagonal base.
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated bipyramidal geometry.
+   """
+
+   # Check input
+   inp.check_input_case()
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Initialize bulk "molecule" and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file, False)
+
+   # Define vertices with respect to the center (C[0,0,0]) of the XY-plane base
+   #
+   # XY base (center 6 in the +z direction)
+   #
+   #          
+   #           1
+   #          ,'.
+   #        ,'   `.
+   #      ,'       `.
+   #  5 ,'           `. 2       ^ y      
+   #    \      C      /         |        
+   #     \           /          o ---> x         
+   #      \         /          z                 
+   #       \_______/                  
+   #      4         3                 
+   #   
+
+   # Calculate circumradius from apothem: R = a / cos(π/5)
+   apothem = inp.bipyramid_width  
+   R = apothem / math.cos(math.pi/5)
+
+   # Calculate pentagon vertices (angles offset by -90° to have a flat side at bottom)
+   angles = [math.radians(-90 + i * 72) for i in range(5)]  # 72° between vertices
+
+   centers = {}
+   # Pentagon base vertices
+   for i in range(5):
+       centers[f"center_{i+1}"] = [
+           R * math.cos(angles[i]),  # x coordinate
+           R * math.sin(angles[i]),  # y coordinate  
+           0.0                       # z coordinate (base)
+       ]
+
+   # Apex point at the top (half of total length from base to apex)
+   centers["center_6"] = [0.0, 0.0, inp.bipyramid_length]
+
+
+
+#   # Function to calculate normal and RHS for planes
+#   def calculate_normal_and_rhs(center_a, center_b, apex):
+#       a = [center_a[i] - apex[i] for i in range(3)]
+#       b = [center_b[i] - apex[i] for i in range(3)]
+#       normal = np.cross(a, b)
+#       rhs = -sum(normal[i] * apex[i] for i in range(3))
+#       return normal, rhs
+
+#   # Define planes to cut the pyramid
+#   # Eqs. --> n_x * x + n_y * y + n_z * z + rhs = 0
+#   planes = {
+#       "n_125": calculate_normal_and_rhs(centers["center_1"], centers["center_2"], centers["center_5"]),
+#       "n_235": calculate_normal_and_rhs(centers["center_2"], centers["center_3"], centers["center_5"]),
+#       "n_345": calculate_normal_and_rhs(centers["center_3"], centers["center_4"], centers["center_5"]),
+#       "n_415": calculate_normal_and_rhs(centers["center_4"], centers["center_1"], centers["center_5"])
+#   } 
+
+#   # Pick only atoms within the defined pyramid
+#   mol.filter_xyz_in_pyramid(inp,centers, planes)
+
+#   # Remove dangling atom on extreme 
+#   mol.remove_dangling_atoms_metals(inp)
+
+#   # Alloy
+#   if inp.alloy: mol.create_alloy(inp)
+
+#   # Save filtered geometry
+#   inp.xyz_output = f'pyramid_{inp.atomtype}_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
+#   output.print_geom(mol, inp.xyz_output)
+# -------------------------------------------------------------------------------------
 def cone(inp):
    """
    Generates a conical geometry.
@@ -889,7 +978,7 @@ def get_layers(inp, lattice_constant):
 
        return [int(structure_scaling * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
 
-   elif inp.gen_rod or inp.gen_rod_core_shell:
+   elif inp.gen_rod or inp.gen_rod_core_shell or inp.gen_bipyramid:
 
        axis = inp.main_axis.lower()
 
