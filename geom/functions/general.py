@@ -163,7 +163,7 @@ def print_help():
 
            Decahedron: -create -idh atom_type radius
 
-           Bipyramid: -create -bipyramid atom_type width length
+           Bipyramid rounded: -create -bipyramid_smooth atom_type width length
            
            Pencil: -create -pencil -core atom_type radius -{full/half}shell atom_type length
 
@@ -661,8 +661,8 @@ def parse_create(argv, inp):
          inp.gen_idh = True
          inp.radius = float(argv[4])
 
-      elif (argv[2] == '-bipyramid'):
-         inp.gen_bipyramid = True
+      elif (argv[2] == '-bipyramid_smooth'):
+         inp.gen_bipyramid_smooth = True
          inp.create_ase_bulk = True
          inp.bipyramid_width = float(argv[4])
          inp.bipyramid_length = float(argv[5])

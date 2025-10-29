@@ -132,7 +132,8 @@ class input_class:
       self.gen_idh = False
       self.gen_pyramid = False
       self.gen_microscope = False
-      self.gen_bypyramid = False
+      self.gen_bipyramid = False
+      self.gen_bipyramid_smooth = False
       self.gen_pencil = False
       self.alloy = False
 
@@ -287,6 +288,7 @@ class input_class:
              not self.gen_3d_mesh_sphere    and
              not self.gen_3d_mesh_rod       and
              not self.gen_bipyramid         and
+             not self.gen_bipyramid_smooth  and
              not self.gen_pencil): output.error("Create geom option not recognised.")
 
          if self.create_ase_bulk:

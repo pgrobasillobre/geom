@@ -724,7 +724,7 @@ class molecule:
       Args:
           inp (input_class): The input parameters containing the atomic type.
           centers (dict): Dictionary with center coordinates of the pyramid base and apex.
-                          Expected keys: `"center_1"`, `"center_3"`, `"center_4"`, `"center_5"`.
+                          Expected keys: `"center_1"`, `"center_2"`, `"center_3"`, `"center_4"`, `"center_5"`.
           planes (dict): Dictionary with normal vectors and offsets for the pyramid planes.
                          Expected keys: `"n_125"`, `"n_235"`, `"n_345"`, `"n_415"`.
   
@@ -757,6 +757,85 @@ class molecule:
       x_filtered = x[condition]
       y_filtered = y[condition]
       z_filtered = z[condition]
+
+      # Fill previous geometry with current structure
+      self.nAtoms = len(x_filtered)
+
+      self.atoms = []
+      self.atoms = [inp.atomtype] * self.nAtoms
+
+      self.xyz_center = np.zeros(3)
+      self.xyz_min    = np.zeros(3)
+      self.xyz_max    = np.zeros(3)
+
+      self.xyz = np.zeros((3,self.nAtoms))
+      self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+      # Calculate geometrical center
+      self.xyz_center = np.mean(self.xyz, axis=1)
+
+      # Save maximum/minimum coordinates limits
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
+
+      return(self)
+
+   # --------------------------------------------------------- #
+   # ------- Filter XYZ within pentagonal-base pyramid ------- #
+   
+   def filter_xyz_in_pentagonal_pyramid(self, inp, centers, planes):
+      """
+      Filters atoms in the molecular geometry, keeping only those inside a defined pentagonal pyramid.
+  
+      Args:
+          inp (input_class): The input parameters containing the atomic type.
+          centers (dict): Dictionary with center coordinates of the pyramid base and apex.
+                          Expected keys: `"center_1"`, `"center_2"`, `"center_3"`, `"center_4"`, `"center_5"`,`"center_6"`.
+          planes (dict): Dictionary with normal vectors and offsets for the pyramid planes.
+                         Expected keys: `"n_126"`, `"n_236"`, `"n_346"`, `"n_456"`,  `"n_516"`.
+  
+      Returns:
+          molecule: The molecule object with updated atomic coordinates.
+  
+      Notes:
+          - The function first checks whether each atom lies within the bounding box of the pyramid.
+          - Then, the atoms are filtered using the plane equations for each pyramid face.
+          - The molecule is updated with only the atoms that meet these conditions.
+          - Computes the new geometrical center, bounding box limits, and atom count.
+          - The pyramid structure is defined using four planes and a set of center points.
+      """
+
+      x = self.xyz[0, :]
+      y = self.xyz[1, :]
+      z = self.xyz[2, :]
+      tol = 1e-8  # small numerical slack to avoid precision issues
+ 
+      # Condition for points to be within the pentagonal pyramid
+      condition = (
+          # Axis-aligned bounds (from all 6 reference points)
+          (min(centers["center_1"][2], centers["center_2"][2], centers["center_3"][2], centers["center_4"][2], centers["center_5"][2], centers["center_6"][2]) <= z) &
+          (z <= max(centers["center_1"][2], centers["center_2"][2], centers["center_3"][2], centers["center_4"][2], centers["center_5"][2], centers["center_6"][2])) &
+          (min(centers["center_1"][0], centers["center_2"][0], centers["center_3"][0], centers["center_4"][0], centers["center_5"][0], centers["center_6"][0]) <= x) &
+          (x <= max(centers["center_1"][0], centers["center_2"][0], centers["center_3"][0], centers["center_4"][0], centers["center_5"][0], centers["center_6"][0])) &
+          (min(centers["center_1"][1], centers["center_2"][1], centers["center_3"][1], centers["center_4"][1], centers["center_5"][1], centers["center_6"][1]) <= y) &
+          (y <= max(centers["center_1"][1], centers["center_2"][1], centers["center_3"][1], centers["center_4"][1], centers["center_5"][1], centers["center_6"][1])) &
+
+          # Five lateral faces: (n · r + d) <= tol  -->  nx*x + ny*y + nz*z <= -d + tol
+          (planes["n_126"][0][0] * x + planes["n_126"][0][1] * y + planes["n_126"][0][2] * z <= -planes["n_126"][1] + tol) &
+          (planes["n_236"][0][0] * x + planes["n_236"][0][1] * y + planes["n_236"][0][2] * z <= -planes["n_236"][1] + tol) &
+          (planes["n_346"][0][0] * x + planes["n_346"][0][1] * y + planes["n_346"][0][2] * z <= -planes["n_346"][1] + tol) &
+          (planes["n_456"][0][0] * x + planes["n_456"][0][1] * y + planes["n_456"][0][2] * z <= -planes["n_456"][1] + tol) &
+          (planes["n_516"][0][0] * x + planes["n_516"][0][1] * y + planes["n_516"][0][2] * z <= -planes["n_516"][1] + tol)
+      )
+
+      x_filtered = x[condition]
+      y_filtered = y[condition]
+      z_filtered = z[condition]
+
+      #print(x_filtered,y_filtered,z_filtered)
+
+      #print(planes)
+      #sys.exit()
 
       # Fill previous geometry with current structure
       self.nAtoms = len(x_filtered)
