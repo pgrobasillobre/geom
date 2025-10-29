@@ -610,14 +610,8 @@ def bipyramid(inp):
    mol_rot = molecule.molecule()
    mol_rot = tools.rotate(mol,180.0,'+x',mol_rot)
    mol_rot = tools.rotate(mol_rot,180.0,'+z',mol_rot)
-
-   # Move 1/2*reticular_distance (lc) up in the z axis
-   shift = lattice_constant / 2.0
-
-   mol_rot.translate_geom(shift,[0.0,0.0, 1.0])
    mol = tools.merge_geoms(inp,mol,mol_rot)
-   
-
+  
    # Remove dangling atom on extreme 
    mol.remove_dangling_atoms_metals(inp)
 
@@ -625,7 +619,7 @@ def bipyramid(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   inp.xyz_output = f'bipyramid_{inp.atomtype}_width-{inp.bipyramid_width}_length-{inp.bipyramid_length}_{inp.alloy_string}'
+   inp.xyz_output = f'bipyramid_{inp.atomtype}_width-{inp.bipyramid_width}_length-{inp.bipyramid_length}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def bipyramid_smooth(inp):
