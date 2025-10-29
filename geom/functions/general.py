@@ -163,6 +163,8 @@ def print_help():
 
            Decahedron: -create -idh atom_type radius
 
+           Bipyramid: -create -bipyramid atom_type width length
+
            Bipyramid rounded: -create -bipyramid_smooth atom_type width length
            
            Pencil: -create -pencil -core atom_type radius -{full/half}shell atom_type length
@@ -668,6 +670,19 @@ def parse_create(argv, inp):
          inp.bipyramid_length = float(argv[5])
 
          inp.radius = inp.bipyramid_width / 3.0 # Set radius of spheres in vertices for smoothing structure
+         if inp.bipyramid_width >= inp.bipyramid_length: output.error(f"Bipyramid width must be smaller than length.")
+
+         # Set to create bulk ase geometry
+         inp.rod_width  = inp.bipyramid_width
+         inp.rod_length = inp.bipyramid_length
+         inp.main_axis  = "z"
+
+      elif (argv[2] == '-bipyramid'):
+         inp.gen_bipyramid = True
+         inp.create_ase_bulk = True
+         inp.bipyramid_width = float(argv[4])
+         inp.bipyramid_length = float(argv[5])
+
          if inp.bipyramid_width >= inp.bipyramid_length: output.error(f"Bipyramid width must be smaller than length.")
 
          # Set to create bulk ase geometry
