@@ -399,3 +399,40 @@ def create_bowtie(inp):
 
     delete_all_files(f'{initial_name}*xyz')
 # -------------------------------------------------------------------------------------
+def calculate_normal_and_rhs(center_a, center_b, apex):
+    """
+    Calculate the plane normal and RHS for the plane through three points.
+
+    The plane is defined by the apex and the two points on an edge
+    (`center_a`, `center_b`). The equation returned is:
+
+        n · x + rhs = 0
+
+    where the normal vector is computed as:
+
+        n = (center_a - apex) × (center_b - apex)
+
+    Notes:
+        * The orientation of the normal follows the right-hand rule and depends
+          on the order of `center_a` and `center_b`.
+        * The normal is **not** normalized.
+        * This helper is useful for constructing side planes of a pyramid.
+
+    Args:
+        center_a (array_like): 3-element sequence (x, y, z) for the first point on the edge.
+        center_b (array_like): 3-element sequence (x, y, z) for the second point on the edge.
+        apex (array_like): 3-element sequence (x, y, z) for the apex of the pyramid/face.
+
+    Returns:
+        tuple:
+            A pair `(normal, rhs)` where:
+            * `normal` (numpy.ndarray): The 3D normal vector of the plane (shape `(3,)`).
+            * `rhs` (float): The right-hand-side constant so that `normal · x + rhs = 0`.
+    """
+
+    a = [center_a[i] - apex[i] for i in range(3)]
+    b = [center_b[i] - apex[i] for i in range(3)]
+    normal = np.cross(a, b)
+    rhs = -sum(normal[i] * apex[i] for i in range(3))
+    return normal, rhs
+# -------------------------------------------------------------------------------------
