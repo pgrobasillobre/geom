@@ -35,7 +35,7 @@ GEOM requires **Python 3.8+** and the following dependencies:
 - `numpy==1.24.3`
 - `pytest==8.3.4`
 - `launchpadlib==2.1.0`
-- `pyautogen==0.2.18`
+- `ag2==0.2.18`
 - `flaml[automl]==2.1.1`
 - `httpx==0.27.2`
 
