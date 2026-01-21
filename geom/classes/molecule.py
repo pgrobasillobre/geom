@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import sys #debugpgi
 
 from geom.classes import parameters
 
@@ -656,62 +655,6 @@ class molecule:
       self.xyz_min = np.min(self.xyz, axis=1)
 
       return(self)
-
-   # ----------------------------------------------------- #
-   # ------- Filter XYZ within two-points cylinder ------- #
-
-   def filter_xyz_in_cylinder_between_two_points(self, inp, start_center, end_center):
-       """
-        debugpgi
-       """
-       A = np.asarray(start_center, dtype=float)
-       B = np.asarray(end_center,   dtype=float)
-       v = B - A
-       L = np.linalg.norm(v)
-
-       if L == 0.0:
-           # Degenerate case: treat as a sphere of radius inp.radius centered at A
-           P = self.xyz.T  # shape (N, 3)
-           mask = np.einsum('ij,ij->i', P - A, P - A) <= inp.radius**2
-       else:
-           u = v / L  # unit axis vector
-
-           # Points (N, 3)
-           P = self.xyz.T
-
-           # Projection of each point onto the axis (scalar along the axis)
-           AP = P - A
-           t = AP @ u  # shape (N,)
-
-           # Closest points on the axis line to each atom
-           C = A + np.outer(t, u)
-
-           # Squared radial distance to the axis
-           r2 = np.einsum('ij,ij->i', P - C, P - C)
-
-           # Inside the finite cylinder (capped by planes perpendicular to axis)
-           mask = (t >= 0.0) & (t <= L) & (r2 <= inp.radius**2)
-
-
-       # Apply mask
-       kept = P[mask]
-       self.nAtoms = kept.shape[0]
-
-       # Replace atoms & coordinates
-       self.atoms = [inp.atomtype] * self.nAtoms
-       self.xyz = kept.T if self.nAtoms > 0 else np.zeros((3, 0))
-
-       # Geometry stats
-       if self.nAtoms > 0:
-           self.xyz_center = np.mean(self.xyz, axis=1)
-           self.xyz_max = np.max(self.xyz, axis=1)
-           self.xyz_min = np.min(self.xyz, axis=1)
-       else:
-           self.xyz_center = np.zeros(3)
-           self.xyz_max = np.zeros(3)
-           self.xyz_min = np.zeros(3)
-
-       return self
 
    # ----------------------------------------------------- #
    # ------- Filter XYZ within elliptic paraboloid ------- #

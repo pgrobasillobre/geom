@@ -952,7 +952,14 @@ def check_file_extension(infile,extension):
 # -------------------------------------------------------------------------------------
 def check_file_extension_rdkit(infile,accepted_extensions):
     """ 
-    debugpgi    
+    Checks if the input file has a RDKit-supported extension.
+
+    Args:
+        infile (str): Path to the input file.
+        accepted_extensions (list): List of accepted file extensions for RDKit.
+
+    Returns:
+        None: Raises an error if the file extension is not supported.
     """
    
     file_extension = infile[-4:].lower()
@@ -966,7 +973,15 @@ def check_file_extension_rdkit(infile,accepted_extensions):
 # -------------------------------------------------------------------------------------
 def check_accepted_parameters(param,accepted_params,label="Parameter"):
     """ 
-    debugpgi    
+    Checks if a parameter is in the list of accepted parameters.
+
+    Args:
+        param (str): Parameter value to check.
+        accepted_params (list): List of accepted parameter values.
+        label (str, optional): Label for the parameter in error messages.
+
+    Returns:
+        None: Raises an error if the parameter is not in accepted parameters.
     """
    
     if param not in accepted_params:
