@@ -803,13 +803,14 @@ class molecule:
           - The molecule is updated with only the atoms that meet these conditions.
           - Computes the new geometrical center, bounding box limits, and atom count.
           - The pyramid structure is defined using four planes and a set of center points.
+          - If the base is not on the XY plane, translate the structure.
       """
 
       x = self.xyz[0, :]
       y = self.xyz[1, :]
       z = self.xyz[2, :]
       tol = 1e-8  # small numerical slack to avoid precision issues
- 
+
       # Condition for points to be within the pentagonal pyramid
       condition = (
           # Axis-aligned bounds (from all 6 reference points)
@@ -849,6 +850,11 @@ class molecule:
 
       self.xyz = np.zeros((3,self.nAtoms))
       self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
+
+      # If the pyramid base is not on the XY plane, translate it
+      z_min = min(z_filtered)
+      if (z_min > 0.0 ):
+         self.translate_geom(z_min,[0.0,0.0, -1.0])
 
       # Calculate geometrical center
       self.xyz_center = np.mean(self.xyz, axis=1)
