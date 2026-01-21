@@ -165,8 +165,6 @@ def print_help():
 
            Bipyramid: -create -bipyramid atom_type width length
 
-           Bipyramid rounded: -create -bipyramid_smooth atom_type width length
-           
            Pencil: -create -pencil -core atom_type radius -{full/half}shell atom_type length
 
          -----------------------------
@@ -518,7 +516,7 @@ def parse_create(argv, inp):
 
       elif ('-continuum') in argv:
          inp.gen_3d_mesh = True
-    
+
       elif ("-pencil") in argv:
           inp.gen_pencil = True
 
@@ -662,20 +660,6 @@ def parse_create(argv, inp):
       elif (argv[2] == '-idh'): 
          inp.gen_idh = True
          inp.radius = float(argv[4])
-
-      elif (argv[2] == '-bipyramid_smooth'):
-         inp.gen_bipyramid_smooth = True
-         inp.create_ase_bulk = True
-         inp.bipyramid_width = float(argv[4])
-         inp.bipyramid_length = float(argv[5])
-
-         inp.radius = inp.bipyramid_width / 3.0 # Set radius of spheres in vertices for smoothing structure
-         if inp.bipyramid_width >= inp.bipyramid_length: output.error(f"Bipyramid width must be smaller than length.")
-
-         # Set to create bulk ase geometry
-         inp.rod_width  = inp.bipyramid_width
-         inp.rod_length = inp.bipyramid_length
-         inp.main_axis  = "z"
 
       elif (argv[2] == '-bipyramid'):
          inp.gen_bipyramid = True
