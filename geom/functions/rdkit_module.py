@@ -12,8 +12,15 @@ from rdkit.Chem.Draw import rdMolDraw2D
 # -------------------------------------------------------------------------------------
 def select_case(inp):
   """
-    debugpgi
+  Selects the appropriate RDKit-related function based on user input.
+
+  Args:
+      inp (input_class): An instance of the input class containing user-defined parameters.
+
+  Returns:
+      None: Executes the corresponding geometry generation function.
   """
+
 
   if (inp.rdkit_visualize): visualize(inp)
   if (inp.rdkit_file_conversion): file_conversion(inp)
@@ -25,7 +32,13 @@ def select_case(inp):
 # -------------------------------------------------------------------------------------
 def visualize(inp):
   """
-  debugpgi
+  Visualizes a molecule in 2D or 3D using RDKit.
+
+  Args:
+      inp (input_class): Input parameters containing visualization options.
+
+  Returns:
+      None: Displays the molecule visualization.
   """
 
   # Check input
@@ -40,7 +53,13 @@ def visualize(inp):
 # -------------------------------------------------------------------------------------
 def file_conversion(inp):
     """
-    debugpgi
+    Converts a molecular file from one format to another using RDKit.
+
+    Args:
+        inp (input_class): Input parameters containing file conversion options.
+
+    Returns:
+        None: Saves the converted file to the results folder.
     """
 
     # Check input and create results folder
@@ -57,8 +76,15 @@ def file_conversion(inp):
 # -------------------------------------------------------------------------------------
 def force_field_optimization(inp):
     """
-    debugpgi
-    """   
+    Performs force field optimization on a molecule using RDKit.
+
+    Args:
+        inp (input_class): Input parameters containing optimization options.
+
+    Returns:
+        None: Saves the optimized geometry to the results folder.
+    """
+
     param = parameters.parameters()    
 
     # Check input and create results folder
@@ -122,7 +148,13 @@ def force_field_optimization(inp):
 # -------------------------------------------------------------------------------------
 def generate_conformers(inp):
     """
-    debugpgi
+    Generates multiple conformers for a molecule using RDKit's ETKDG method.
+
+    Args:
+        inp (input_class): Input parameters containing conformer generation options.
+
+    Returns:
+        None: Saves the generated conformers to the results folder.
     """
 
     # Check input and create results folder
@@ -171,8 +203,17 @@ def generate_conformers(inp):
 # -------------------------------------------------------------------------------------
 def conformers_force_field_optimization(mol, inp, retry_factor=2):
     """
-    debugpgi
+    Optimizes multiple conformers using force field methods with retry for non-converged structures.
+
+    Args:
+        mol (Chem.Mol): RDKit molecule with multiple conformers.
+        inp (input_class): Input parameters containing optimization options.
+        retry_factor (int): Factor to multiply max iterations for non-converged conformers.
+
+    Returns:
+        None: Updates the molecule with optimized conformers and metadata.
     """
+
     if mol is None or mol.GetNumConformers() == 0:
         output.error("optimize_conformers_batch: no conformers to optimize.")
 
@@ -254,8 +295,16 @@ def conformers_force_field_optimization(mol, inp, retry_factor=2):
 # -------------------------------------------------------------------------------------
 def save_rdkit_file(mol, out_file):
     """
-    Save an RDKit Mol to a file with the specified extension.
+    Saves an RDKit molecule to a file with the specified extension.
+
+    Args:
+        mol (Chem.Mol): RDKit molecule to save.
+        out_file (str): Output file path.
+
+    Returns:
+        None: Saves the molecule to the specified file format.
     """
+
     param = parameters.parameters()  
 
     ext = out_file[-4:].lower()
@@ -287,13 +336,18 @@ def save_rdkit_file(mol, out_file):
 # -------------------------------------------------------------------------------------
 def save_rdkit_conformers(mol, inp, out_dir="results_geom", max_digits=7):
     """
-    Save each conformer as:
-      - if inp.rdkit_opt:  {stem}_opt_{CONV|NOTCONV}_{FF}_conf_########{ext}
-      - else:              {stem}_conf_########{ext}
+    Saves each conformer of a molecule to separate files with appropriate naming.
 
-    Reads per-conformer convergence from:
-      _Conf_{index:07d}_FF_Converged  (set earlier during optimization)
+    Args:
+        mol (Chem.Mol): RDKit molecule with multiple conformers.
+        inp (input_class): Input parameters containing output options.
+        out_dir (str): Output directory for conformer files.
+        max_digits (int): Maximum digits for conformer numbering.
+
+    Returns:
+        None: Saves each conformer to separate files.
     """
+
     param = parameters.parameters()
 
     if mol is None:
@@ -362,11 +416,15 @@ def save_rdkit_conformers(mol, inp, out_dir="results_geom", max_digits=7):
 # -------------------------------------------------------------------------------------
 def embed_3d(mol):
     """
-    Ensure the given RDKit molecule has hydrogens and a 3D conformer.
-    - Adds hydrogens (if not already present).
-    - If there is no conformer or only a 2D conformer, (re)embed with ETKDGv3.
-    - If no conformer exists, generates one with ETKDGv3.
+    Ensures the given RDKit molecule has hydrogens and a 3D conformer.
+
+    Args:
+        mol (Chem.Mol): Input RDKit molecule.
+
+    Returns:
+        Chem.Mol: Molecule with hydrogens added and 3D conformer embedded.
     """
+
     if mol is None:
         raise ValueError("embed_3d: input molecule is None.")
 
@@ -414,6 +472,7 @@ def load_rdkit_file(inp):
         Chem.Mol | None: Loaded molecule (trimmed to a single conformer if needed),
         or triggers an error if loading fails.
     """
+
     param = parameters.parameters()
     filename = inp.rdkit_mol_file
     ext = filename[-4:].lower()
@@ -474,6 +533,7 @@ def keep_first_conformer(mol):
         The same molecule if it has ≤1 conformer; otherwise a copy
         containing only conformer 0.
     """
+
     if mol.GetNumConformers() <= 1:
         return mol
     
@@ -485,10 +545,17 @@ def keep_first_conformer(mol):
 # -------------------------------------------------------------------------------------
 def plot_2d_molecule(mol, inp, size=(800, 700)):
     """
-    Compute 2D coords and render as an image, then show it.
-    - stereo_annotations: R/S and E/Z labels
-    - annotate_atom_indices: overlays atom indices (does not replace element symbols)
+    Computes 2D coordinates and renders a molecule as an image.
+
+    Args:
+        mol (Chem.Mol): RDKit molecule to visualize.
+        inp (input_class): Input parameters containing visualization options.
+        size (tuple): Image size in pixels (width, height).
+
+    Returns:
+        None: Displays the 2D molecular visualization.
     """
+
     stereo_annotations = inp.stereo_annotations
     annotate_atom_indices = inp.atom_index
     black_and_white = inp.rdkit_bw
@@ -574,9 +641,19 @@ def plot_2d_molecule(mol, inp, size=(800, 700)):
 # -------------------------------------------------------------------------------------
 def plot_3d_molecule(mol, style="ballstick", width=1600, height=900, background="1xFFFFFF"):
     """
-    Interactive 3D using py3Dmol.
-    In CLI: generates a temporary HTML file and opens it in the default browser.
+    Creates an interactive 3D visualization of a molecule using py3Dmol.
+
+    Args:
+        mol (Chem.Mol): RDKit molecule to visualize.
+        style (str): Visualization style for the molecule.
+        width (int): Width of the visualization window in pixels.
+        height (int): Height of the visualization window in pixels.
+        background (str): Background color for the visualization.
+
+    Returns:
+        None: Opens an interactive 3D visualization in the web browser.
     """
+
     # Ensure we have a 3D conformer.
     mol = embed_3d(mol)
 
@@ -599,8 +676,13 @@ def plot_3d_molecule(mol, style="ballstick", width=1600, height=900, background=
 # -------------------------------------------------------------------------------------
 def xyz_to_pdb(inp):
     """
-    Convert XYZ -> PDB .
-     debugpgi
+    Converts an XYZ file to PDB format using RDKit's bond determination.
+
+    Args:
+        inp (input_class): Input parameters containing XYZ file path.
+
+    Returns:
+        input_class: Updated input object with PDB file path.
     """
 
     # Determine the script's location
@@ -663,15 +745,16 @@ def xyz_to_pdb(inp):
 # -------------------------------------------------------------------------------------
 def match_substructure(mol, pattern):
     """
-    patterns: 
-        str (SMARTS/SMILES). 
+    Finds and highlights substructure matches in a molecule.
+
+    Args:
+        mol (Chem.Mol): Target molecule to search in.
+        pattern (str): SMARTS or SMILES pattern to match.
+
     Returns:
-        highlightAtoms, highlightBonds, highlightAtomColors, highlightBondColors
+        tuple: (highlightAtoms, highlightBonds, highlightAtomColors, highlightBondColors)
     """
 
-    atom_ids, bond_ids = set(), set()
-
-    """Try SMARTS first (for things like [CH2][OH1]); fall back to SMILES."""
     q = Chem.MolFromSmarts(pattern)
     if q is None: q = Chem.MolFromSmiles(pattern)
 
@@ -698,7 +781,17 @@ def match_substructure(mol, pattern):
 # -------------------------------------------------------------------------------------
 def _merge_highlights(a_atoms, a_bonds, a_atomCols, a_bondCols,
                       b_atoms, b_bonds, b_atomCols, b_bondCols):
-    """Union of two highlight sets; later colors override earlier on overlap."""
+    """
+    Merges two highlight sets for molecular visualization.
+
+    Args:
+        a_*: First set of highlight information.
+        b_*: Second set of highlight information.
+
+    Returns:
+        tuple: Merged (atoms, bonds, atomColors, bondColors)
+    """
+
     if a_atoms is None: a_atoms, a_bonds, a_atomCols, a_bondCols = [], [], {}, {}
     if b_atoms is None: b_atoms, b_bonds, b_atomCols, b_bondCols = [], [], {}, {}
     atoms = sorted(set(a_atoms) | set(b_atoms))
@@ -708,7 +801,16 @@ def _merge_highlights(a_atoms, a_bonds, a_atomCols, a_bondCols,
     return atoms or None, bonds or None, atomCols or None, bondCols or None
 # -------------------------------------------------------------------------------------
 def find_aromatic_highlights(m):
-    """Return atom/bond ids and pale-blue color maps for aromatic atoms/bonds."""
+    """
+    Finds and highlights aromatic atoms and bonds in a molecule.
+
+    Args:
+        m (Chem.Mol): Input molecule.
+
+    Returns:
+        tuple: (aromatic_atoms, aromatic_bonds, atom_colors, bond_colors)
+    """
+
     arom_atoms = [a.GetIdx() for a in m.GetAtoms() if a.GetIsAromatic()]
     arom_bonds = [b.GetIdx() for b in m.GetBonds() if b.GetIsAromatic()]
     
@@ -732,9 +834,22 @@ def _draw_gnuplot_legend_pillow(
     font_name_candidates=("Times New Roman", "Times.ttf", "Times", "DejaVuSerif.ttf")
 ):
     """
-    Draw a gnuplot-like legend onto a PIL image.
-    entries: [("Aromaticity", (153, 230, 153)), ("SMILES match", (153, 204, 255))]
+    Draws a gnuplot-like legend onto a PIL image.
+
+    Args:
+        img (PIL.Image): Input image to draw legend on.
+        entries (list): List of (label, rgb_tuple) pairs.
+        corner (str): Corner position for the legend.
+        box_alpha (int): Alpha value for legend background.
+        pad (int): Padding around legend content.
+        swatch_size (tuple): Size of color swatches.
+        row_gap (int): Gap between rows in the legend.
+        font_name_candidates (tuple): Font names to try.
+
+    Returns:
+        PIL.Image: Image with legend added.
     """
+
     from PIL import ImageDraw, ImageFont, Image
 
     draw = ImageDraw.Draw(img, "RGBA")

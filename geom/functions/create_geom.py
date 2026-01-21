@@ -834,7 +834,15 @@ def idh(inp):
 # -------------------------------------------------------------------------------------
 def pencil(inp):
    """
-    debugpgi
+   Generates a nanopencil nanoparticle geometry.
+   (Reference of experimental geometries: https://doi.org/10.1002/smll.202302302
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated decahedral geometry.
+
    """
 
    # Check input
