@@ -186,6 +186,66 @@ class molecule:
    
       return(self)
 
+   # ----------------------------------------------------- #
+   # ------- Slice Z coordinates below a threshold ------- #
+
+   def slice_xyz_by_z_threshold(self, inp, z_threshold=-0.1):
+      """
+      Slice coordinates by eliminating atoms with z ≤ threshold.
+      
+      Args:
+          inp: Input parameters (for atom type)
+          z_threshold: Threshold value. Atoms with z ≤ this value are removed.
+      
+      Returns:
+          self: Updated object with sliced coordinates
+      """
+      # Extract coordinates
+      x = self.xyz[0, :]
+      y = self.xyz[1, :]
+      z = self.xyz[2, :]
+      
+      # Condition to KEEP atoms (z > threshold)
+      condition = z > z_threshold
+      
+      # Count how many atoms we're removing
+      n_removed = np.sum(~condition)
+      
+      # Filter coordinates based on condition
+      x_filtered = x[condition]
+      y_filtered = y[condition]
+      z_filtered = z[condition]
+      
+      # Update the object with filtered data
+      self.nAtoms = len(x_filtered)
+      
+      # If atoms list exists, filter it too
+      if hasattr(self, 'atoms') and self.atoms is not None and len(self.atoms) == len(x):
+          self.atoms = [self.atoms[i] for i in range(len(condition)) if condition[i]]
+      else:
+          # If no atom list exists, create a default one
+          self.atoms = [inp.atomtype] * self.nAtoms
+      
+      # Reinitialize arrays
+      self.xyz_center = np.zeros(3)
+      self.xyz_min = np.zeros(3)
+      self.xyz_max = np.zeros(3)
+      
+      # Update coordinates
+      self.xyz = np.zeros((3, self.nAtoms))
+      self.xyz[0, :] = x_filtered
+      self.xyz[1, :] = y_filtered
+      self.xyz[2, :] = z_filtered
+      
+      # Calculate geometrical center
+      self.xyz_center = np.mean(self.xyz, axis=1)
+      
+      # Save maximum/minimum coordinate limits
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
+      
+      return self
+
    # ------------------------------------------------ #
    # ------- Filter XYZ within a ribbon shape ------- #
    

@@ -951,6 +951,11 @@ def pencil(inp):
       mol_in.translate_geom(z_min,[0.0,0.0, -1.0])
       mol_out.translate_geom(z_min,[0.0,0.0, -1.0])
 
+   # If halfshelf slice from z = 0 to z = -inf
+   if inp.pencil_type == "halfshell":
+      inp.atomtype = inp.atomtype_out
+      mol_out.slice_xyz_by_z_threshold(inp, z_threshold=-0.1)
+
    # Rotate 180 degrees to create bottom pyramid and merge
    mol_rot = molecule.molecule()
    mol_rot = tools.rotate(mol_in,180.0,'+x',mol_rot)
@@ -980,7 +985,7 @@ def pencil(inp):
 
    # Save filtered geometry
    inp.rod_length = inp.rod_length / 2.0 # Make it match with initial definition
-   inp.xyz_output = f'pencil_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_length-{inp.rod_length}{inp.alloy_string}'
+   inp.xyz_output = f'pencil_{inp.pencil_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_length-{inp.rod_length}{inp.alloy_string}'
    output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def create_ase_bulk_metal(inp, base_dir):
