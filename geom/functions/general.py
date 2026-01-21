@@ -165,7 +165,7 @@ def print_help():
 
            Bipyramid: -create -bipyramid atom_type width length
 
-           Pencil: -create -pencil -core atom_type radius -{full/half}shell atom_type length
+           Pencil: -create -pencil -core atom_type -{full/half}shell atom_type core_width core_length shell_length
 
          -----------------------------
          Additional Options
@@ -664,8 +664,8 @@ def parse_create(argv, inp):
       elif (argv[2] == '-bipyramid'):
          inp.gen_bipyramid = True
          inp.create_ase_bulk = True
-         inp.bipyramid_width = float(argv[4])
-         inp.bipyramid_length = float(argv[5])
+         inp.bipyramid_width = float(argv[4]) / 2.0 
+         inp.bipyramid_length = float(argv[5]) / 2.0
 
          if inp.bipyramid_width >= inp.bipyramid_length: output.error(f"Bipyramid width must be smaller than length.")
 
@@ -677,11 +677,13 @@ def parse_create(argv, inp):
       elif (inp.gen_pencil): 
          inp.create_ase_bulk = True
          inp.atomtype_in = argv[4].lower()
-         inp.radius_in = float(argv[5])
-         inp.atomtype_out = argv[7].lower()
-         inp.radius_out = float(argv[8])
-             
-         if inp.radius_in >= inp.radius_out: output.error(f"Pencil shell outer radius must be greater than core inner radius.")
+         inp.atomtype_out = argv[6].lower()
+         inp.bipyramid_width = float(argv[7]) / 2.0
+         inp.bipyramid_length = float(argv[8]) / 2.0
+         inp.rod_length = float(argv[9]) / 2.0
+
+         if inp.bipyramid_length <= inp.bipyramid_width: output.error(f"Pencil shell outer radius must be greater than core inner radius.")
+         if inp.bipyramid_length > inp.rod_length: output.error(f"Pencil shell outer length must be greater than or equal to core inner length.")
 
          if any("-fullshell" in arg.lower() for arg in argv):
              inp.pencil_type = "fullshell"
@@ -700,14 +702,11 @@ def parse_create(argv, inp):
          elif (inp.atomtype_in == inp.atomtype_out):
              output.error(f"Core and shell atom types coincide.")
         
-         # Set to create bulk ase geometry and create_icosahedral core
-         inp.radius = inp.radius_in
-
-         inp.atomtype   = inp.atomtype_out
-         inp.rod_width  = inp.radius_in*2.0 + 10.0 # Add additional atomic layers between core and shell
-         inp.rod_length = inp.radius_out 
+         # Set to create bulk ase geometry
+         inp.atomtype = inp.atomtype_out
+         inp.rod_width  = inp.bipyramid_width*2.0
+         inp.rod_length = inp.rod_length*2.0
          inp.main_axis  = "z"
-
 
       else:
          output.error(f'Create nanoparticle option "{argv[2]}" not recognized. Try python3 geom -h')
