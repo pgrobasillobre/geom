@@ -442,7 +442,7 @@ def test_create_bipyramid(monkeypatch):
    test_folder = 'bipyramid'
    
    # Mock sys.argv to simulate the command line input
-   mock_args = ["dummy", '-create', '-bipyramid', 'Ag', '30.0', '50.0']
+   mock_args = ["dummy", '-create', '-bipyramid', 'Ag', '60.0', '100.0']
    monkeypatch.setattr(sys, "argv", mock_args)
    
    # Manually create and populate the input class

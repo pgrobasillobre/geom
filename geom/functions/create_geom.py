@@ -46,7 +46,7 @@ def select_case(inp):
    if (inp.create_bowtie): tools.create_bowtie(inp)
 
    # Eliminate tmp folder containing bulk structure
-   #if inp.create_ase_bulk: shutil.rmtree(inp.tmp_folder)
+   if inp.create_ase_bulk: shutil.rmtree(inp.tmp_folder)
 # -------------------------------------------------------------------------------------
 def graphene(inp):
    """
@@ -549,6 +549,7 @@ def bipyramid(inp):
    # Extract lattice constant and merge cutoff
    param = parameters.parameters()
    lattice_constant = param.lattice_constant.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
 
    # Initialize bulk "molecule" and read geometry
    mol = molecule.molecule()
@@ -604,6 +605,11 @@ def bipyramid(inp):
 
    # Include atoms within the defined pentagonal pyramid
    mol.filter_xyz_in_pentagonal_pyramid(inp,centers, planes)
+
+   # If the pyramid base is not on the XY plane, translate it
+   z_min = mol.xyz_min[-1]
+   if (z_min > 0.0 ):
+      mol.translate_geom(z_min,[0.0,0.0, -1.0])
 
    # Rotate 180 degrees to create bottom pyramid and merge
    mol_rot = molecule.molecule()
@@ -836,6 +842,11 @@ def pencil(inp):
    general.create_results_geom()
    #out_log = output.logfile_init()
 
+   # Extract lattice constant and merge cutoff
+   param = parameters.parameters()
+   lattice_constant = param.lattice_constant.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
+
    # Initialize bulk "molecule" and read geometry
    mol_sphere_1 = molecule.molecule()
    mol_sphere_2 = molecule.molecule()
@@ -845,12 +856,19 @@ def pencil(inp):
    mol_sphere_2.read_geom(inp.geom_file,False)
    mol_cylinder.read_geom(inp.geom_file,False)
 
-
    # ----------------------- #
    # --------- Out --------- #
 
    # Populate input class
    inp.atomtype = inp.atomtype_out
+
+   # Increase rod width and length to have a coating that
+   # is 3x(lattice constant) in the thinner part
+   inp.rod_width  += 3.0 * lattice_constant 
+   inp.rod_length += 3.0 * lattice_constant
+   if (abs(inp.rod_length - inp.bipyramid_length) < 0.1):
+      inp.rod_length = inp.bipyramid_length*2
+ 
 
    # Create individual sphere at the extremes of the rods 
    tools.determine_sphere_center(inp,'+')
@@ -866,15 +884,14 @@ def pencil(inp):
    mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
    mol_out = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
 
-   mol_out.print_geom("debug_rod_out.xyz")
-   sys.exit()
-
    # ---------------------- #
    # --------- In --------- #
 
    # Copy mol_out as initial guess, change atomtype, and populate input class
-   mol_in = copy.deepcopy(mol_out)
+   mol_in = molecule.molecule()
+   mol_in.read_geom(inp.geom_file,False)
    mol_in.change_atomtype(inp.atomtype_in)
+   inp.atomtype = inp.atomtype_in
 
    # Define vertices with respect to the center (C[0,0,0]) of the XY-plane base
    #
@@ -927,6 +944,22 @@ def pencil(inp):
    # Include atoms within the defined pentagonal pyramid
    mol_in.filter_xyz_in_pentagonal_pyramid(inp,centers, planes)
 
+   # If the pyramid base is not on the XY plane, translate it
+   # To make it match with the outer rod, translate it as well
+   z_min = mol_in.xyz_min[-1]
+   if (z_min > 0.0 ):
+      mol_in.translate_geom(z_min,[0.0,0.0, -1.0])
+      mol_out.translate_geom(z_min,[0.0,0.0, -1.0])
+
+   # Rotate 180 degrees to create bottom pyramid and merge
+   mol_rot = molecule.molecule()
+   mol_rot = tools.rotate(mol_in,180.0,'+x',mol_rot)
+   mol_rot = tools.rotate(mol_rot,180.0,'+z',mol_rot)
+   mol_in = tools.merge_geoms(inp,mol_in,mol_rot)
+  
+   # Remove dangling atom on extreme 
+   mol_in.remove_dangling_atoms_metals(inp)
+
    # Create shell by subtracting core geometry
    mol_shell = tools.subtract_geoms(inp,mol_in,mol_out)
 
@@ -946,85 +979,8 @@ def pencil(inp):
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
    # Save filtered geometry
-   inp.xyz_output = f'pencil_core{inp.atomtype_in}_r_in_{inp.radius_in}_shell_rod_{inp.atomtype_out}_w_{inp.rod_width}_l_{inp.rod_length}{inp.alloy_string}'
-   output.print_geom(mol_core_shell, inp.xyz_output)
-# -------------------------------------------------------------------------------------
-def pencil(inp):
-   """
-    debugpgi
-   """
-
-   # Check input
-   inp.check_input_case()   
-   general.create_results_geom()
-   #out_log = output.logfile_init()
-
-   # Extract merge cutoff 
-   param = parameters.parameters()
-   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
- 
-   # Initialize bulk "molecule" and read geometry
-   mol_sphere_1 = molecule.molecule()
-   mol_sphere_2 = molecule.molecule()
-   mol_cylinder = molecule.molecule()
-
-   mol_sphere_1.read_geom(inp.geom_file,False)
-   mol_sphere_2.read_geom(inp.geom_file,False)
-   mol_cylinder.read_geom(inp.geom_file,False)
-
-   # ----------------------- #
-   # --------- Out --------- #
-
-   # Populate input class
-   inp.atomtype = inp.atomtype_out
-
-   # Create individual sphere at the extremes of the rods 
-   tools.determine_sphere_center(inp,'+')
-   mol_sphere_1.filter_xyz_in_sphere(inp)
-
-   tools.determine_sphere_center(inp,'-')
-   mol_sphere_2.filter_xyz_in_sphere(inp)
-
-   # Create cylinder
-   mol_cylinder.filter_xyz_in_cylinder(inp)
-
-   # Merge cylinder and spheres geometries
-   mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
-   mol_out = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
-
-   # ---------------------- #
-   # --------- In --------- #
-
-   # Copy mol_out as initial guess, change atomtype, and populate input class
-   mol_in = copy.deepcopy(mol_out)
-   mol_in.change_atomtype(inp.atomtype_in)
-
-   mol_in_rot = molecule.molecule()
-
-   # Create core
-   mol_in.create_icosahedra(inp)
-   mol_in_rot = tools.rotate(mol_in,125,"+x",mol_in_rot) # Rotate core to align ico extremes with z axis
-
-   # Create shell by subtracting core geometry
-   mol_shell = tools.subtract_geoms(inp,mol_in_rot,mol_out)
-
-   # Alloy core and shell
-   if inp.alloy: 
-      inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
-
-      inp.atomtype = inp.atomtype_out
-      inp.atomtype_alloy = inp.atomtype_in
-      mol_shell.create_alloy(inp)
-
-      inp.atomtype = inp.atomtype_in
-      inp.atomtype_alloy = inp.atomtype_out
-      mol_in.create_alloy(inp)
-
-   # Merge to create core-shell
-   mol_core_shell = tools.merge_geoms(inp,mol_in_rot,mol_shell)
-
-   # Save filtered geometry
-   inp.xyz_output = f'pencil_core_{inp.atomtype_in}_r_in_{inp.radius_in}_shell_rod_{inp.atomtype_out}_w_{inp.rod_width}_l_{inp.rod_length}{inp.alloy_string}'
+   inp.rod_length = inp.rod_length / 2.0 # Make it match with initial definition
+   inp.xyz_output = f'pencil_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_length-{inp.rod_length}{inp.alloy_string}'
    output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def create_ase_bulk_metal(inp, base_dir):
@@ -1048,6 +1004,7 @@ def create_ase_bulk_metal(inp, base_dir):
    inp.tmp_folder = os.path.join(base_dir,'tmp')
    if os.path.exists(inp.tmp_folder): shutil.rmtree(inp.tmp_folder)
    os.mkdir(inp.tmp_folder)
+
 
    # Determine minimum layers required by ASE
    layers = get_layers(inp,lattice_constant)
@@ -1101,7 +1058,7 @@ def get_layers(inp, lattice_constant):
 
        return layers
 
-   elif inp.gen_bipyramid:
+   elif inp.gen_bipyramid or inp.gen_pencil:
 
        axis = "z"
 
@@ -1111,24 +1068,11 @@ def get_layers(inp, lattice_constant):
        layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
 
        axis_index = {"x": 0, "y": 1, "z": 2}[axis]
+
        layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
 
        return layers
    
-   elif inp.gen_pencil:
-
-       axis = inp.main_axis.lower()
-
-       R = (inp.radius_in + 20.0) / 2.0
-       L = 2.0 * structure_scaling * (inp.radius_out+ 20.0)
-
-       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
-
-       axis_index = {"x": 0, "y": 1, "z": 2}[axis]
-       layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
-
-       return layers
-
    elif inp.gen_tip:
       H = structure_scaling * inp.z_max * 1.8     # Tip height
       return [int(H / lattice_constant) + 2] * 3  # Tip grows mostly in z-axis

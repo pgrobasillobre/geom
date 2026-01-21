@@ -833,11 +833,6 @@ class molecule:
       y_filtered = y[condition]
       z_filtered = z[condition]
 
-      #print(x_filtered,y_filtered,z_filtered)
-
-      #print(planes)
-      #sys.exit()
-
       # Fill previous geometry with current structure
       self.nAtoms = len(x_filtered)
 
@@ -850,11 +845,6 @@ class molecule:
 
       self.xyz = np.zeros((3,self.nAtoms))
       self.xyz = np.vstack((x_filtered, y_filtered, z_filtered))
-
-      # If the pyramid base is not on the XY plane, translate it
-      z_min = min(z_filtered)
-      if (z_min > 0.0 ):
-         self.translate_geom(z_min,[0.0,0.0, -1.0])
 
       # Calculate geometrical center
       self.xyz_center = np.mean(self.xyz, axis=1)
