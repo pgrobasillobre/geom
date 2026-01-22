@@ -1060,7 +1060,7 @@ def get_layers(inp, lattice_constant):
 
        return [int(structure_scaling * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
 
-   elif inp.gen_rod or inp.gen_rod_core_shell:
+   elif inp.gen_rod or inp.gen_rod_core_shell or inp.gen_pencil:
 
        axis = inp.main_axis.lower()
 
@@ -1074,11 +1074,11 @@ def get_layers(inp, lattice_constant):
 
        return layers
 
-   elif inp.gen_bipyramid or inp.gen_pencil:
+   elif inp.gen_bipyramid:
 
        axis = "z"
 
-       R = inp.bipyramid_width
+       R = inp.bipyramid_width / 2.0
        L = 2.0 * structure_scaling * inp.bipyramid_length
 
        layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
