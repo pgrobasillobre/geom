@@ -624,6 +624,8 @@ def bipyramid(inp):
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
+   inp.bipyramid_width = inp.bipyramid_width * 2.0  # Make it match with initial definition 
+   inp.bipyramid_length = inp.bipyramid_length * 2.0  # Make it match with initial definition
    inp.xyz_output = f'bipyramid_{inp.atomtype}_width-{inp.bipyramid_width}_length-{inp.bipyramid_length}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
@@ -872,11 +874,11 @@ def pencil(inp):
 
    # Increase rod width and length to have a coating that
    # is 3x(lattice constant) in the thinner part
-   inp.rod_width  += 3.0 * lattice_constant 
-   inp.rod_length += 3.0 * lattice_constant
-   if (abs(inp.rod_length - inp.bipyramid_length) < 0.1):
-      inp.rod_length = inp.bipyramid_length*2
- 
+   minimum_coating = 3.0 * lattice_constant
+   inp.rod_width  += minimum_coating 
+   if (abs(inp.rod_length - inp.bipyramid_length*2.0) < minimum_coating):
+      inp.rod_length = inp.bipyramid_length*2.0 + minimum_coating
+
 
    # Create individual sphere at the extremes of the rods 
    tools.determine_sphere_center(inp,'+')
@@ -992,7 +994,8 @@ def pencil(inp):
    mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
 
    # Save filtered geometry
-   inp.rod_length = inp.rod_length / 2.0 # Make it match with initial definition
+   inp.bipyramid_width = inp.bipyramid_width * 2.0  # Make it match with initial definition 
+   inp.bipyramid_length = inp.bipyramid_length * 2.0  # Make it match with initial definition
    inp.xyz_output = f'pencil_{inp.pencil_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_length-{inp.rod_length}{inp.alloy_string}'
    output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
