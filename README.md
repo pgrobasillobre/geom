@@ -124,7 +124,7 @@ To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_
 ai_geom
 ```
 
-You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometyr creation:
+You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometry creation:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assistant.png" width="600">
