@@ -165,7 +165,7 @@ def print_help():
 
            Bipyramid: -create -bipyramid atom_type width length
 
-           Pencil: -create -pencil -core atom_type -{full/half}shell atom_type core_width core_length shell_length
+           Pencil: -create -pencil -core atom_type -{full/half}shell atom_type core_width core_length shell_width shell_length
 
          -----------------------------
          Additional Options
@@ -680,10 +680,12 @@ def parse_create(argv, inp):
          inp.atomtype_out = argv[6].lower()
          inp.bipyramid_width = float(argv[7]) / 2.0
          inp.bipyramid_length = float(argv[8]) / 2.0
-         inp.rod_length = float(argv[9]) / 2.0
+         inp.rod_width = float(argv[9])  / 2.0 
+         inp.rod_length = float(argv[10]) / 2.0
 
          if inp.bipyramid_length <= inp.bipyramid_width: output.error(f"Pencil shell outer radius must be greater than core inner radius.")
          if inp.bipyramid_length > inp.rod_length: output.error(f"Pencil shell outer length must be greater than or equal to core inner length.")
+         if inp.bipyramid_width  > inp.rod_width:  output.error(f"Pencil shell outer width must be greater than or equal to core inner width.")
 
          if any("-fullshell" in arg.lower() for arg in argv):
              inp.pencil_type = "fullshell"
@@ -704,8 +706,8 @@ def parse_create(argv, inp):
         
          # Set to create bulk ase geometry
          inp.atomtype = inp.atomtype_out
-         inp.rod_width  = inp.bipyramid_width*2.0
-         inp.rod_length = inp.rod_length*2.0
+         inp.rod_width  = inp.rod_width*2.0
+         inp.rod_length  = inp.rod_length*2.0
          inp.main_axis  = "z"
 
       else:
