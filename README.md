@@ -127,7 +127,7 @@ ai_geom
 You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometyr creation:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assitant.png" width="600">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assistant.png" width="600">
 </p>
 
 
