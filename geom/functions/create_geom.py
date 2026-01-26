@@ -873,12 +873,12 @@ def pencil(inp):
    inp.atomtype = inp.atomtype_out
 
    # Increase rod width and length to have a coating that
-   # is 3x(lattice constant) in the thinner part
+   # is at least 3x(lattice constant) in the thinner part
    minimum_coating = 3.0 * lattice_constant
-   inp.rod_width  += minimum_coating 
    if (abs(inp.rod_length - inp.bipyramid_length*2.0) < minimum_coating):
       inp.rod_length = inp.bipyramid_length*2.0 + minimum_coating
-
+   if (abs(inp.rod_width - inp.bipyramid_width*2.0) < minimum_coating):
+      inp.rod_width = inp.bipyramid_width*2.0 + minimum_coating
 
    # Create individual sphere at the extremes of the rods 
    tools.determine_sphere_center(inp,'+')
@@ -996,7 +996,7 @@ def pencil(inp):
    # Save filtered geometry
    inp.bipyramid_width = inp.bipyramid_width * 2.0  # Make it match with initial definition 
    inp.bipyramid_length = inp.bipyramid_length * 2.0  # Make it match with initial definition
-   inp.xyz_output = f'pencil_{inp.pencil_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_length-{inp.rod_length}{inp.alloy_string}'
+   inp.xyz_output = f'pencil_{inp.pencil_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_width_{inp.rod_width}_out_length-{inp.rod_length}{inp.alloy_string}'
    output.print_geom(mol_core_shell, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def create_ase_bulk_metal(inp, base_dir):
