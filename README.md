@@ -88,13 +88,13 @@ geom -rdkit -i tyrosine.mol -o tyrosine.pdb
 geom -r1 90 geom.xyz origin_CM_yes +y
 ```
 
-- Generate a nanoparticle sphere:
+- **Generate** a nanoparticle sphere:
 
 ```
 geom -create -sphere Ag 30
 ```
 
-- Generate a graphene ribbon: 
+- **Generate** a graphene ribbon: 
 
 ```
 geom -create -graphene rib 50 20
