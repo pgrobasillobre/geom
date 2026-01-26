@@ -7,6 +7,10 @@ dependencies:
   - gmsh=4.11.1
   - ase=3.22.1
   - pytest=8.3.4
+  - rdkit
+  - py3Dmol
+  - pyside6
+  - python-dotenv
   - pip
   - pip:
       - launchpadlib==2.1.0

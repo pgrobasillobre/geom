@@ -1,5 +1,6 @@
 import sys
 import os
+import ast
 
 from geom.classes import parameters
 from geom.functions import output, create_geom
@@ -27,7 +28,7 @@ def read_command_line(argv, inp):
     command = argv[1]
     if command in ['-h', '-help']:
         print_help()
-    elif command == '-t' or command =='-t1':
+    elif command == '-t' or command =='-t1' or command == '-tc':
         parse_translation(argv, inp)
     elif command == '-r' or command =='-r1':
         parse_rotation(argv, inp)
@@ -41,6 +42,8 @@ def read_command_line(argv, inp):
         parse_create(argv, inp)
     elif command == '-merge':
         parse_merge(argv,inp)
+    elif command == '-rdkit':
+        parse_rdkit(argv,inp)
     else:
         output.error(f'Option "{command}" not recognized. Try python3 geom -h')
 # -------------------------------------------------------------------------------------
@@ -71,6 +74,10 @@ def print_help():
          One translation:
 
            -t1 shift geom.xyz origin_CM{origin_CM_yes/no} axis{+-}{x/y/z}
+
+         Translation to center of coordinates:
+
+           -tc geom.xyz
 
 
          ---------
@@ -176,6 +183,45 @@ def print_help():
 
          Note: Alloying, core-shell, dimer, and bowtie options are only available for Ag and Au-based nanoparticles.
 
+
+         ------
+         RDKit:
+         ------
+
+         Visualization:
+
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz] -vis2d | -vis3d
+
+            Options (for -vis2d, can be combined):
+                -stereo   Show stereochemistry labels (R/S, E/Z)
+                -index    Show atom indices
+                -bw       Black and white rendering
+                -rm_H     Remove hydrogens
+                -abbrevs  Abbreviate ligands
+                -aromatic Highlight in pale green aromatic atoms/bonds
+                -match    "smiles/smarts"
+                          If present, highlight in pale blue a substructure parsed from a SMILES or SMARTS string
+
+         File conversion:
+
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz] -o file.[pdb|sdf|mol|smi|xyz]
+        
+         Force field geometry optimization:
+
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz]
+                    -opt [mmff94|mmff94s|uff] (default=mmff94)
+                    [-maxIters N(default=200)]
+                    [-o file.[pdb|sdf|mol2|xyz](default=pdb)]
+
+         Conformers generation:
+
+            -rdkit -i file.[pdb|sdf|mol|smi|xyz] 
+                    -confs [N] (default=50)
+                    [-opt [mmff94|mmff94s|uff] (default=mmff94)]
+                    [-maxIters N] (default=200)
+                    [-ext [pdb|sdf|xyz] (default=pdb)]
+                    [-pruneRms RMS] (default=0.30)
+
     '''
     print(help_text)
     sys.exit()
@@ -192,7 +238,8 @@ def parse_translation(argv, inp):
        None: Sets translation-related attributes in `inp`.
 
    Notes:
-       - Handles both controlled distance translation (`-t`) and simple shift translation (`-t1`).
+       - Handles both controlled distance translation (`-t`), simple shift translation (`-t1`),
+         and translation of geometrical center to the center of coordinates (`-tc`).
        - Extracts input filenames, translation parameters, and verbosity settings.
    """
 
@@ -222,6 +269,10 @@ def parse_translation(argv, inp):
       inp.dir_axis_input = str(argv[5])
 
       if (inp.origin_CM == 'origin_CM_yes'): inp.move_geom_to_000 = True
+
+   elif argv[1] == '-tc':
+      inp.translate_center = True
+      inp.geom_file      = str(argv[2]) 
 # -------------------------------------------------------------------------------------
 def parse_rotation(argv, inp):
    """
@@ -299,6 +350,64 @@ def parse_merge(argv, inp):
    inp.geom1_file = str(argv[2])
    inp.geom2_file = str(argv[3])
    inp.merge_cutoff = float(argv[4])
+# -------------------------------------------------------------------------------------
+def parse_rdkit(argv, inp):
+    """
+        TO DO
+    """
+
+    # Sanitary check
+    if "-i" not in argv: output.error('Missing "-i" option for parsing input.')
+
+    inp.rdkit = True
+
+    # Visualization
+
+    if "-vis2d" in argv: inp.rdkit_visualize_2d = True
+    if "-vis3d" in argv: inp.rdkit_visualize_3d = True
+    if "-stereo" in argv: inp.stereo_annotations = True
+    if "-index" in argv: inp.atom_index = True
+    if "-bw" in argv: inp.rdkit_bw = True
+    if "-rm_H" or "-rm_h" in argv: inp.remove_H = True
+    if "-abbrevs" in argv: inp.rdkit_abbreviations = True
+    if "-aromatic" in argv: inp.check_aromaticity = True
+
+    if "-match" in argv:
+        inp.rdkit_match = True
+        inp.match_smiles = extract_value(argv, "-match",value_type=str)
+    
+    if (inp.rdkit_visualize_2d or inp.rdkit_visualize_3d): inp.rdkit_visualize = True 
+
+    inp.rdkit_mol_file = argv[3]
+    inp.rdkit_mol_file_extension = inp.rdkit_mol_file[-4:]
+
+    # File conversion
+    if "-o" in argv:
+        inp.rdkit_file_conversion = True
+        inp.rdkit_output_file = extract_value(argv, "-o",value_type=str)
+
+    # Force field optimization
+    if "-opt" in argv:
+        inp.rdkit_opt = True
+        inp.rdkit_force_field = extract_value_or_default(argv,"-opt",value_type=str,default="mmff94") 
+
+        if "-o" in argv: 
+            inp.rdkit_file_conversion = False # Turn off file conversion
+        else:
+            inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + "_opt.pdb"
+
+        if any(arg.lower() == "-maxiters" for arg in argv):
+            inp.rdkit_max_iters = extract_value(argv, "-maxIters",value_type=int)
+
+    # Conformers generation
+    if "-confs" in argv:
+        inp.rdkit_conformers = True
+        inp.rdkit_confs = extract_value_or_default(argv,"-confs",value_type=int,default=50) 
+        if "-ext" in argv: 
+            inp.rdkit_confs_ext = "." + extract_value(argv,"-ext",value_type=str)
+        if any(arg.lower() == "-prunerms" for arg in argv):
+            inp.rdkit_confs_prune_rms = extract_value(argv, "-pruneRms", value_type=float)
+        inp.rdkit_output_file = inp.rdkit_mol_file[:-4] + inp.rdkit_confs_ext
 # -------------------------------------------------------------------------------------
 def parse_min(argv, inp):
    """
@@ -404,6 +513,9 @@ def parse_create(argv, inp):
       elif ('-continuum') in argv:
          inp.gen_3d_mesh = True
 
+      elif ("-pencil") in argv:
+          inp.gen_pencil = True
+
       else:
          inp.atomtype = argv[3].lower()
          if inp.atomtype not in param.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
@@ -454,11 +566,11 @@ def parse_create(argv, inp):
             inp.create_ase_bulk = True
 
             inp.main_axis = argv[3].lower()
-            inp.atomtype_in = argv[5]
+            inp.atomtype_in = argv[5].lower()
             inp.rod_length_in = float(argv[6])
             inp.rod_width_in = float(argv[7])
 
-            inp.atomtype_out = argv[9]
+            inp.atomtype_out = argv[9].lower()
             inp.rod_length_out = float(argv[10])
             inp.rod_width_out = float(argv[11])
 
@@ -489,7 +601,7 @@ def parse_create(argv, inp):
             inp.rod_width = float(argv[6])
             inp.mesh_size = float(argv[7])
 
-            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be greater than length.")
+            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be smaller than length.")
 
             inp.mesh_output = f"results_geom/rod_{inp.main_axis.upper()}_l_{inp.rod_length}_w_{inp.rod_width}_mesh_size_{inp.mesh_size}.msh"
          else:
@@ -500,7 +612,7 @@ def parse_create(argv, inp):
             inp.rod_length = float(argv[5])
             inp.rod_width = float(argv[6])
 
-            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be greater than length.")
+            if inp.rod_width >= inp.rod_length: output.error(f"Rod width must be smaller than length.")
 
          if inp.main_axis not in inp.axes: output.error(f"Axis {inp.main_axis} not recognized.") 
 
@@ -545,9 +657,57 @@ def parse_create(argv, inp):
          inp.gen_idh = True
          inp.radius = float(argv[4])
 
+      elif (argv[2] == '-bipyramid'):
+         inp.gen_bipyramid = True
+         inp.create_ase_bulk = True
+         inp.bipyramid_width = float(argv[4]) / 2.0 
+         inp.bipyramid_length = float(argv[5]) / 2.0
+
+         if inp.bipyramid_width >= inp.bipyramid_length: output.error(f"Bipyramid width must be smaller than length.")
+
+         # Set to create bulk ase geometry
+         inp.rod_width  = inp.bipyramid_width
+         inp.rod_length = inp.bipyramid_length
+         inp.main_axis  = "z"
+
+      elif (inp.gen_pencil): 
+         inp.create_ase_bulk = True
+         inp.atomtype_in = argv[4].lower()
+         inp.atomtype_out = argv[6].lower()
+         inp.bipyramid_width = float(argv[7]) / 2.0
+         inp.bipyramid_length = float(argv[8]) / 2.0
+         inp.rod_width = float(argv[9])  / 2.0 
+         inp.rod_length = float(argv[10]) / 2.0
+
+         if inp.bipyramid_length <= inp.bipyramid_width: output.error(f"Pencil shell outer radius must be greater than core inner radius.")
+         if inp.bipyramid_length > inp.rod_length: output.error(f"Pencil shell outer length must be greater than or equal to core inner length.")
+         if inp.bipyramid_width  > inp.rod_width:  output.error(f"Pencil shell outer width must be greater than or equal to core inner width.")
+
+         if any("-fullshell" in arg.lower() for arg in argv):
+             inp.pencil_type = "fullshell"
+         elif any("-halfshell" in arg.lower() for arg in argv):
+             inp.pencil_type = "halfshell"
+         else:
+             output.error("Pencil shell type not recognised. \n\n" 
+                          "   Options: \n\n"
+                          "     -fullshell\n\n" \
+                          "     -halfshell")
+        
+         if (inp.atomtype_in not in inp.atomtypes_core_shell):
+             output.error(f'Core atom type "{inp.atomtype_in}" not supported.')
+         elif (inp.atomtype_out not in inp.atomtypes_core_shell):
+             output.error(f'Shell atom type "{inp.atomtype_out}" not supported.')
+         elif (inp.atomtype_in == inp.atomtype_out):
+             output.error(f"Core and shell atom types coincide.")
+        
+         # Set to create bulk ase geometry
+         inp.atomtype = inp.atomtype_out
+         inp.rod_width  = inp.rod_width*2.0
+         inp.rod_length  = inp.rod_length*2.0
+         inp.main_axis  = "z"
+
       else:
          output.error(f'Create nanoparticle option "{argv[2]}" not recognized. Try python3 geom -h')
-
 
       # Create bulk metal dynamically
       if inp.create_ase_bulk: create_geom.create_ase_bulk_metal(inp, base_dir)
@@ -788,6 +948,48 @@ def check_file_extension(infile,extension):
    i = len(extension)
    if (infile[-i:] != extension): output.error('extension "' + extension + '" not found in file "' + infile + '"' )
 # -------------------------------------------------------------------------------------
+def check_file_extension_rdkit(infile,accepted_extensions):
+    """ 
+    Checks if the input file has a RDKit-supported extension.
+
+    Args:
+        infile (str): Path to the input file.
+        accepted_extensions (list): List of accepted file extensions for RDKit.
+
+    Returns:
+        None: Raises an error if the file extension is not supported.
+    """
+   
+    file_extension = infile[-4:].lower()
+    if file_extension not in accepted_extensions:
+        msg = (
+            f"File extension '{file_extension}' for RDKit not supported.\n\n"
+            "   Accepted file extensions:"
+            + "".join(f"\n     - {ext}" for ext in accepted_extensions)
+        )
+        output.error(msg)
+# -------------------------------------------------------------------------------------
+def check_accepted_parameters(param,accepted_params,label="Parameter"):
+    """ 
+    Checks if a parameter is in the list of accepted parameters.
+
+    Args:
+        param (str): Parameter value to check.
+        accepted_params (list): List of accepted parameter values.
+        label (str, optional): Label for the parameter in error messages.
+
+    Returns:
+        None: Raises an error if the parameter is not in accepted parameters.
+    """
+   
+    if param not in accepted_params:
+        msg = (
+            f"{label.capitalize()} '{param}' not supported.\n\n"
+            "   Accepted entries:"
+            + "".join(f"\n     - {parameter}" for parameter in accepted_params)
+        )
+        output.error(msg)
+# -------------------------------------------------------------------------------------
 def check_dir_axis(inp):
    """ 
    Validates the direction axis input for translation or rotation.
@@ -852,4 +1054,190 @@ def create_results_geom():
    #      sys.exit()
 
    if (not(os.path.exists('results_geom'))): os.system('mkdir results_geom')
+# -------------------------------------------------------------------------------------
+def extract_string_or_list(argv, flag):
+    """
+    Extract the argument(s) that follow a CLI flag.
+
+    Accepts:
+      - <flag> CO             -> ["CO"]
+      - <flag> "CO"           -> ["CO"]
+      - <flag> CO,OH          -> ["CO","OH"]
+      - <flag> ["CO","OH"]    -> ["CO","OH"]   (quoted or unquoted list)
+      - <flag> [CO, OH]       -> ["CO","OH"]   (bare items)
+
+    Returns a list of strings.
+    """
+    if flag not in argv:
+        return []
+
+    i = argv.index(flag)
+    if i + 1 >= len(argv):
+        raise ValueError(f'Missing argument after "{flag}"')
+
+    # Grab everything after the flag
+    tokens = argv[i+1:]
+
+    # Reassemble if it's a list starting with '['
+    if tokens[0].startswith('['):
+        depth = 0
+        parts = []
+        for tok in tokens:
+            depth += tok.count('[')
+            depth -= tok.count(']')
+            parts.append(tok)
+            if depth <= 0:
+                break
+        raw = ' '.join(parts).strip()
+    else:
+        raw = tokens[0].strip()
+
+    # Try Python literal eval
+    try:
+        if raw.startswith('['):
+            val = ast.literal_eval(raw)
+            if isinstance(val, (list, tuple)):
+                return [str(x).strip().strip('"').strip("'") for x in val]
+            return [str(val)]
+        else:
+            if ',' in raw:
+                return [p.strip().strip('"').strip("'") for p in raw.split(',') if p.strip()]
+            return [raw.strip().strip('"').strip("'")]
+    except Exception:
+        # Fallback for [CO, OH] without quotes
+        if raw.startswith('[') and raw.endswith(']'):
+            inner = raw[1:-1]
+            items = [p.strip().strip('"').strip("'") for p in inner.split(',') if p.strip()]
+            return items
+        return [raw.strip().strip('"').strip("'")]
+# -------------------------------------------------------------------------------------
+def extract_value(argv, flag, value_type):
+    """
+    Extract the argument that follows a CLI flag and cast it to a given type.
+
+    Args:
+        argv (list): Command-line arguments.
+        flag (str): Flag to search for (case-insensitive).
+        value_type (type): Expected Python type (e.g., str, int, float).
+
+    Returns:
+        The value converted to the expected type.
+
+    Raises:
+        ValueError: If the flag is present but has no value, 
+                    or if the value cannot be converted to the expected type.
+        SystemExit: If the flag is not found (via output.error()).
+    """
+    # Normalize for case-insensitive search
+    argv_lower = [arg.lower() for arg in argv]
+    flag_lower = flag.lower()
+
+    if flag_lower not in argv_lower:
+        output.error(f'Requested flag "{flag}" not found')
+
+    i = argv_lower.index(flag_lower)
+
+    # Case 1: flag is last in argv → no value provided
+    if i + 1 >= len(argv):
+        raise ValueError(f'Missing argument after "{flag}"')
+
+    token = argv[i + 1]
+
+    # Case 2: next token looks like another flag → treat as missing
+    if token.startswith("-"):
+        raise ValueError(f'Missing argument after "{flag}" (found another flag \"{token}\")')
+
+    # Type validation
+    try:
+        if value_type is str:
+            value = token
+        elif value_type is int:
+            value = int(token)
+        elif value_type is float:
+            value = float(token)
+        else:
+            raise TypeError(f'Unsupported value_type "{value_type.__name__}". '
+                            'Allowed: str, int, float.')
+    except ValueError:
+        raise ValueError(f'Expected a {value_type.__name__} after "{flag}", got "{token}"')
+
+    return value
+# -------------------------------------------------------------------------------------
+def extract_value_or_default(argv, flag, value_type=str, default=None):
+    """
+    Extract the argument that follows a CLI flag and cast it to a given type.
+    If the flag is absent or has no following value, return the provided default.
+    If the flag is present but the value is not convertible to the requested type, raise ValueError.
+
+    Args:
+        argv (list[str]): Command-line arguments.
+        flag (str): Flag to search for (case-insensitive).
+        value_type (type): One of {str, int, float}.
+        default (Any): Default value if the flag is missing or has no argument.
+                       If not None, its type must match `value_type`.
+
+    Returns:
+        Any: The value converted to `value_type`, or `default` when appropriate.
+
+    Raises:
+        TypeError: If `value_type` is unsupported, or `default`'s type doesn't match `value_type`.
+        ValueError: If the flag is present but the following token can't be converted to `value_type`.
+    """
+    # Validate requested type
+    if value_type not in (str, int, float):
+        raise TypeError(f'Unsupported value_type "{getattr(value_type, "__name__", value_type)}". Allowed: str, int, float.')
+
+    # Validate default type (allow None)
+    if default is not None and not isinstance(default, value_type):
+        raise TypeError(
+            f'Default value type mismatch for flag "{flag}": '
+            f'expected {value_type.__name__}, got {type(default).__name__}.'
+        )
+
+    # Case-insensitive search for the flag
+    argv_lower = [a.lower() for a in argv]
+    flag_lower = flag.lower()
+
+    # If flag not present → return default
+    if flag_lower not in argv_lower:
+        return default
+
+    i = argv_lower.index(flag_lower)
+
+    # Flag is last token → no value provided → return default
+    if i + 1 >= len(argv):
+        return default
+
+    token = argv[i + 1]
+
+    # Next token looks like another flag → treat as missing → return default
+    if token.startswith("-"):
+        return default
+
+    # Cast to the requested type
+    try:
+        if value_type is str:
+            return token
+        elif value_type is int:
+            return int(token)
+        elif value_type is float:
+            return float(token)
+    except ValueError as e:
+        raise ValueError(
+            f'Invalid {value_type.__name__} value "{token}" provided for flag "{flag}".'
+        ) from e
+# -------------------------------------------------------------------------------------
+def check_equal_extensions(infile1,infile2):
+   """ 
+   Checks if two input files have the same extension. If yes, raises an error.
+
+   Args:
+       infile1 (str): Path to the first input file.
+       infile2 (str): Path to the second input file.
+    """
+   
+   ext1 = infile1[-4:].lower()
+   ext2 = infile2[-4:].lower()
+
+   if (ext1 == ext2): output.error('input files must have different extensions ("' + ext1 + '" found in both files)')
 # -------------------------------------------------------------------------------------

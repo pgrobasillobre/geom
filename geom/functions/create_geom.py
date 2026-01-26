@@ -38,7 +38,9 @@ def select_case(inp):
    if (inp.gen_icosahedra):        icosahedra(inp)
    if (inp.gen_cto):               cto(inp)
    if (inp.gen_idh):               idh(inp)
-
+   if (inp.gen_bipyramid):         bipyramid(inp)
+   if (inp.gen_pencil):            pencil(inp)
+   
    # Creation of dimer and bowtie structures
    if (inp.create_dimer):  tools.create_dimer(inp)
    if (inp.create_bowtie): tools.create_bowtie(inp)
@@ -507,21 +509,12 @@ def pyramid(inp):
        "center_5": [0.0, 0.0, inp.z_max]
    }
 
-   # Function to calculate normal and RHS for planes
-   def calculate_normal_and_rhs(center_a, center_b, apex):
-       a = [center_a[i] - apex[i] for i in range(3)]
-       b = [center_b[i] - apex[i] for i in range(3)]
-       normal = np.cross(a, b)
-       rhs = -sum(normal[i] * apex[i] for i in range(3))
-       return normal, rhs
-
    # Define planes to cut the pyramid
-   # Eqs. --> n_x * x + n_y * y + n_z * z + rhs = 0
    planes = {
-       "n_125": calculate_normal_and_rhs(centers["center_1"], centers["center_2"], centers["center_5"]),
-       "n_235": calculate_normal_and_rhs(centers["center_2"], centers["center_3"], centers["center_5"]),
-       "n_345": calculate_normal_and_rhs(centers["center_3"], centers["center_4"], centers["center_5"]),
-       "n_415": calculate_normal_and_rhs(centers["center_4"], centers["center_1"], centers["center_5"])
+       "n_125": tools.calculate_normal_and_rhs(centers["center_1"], centers["center_2"], centers["center_5"]),
+       "n_235": tools.calculate_normal_and_rhs(centers["center_2"], centers["center_3"], centers["center_5"]),
+       "n_345": tools.calculate_normal_and_rhs(centers["center_3"], centers["center_4"], centers["center_5"]),
+       "n_415": tools.calculate_normal_and_rhs(centers["center_4"], centers["center_1"], centers["center_5"])
    } 
 
    # Pick only atoms within the defined pyramid
@@ -535,6 +528,105 @@ def pyramid(inp):
 
    # Save filtered geometry
    inp.xyz_output = f'pyramid_{inp.atomtype}_length-{inp.side_length}_zmin-{inp.z_min}_zmax-{inp.z_max}{inp.alloy_string}'
+   output.print_geom(mol, inp.xyz_output)
+# -------------------------------------------------------------------------------------
+def bipyramid(inp):
+   """
+   Generates a bipyramid-shaped geometry with a pentagonal base.
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated bipyramidal geometry.
+   """
+
+   # Check input
+   inp.check_input_case()
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Extract lattice constant and merge cutoff
+   param = parameters.parameters()
+   lattice_constant = param.lattice_constant.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
+
+   # Initialize bulk "molecule" and read geometry
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file, False)
+
+   # Define vertices with respect to the center (C[0,0,0]) of the XY-plane base
+   #
+   # XY base (center 6 in the +z direction)
+   #
+   #          
+   #           1
+   #          ,'.
+   #        ,'   `.
+   #      ,'       `.
+   #  5 ,'           `. 2       ^ y      
+   #    \      C      /         |        
+   #     \           /          o ---> x         
+   #      \         /          z                 
+   #       \_______/                  
+   #      4         3                 
+   #   
+
+   # ------------------------------
+   # Define pentagonal-base pyramid
+   # -------------------------------
+
+   # Recover true circumradius
+   R = inp.bipyramid_width 
+
+   # Calculate pentagon vertices (angles offset by 90° to have a flat side at bottom)
+   angles = [math.radians(90 + i * 72) for i in range(5)]  # 72° between vertices
+
+   centers = {}
+   # Pentagon base vertices
+   for i in range(5):
+       centers[f"center_{i+1}"] = [
+           R * math.cos(angles[i]),  # x coordinate
+           R * math.sin(angles[i]),  # y coordinate  
+           0.0                       # z coordinate (base)
+       ]
+
+   # Apex point at the top (half of total length from base to apex)
+   centers["center_6"] = [0.0, 0.0, inp.bipyramid_length ]  # z coordinate (top apex). Added extra length to ensure lateral sides are filled by atoms
+
+   # Define planes to cut the pyramid
+   planes = {
+       "n_126": tools.calculate_normal_and_rhs(centers["center_1"], centers["center_2"], centers["center_6"]),
+       "n_236": tools.calculate_normal_and_rhs(centers["center_2"], centers["center_3"], centers["center_6"]),
+       "n_346": tools.calculate_normal_and_rhs(centers["center_3"], centers["center_4"], centers["center_6"]),
+       "n_456": tools.calculate_normal_and_rhs(centers["center_4"], centers["center_5"], centers["center_6"]),
+       "n_516": tools.calculate_normal_and_rhs(centers["center_5"], centers["center_1"], centers["center_6"]),
+   } 
+
+   # Include atoms within the defined pentagonal pyramid
+   mol.filter_xyz_in_pentagonal_pyramid(inp,centers, planes)
+
+   # If the pyramid base is not on the XY plane, translate it
+   z_min = mol.xyz_min[-1]
+   if (z_min > 0.0 ):
+      mol.translate_geom(z_min,[0.0,0.0, -1.0])
+
+   # Rotate 180 degrees to create bottom pyramid and merge
+   mol_rot = molecule.molecule()
+   mol_rot = tools.rotate(mol,180.0,'+x',mol_rot)
+   mol_rot = tools.rotate(mol_rot,180.0,'+z',mol_rot)
+   mol = tools.merge_geoms(inp,mol,mol_rot)
+  
+   # Remove dangling atom on extreme 
+   mol.remove_dangling_atoms_metals(inp)
+
+   # Alloy
+   if inp.alloy: mol.create_alloy(inp)
+
+   # Save filtered geometry
+   inp.bipyramid_width = inp.bipyramid_width * 2.0  # Make it match with initial definition 
+   inp.bipyramid_length = inp.bipyramid_length * 2.0  # Make it match with initial definition
+   inp.xyz_output = f'bipyramid_{inp.atomtype}_width-{inp.bipyramid_width}_length-{inp.bipyramid_length}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def cone(inp):
@@ -616,21 +708,13 @@ def microscope(inp):
        "center_5": [0.0, 0.0, inp.z_max]
    }
 
-   # Function to calculate normal and RHS for planes
-   def calculate_normal_and_rhs(center_a, center_b, apex):
-       a = [center_a[i] - apex[i] for i in range(3)]
-       b = [center_b[i] - apex[i] for i in range(3)]
-       normal = np.cross(a, b)
-       rhs = -sum(normal[i] * apex[i] for i in range(3))
-       return normal, rhs
-
    # Define planes to cut the pyramid
    # Eqs. --> n_x * x + n_y * y + n_z * z + rhs = 0
    planes = {
-       "n_125": calculate_normal_and_rhs(centers["center_1"], centers["center_2"], centers["center_5"]),
-       "n_235": calculate_normal_and_rhs(centers["center_2"], centers["center_3"], centers["center_5"]),
-       "n_345": calculate_normal_and_rhs(centers["center_3"], centers["center_4"], centers["center_5"]),
-       "n_415": calculate_normal_and_rhs(centers["center_4"], centers["center_1"], centers["center_5"])
+       "n_125": tools.calculate_normal_and_rhs(centers["center_1"], centers["center_2"], centers["center_5"]),
+       "n_235": tools.calculate_normal_and_rhs(centers["center_2"], centers["center_3"], centers["center_5"]),
+       "n_345": tools.calculate_normal_and_rhs(centers["center_3"], centers["center_4"], centers["center_5"]),
+       "n_415": tools.calculate_normal_and_rhs(centers["center_4"], centers["center_1"], centers["center_5"])
    } 
 
    # Pick only atoms within the defined pyramid
@@ -750,6 +834,171 @@ def idh(inp):
    inp.xyz_output = f'decahedron_{inp.atomtype}_r_{inp.radius}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
+def pencil(inp):
+   """
+   Generates a nanopencil nanoparticle geometry.
+   (Reference of experimental geometries: https://doi.org/10.1002/smll.202302302
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated decahedral geometry.
+
+   """
+
+   # Check input
+   inp.check_input_case()   
+   general.create_results_geom()
+   #out_log = output.logfile_init()
+
+   # Extract lattice constant and merge cutoff
+   param = parameters.parameters()
+   lattice_constant = param.lattice_constant.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
+
+   # Initialize bulk "molecule" and read geometry
+   mol_sphere_1 = molecule.molecule()
+   mol_sphere_2 = molecule.molecule()
+   mol_cylinder = molecule.molecule()
+
+   mol_sphere_1.read_geom(inp.geom_file,False)
+   mol_sphere_2.read_geom(inp.geom_file,False)
+   mol_cylinder.read_geom(inp.geom_file,False)
+
+   # ----------------------- #
+   # --------- Out --------- #
+
+   # Populate input class
+   inp.atomtype = inp.atomtype_out
+
+   # Increase rod width and length to have a coating that
+   # is at least 3x(lattice constant) in the thinner part
+   minimum_coating = 3.0 * lattice_constant
+   if (abs(inp.rod_length - inp.bipyramid_length*2.0) < minimum_coating):
+      inp.rod_length = inp.bipyramid_length*2.0 + minimum_coating
+   if (abs(inp.rod_width - inp.bipyramid_width*2.0) < minimum_coating):
+      inp.rod_width = inp.bipyramid_width*2.0 + minimum_coating
+
+   # Create individual sphere at the extremes of the rods 
+   tools.determine_sphere_center(inp,'+')
+   mol_sphere_1.filter_xyz_in_sphere(inp)
+
+   tools.determine_sphere_center(inp,'-')
+   mol_sphere_2.filter_xyz_in_sphere(inp)
+
+   # Create cylinder
+   mol_cylinder.filter_xyz_in_cylinder(inp)
+
+   # Merge cylinder and spheres geometries
+   mol_tmp = tools.merge_geoms(inp,mol_sphere_1,mol_sphere_2)
+   mol_out = tools.merge_geoms(inp,mol_cylinder,mol_tmp)
+
+   # ---------------------- #
+   # --------- In --------- #
+
+   # Copy mol_out as initial guess, change atomtype, and populate input class
+   mol_in = molecule.molecule()
+   mol_in.read_geom(inp.geom_file,False)
+   mol_in.change_atomtype(inp.atomtype_in)
+   inp.atomtype = inp.atomtype_in
+
+   # Define vertices with respect to the center (C[0,0,0]) of the XY-plane base
+   #
+   # XY base (center 6 in the +z direction)
+   #
+   #          
+   #           1
+   #          ,'.
+   #        ,'   `.
+   #      ,'       `.
+   #  5 ,'           `. 2       ^ y      
+   #    \      C      /         |        
+   #     \           /          o ---> x         
+   #      \         /          z                 
+   #       \_______/                  
+   #      4         3                 
+   #   
+
+   # ------------------------------
+   # Define pentagonal-base pyramid
+   # -------------------------------
+
+   # Recover true circumradius
+   R = inp.bipyramid_width 
+
+   # Calculate pentagon vertices (angles offset by 90° to have a flat side at bottom)
+   angles = [math.radians(90 + i * 72) for i in range(5)]  # 72° between vertices
+
+   centers = {}
+   # Pentagon base vertices
+   for i in range(5):
+       centers[f"center_{i+1}"] = [
+           R * math.cos(angles[i]),  # x coordinate
+           R * math.sin(angles[i]),  # y coordinate  
+           0.0                       # z coordinate (base)
+       ]
+
+   # Apex point at the top (half of total length from base to apex)
+   centers["center_6"] = [0.0, 0.0, inp.bipyramid_length ]  # z coordinate (top apex). Added extra length to ensure lateral sides are filled by atoms
+
+   # Define planes to cut the pyramid
+   planes = {
+       "n_126": tools.calculate_normal_and_rhs(centers["center_1"], centers["center_2"], centers["center_6"]),
+       "n_236": tools.calculate_normal_and_rhs(centers["center_2"], centers["center_3"], centers["center_6"]),
+       "n_346": tools.calculate_normal_and_rhs(centers["center_3"], centers["center_4"], centers["center_6"]),
+       "n_456": tools.calculate_normal_and_rhs(centers["center_4"], centers["center_5"], centers["center_6"]),
+       "n_516": tools.calculate_normal_and_rhs(centers["center_5"], centers["center_1"], centers["center_6"]),
+   } 
+
+   # Include atoms within the defined pentagonal pyramid
+   mol_in.filter_xyz_in_pentagonal_pyramid(inp,centers, planes)
+
+   # If the pyramid base is not on the XY plane, translate it
+   # To make it match with the outer rod, translate it as well
+   z_min = mol_in.xyz_min[-1]
+   if (z_min > 0.0 ):
+      mol_in.translate_geom(z_min,[0.0,0.0, -1.0])
+      mol_out.translate_geom(z_min,[0.0,0.0, -1.0])
+
+   # If halfshelf slice from z = 0 to z = -inf
+   if inp.pencil_type == "halfshell":
+      inp.atomtype = inp.atomtype_out
+      mol_out.slice_xyz_by_z_threshold(inp, z_threshold=-0.1)
+
+   # Rotate 180 degrees to create bottom pyramid and merge
+   mol_rot = molecule.molecule()
+   mol_rot = tools.rotate(mol_in,180.0,'+x',mol_rot)
+   mol_rot = tools.rotate(mol_rot,180.0,'+z',mol_rot)
+   mol_in = tools.merge_geoms(inp,mol_in,mol_rot)
+  
+   # Remove dangling atom on extreme 
+   mol_in.remove_dangling_atoms_metals(inp)
+
+   # Create shell by subtracting core geometry
+   mol_shell = tools.subtract_geoms(inp,mol_in,mol_out)
+
+   # Alloy core and shell
+   if inp.alloy: 
+      inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
+
+      inp.atomtype = inp.atomtype_out
+      inp.atomtype_alloy = inp.atomtype_in
+      mol_shell.create_alloy(inp)
+
+      inp.atomtype = inp.atomtype_in
+      inp.atomtype_alloy = inp.atomtype_out
+      mol_in.create_alloy(inp)
+
+   # Merge to create core-shell
+   mol_core_shell = tools.merge_geoms(inp,mol_in,mol_shell)
+
+   # Save filtered geometry
+   inp.bipyramid_width = inp.bipyramid_width * 2.0  # Make it match with initial definition 
+   inp.bipyramid_length = inp.bipyramid_length * 2.0  # Make it match with initial definition
+   inp.xyz_output = f'pencil_{inp.pencil_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_width_{inp.rod_width}_out_length-{inp.rod_length}{inp.alloy_string}'
+   output.print_geom(mol_core_shell, inp.xyz_output)
+# -------------------------------------------------------------------------------------
 def create_ase_bulk_metal(inp, base_dir):
    """
    Creates a temporary bulk metal XYZ file using ASE.
@@ -771,6 +1020,7 @@ def create_ase_bulk_metal(inp, base_dir):
    inp.tmp_folder = os.path.join(base_dir,'tmp')
    if os.path.exists(inp.tmp_folder): shutil.rmtree(inp.tmp_folder)
    os.mkdir(inp.tmp_folder)
+
 
    # Determine minimum layers required by ASE
    layers = get_layers(inp,lattice_constant)
@@ -810,7 +1060,7 @@ def get_layers(inp, lattice_constant):
 
        return [int(structure_scaling * R / lattice_constant) + 2] * 3  # Same layers for x, y, z
 
-   elif inp.gen_rod or inp.gen_rod_core_shell:
+   elif inp.gen_rod or inp.gen_rod_core_shell or inp.gen_pencil:
 
        axis = inp.main_axis.lower()
 
@@ -824,6 +1074,21 @@ def get_layers(inp, lattice_constant):
 
        return layers
 
+   elif inp.gen_bipyramid:
+
+       axis = "z"
+
+       R = inp.bipyramid_width / 2.0
+       L = 2.0 * structure_scaling * inp.bipyramid_length
+
+       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
+
+       axis_index = {"x": 0, "y": 1, "z": 2}[axis]
+
+       layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
+
+       return layers
+   
    elif inp.gen_tip:
       H = structure_scaling * inp.z_max * 1.8     # Tip height
       return [int(H / lattice_constant) + 2] * 3  # Tip grows mostly in z-axis

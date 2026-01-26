@@ -1,7 +1,7 @@
 import sys 
 
 from .classes import input_class
-from .functions import general, translate, rotate, create_geom, various, output
+from .functions import general, translate, rotate, create_geom, various, rdkit_module, output
 
 
 #                    ██████╗ ███████╗ ██████╗ ███╗   ███╗     ██████╗ ██████╗ ██████╗ ███████╗                
@@ -39,6 +39,8 @@ def main():
             create_geom.select_case(inp)
         elif inp.small_tasks:
             various.select_case(inp)
+        elif inp.rdkit:
+            rdkit_module.select_case(inp) 
         else:
             output.error("No valid task specified. Use -h for help.")
 

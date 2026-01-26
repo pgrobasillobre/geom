@@ -1,3 +1,4 @@
+from geom.classes import parameters
 from geom.functions import general, output
 
 class input_class:
@@ -31,6 +32,35 @@ class input_class:
           - Structure-specific settings (graphene edge type, core-shell configuration, alloy composition).
       """
 
+      # -- RDKit options
+      self.rdkit = False
+      self.rdkit_visualize = False
+      self.rdkit_visualize_2d = False
+      self.rdkit_visualize_3d = False
+      self.rdkit_bw = False
+      self.rdkit_match = False
+      self.rdkit_abbreviations = False
+      self.rdkit_file_conversion = False
+      self.rdkit_opt = False
+      self.rdkit_conformers = False
+      
+      self.stereo_annotations = False
+      self.atom_index = False
+      self.remove_H = False
+      self.check_aromaticity = False
+      
+      self.match_smiles = ''
+      self.rdkit_mol_file = ''
+      self.rdkit_mol_file_extension = ''
+      self.rdkit_force_field = ''
+      self.rdkit_output_file = ''
+      self.rdkit_confs_ext = '.pdb'
+
+      self.rdkit_max_iters = 200
+      self.rdkit_confs = 50
+   
+      self.rdkit_confs_prune_rms = 0.30      
+
       # -- Small tasks
       self.small_tasks = False
        
@@ -38,6 +68,7 @@ class input_class:
       self.translate = False 
       self.translate_controlled_distance = False
       self.translate_1 = False
+      self.translate_center = False
      
       self.move_geom_to_000   = False
       self.move_geom_1_to_000 = False
@@ -101,6 +132,8 @@ class input_class:
       self.gen_idh = False
       self.gen_pyramid = False
       self.gen_microscope = False
+      self.gen_bipyramid = False
+      self.gen_pencil = False
       self.alloy = False
 
       self.mesh_size = 1.0
@@ -118,6 +151,8 @@ class input_class:
       self.rod_width = 0.0
       self.rod_width_in = 0.0
       self.rod_width_out = 0.0
+      self.bipyramid_width = 0.0
+      self.bipyramid_length = 0.0
       self.side_length = 0.0
       self.radius     = 0.0
       self.radius_in  = 0.0
@@ -221,6 +256,21 @@ class input_class:
          general.check_file_exists(self.geom_file)
          general.check_file_extension(self.geom_file,'.xyz')
 
+      elif (self.rdkit):
+         general.check_file_exists(self.rdkit_mol_file)
+
+         # Extract parameters to check extension
+         param = parameters.parameters()
+         general.check_file_extension_rdkit(self.rdkit_mol_file, param.rdkit_file_extensions)
+
+         if (self.rdkit_file_conversion): 
+            general.check_file_extension_rdkit(self.rdkit_output_file, param.rdkit_file_extensions)
+            general.check_equal_extensions(self.rdkit_mol_file_extension, self.rdkit_output_file)  
+         
+         if (self.rdkit_opt):
+            general.check_accepted_parameters(self.rdkit_force_field, param.rdkit_force_fields, label='Force field')
+            general.check_accepted_parameters(self.rdkit_output_file[-4:], param.rdkit_file_extensions_opt, label='Optimization saved to file extension')
+
       elif (self.create_geom):
          if (not self.gen_graphene          and
              not self.gen_sphere            and
@@ -235,7 +285,9 @@ class input_class:
              not self.gen_cto               and
              not self.gen_idh               and 
              not self.gen_3d_mesh_sphere    and
-             not self.gen_3d_mesh_rod): output.error("Create geom option not recognised.")
+             not self.gen_3d_mesh_rod       and
+             not self.gen_bipyramid         and
+             not self.gen_pencil): output.error("Create geom option not recognised.")
 
          if self.create_ase_bulk:
             general.check_file_exists(self.geom_file)

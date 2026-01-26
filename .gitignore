@@ -35,7 +35,11 @@ geom/tests/control_distance/sphere_r_10.0_center_0.0_0.0_0.0_+x_d_10.00.xyz
 geom/tests/control_rotation/doxorubicin_+x_degree_90.0.xyz
 geom/tests/t1_distance/doxorubicin_-y_d_15.20.xyz
 geom/tests/r1_rotation/doxorubicin_-y_degree_30.0.xyz
+geom/tests/penc*/*xyz
 
 geom/tests/rod*/*msh
 geom/tests/sphere*/*msh
 
+tests/rdkit_opt/*sdf
+
+geom/.DS_Store
