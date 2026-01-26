@@ -124,12 +124,12 @@ To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_
 ai_geom
 ```
 
-You’ll be greeted with a ChatGPT-like chat prompt where you can type requests like:
+You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometyr creation:
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assitant.png" width="600">
+</p>
 
-```
-Create a gold nanorod along the z axis that is 40 angstroms long and 10 angstroms wide.
-```
 
 The assistant will automatically create and execute the corresponding GEOM command for you.
 
