@@ -5,13 +5,14 @@
 **[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v1.1.0)**
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo.png" width="600">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo-rdkit.png" width="600">
 </p>
 
 
 ## Features
 
-- **AI Assistant for nanoparticle and graphene creation** *(new in v1.1.0)*
+- **RDKit tools**: molecular visualization, file conversion, force field optimization, and conformers generation.
+- **AI Assistant for nanoparticle and graphene creation** 
 - **Geometry Transformations**: Translation, rotation, merging, and specular (mirror) transformations.
 - **Nanoparticle Generation**: Sphere, rod, core-shell, tip, pyramid, cone, icosahedron, and more.
 - **Graphene Structures**: Ribbons, disks, rings, and triangles.
@@ -64,6 +65,16 @@ This will display the help menu with all the available commands and their descri
 
 Example commands:
 
+- **RDKit conformers generation**
+```
+geom -rdkit -i tyrosine.mol -confs
+```
+
+- **RDKit file conversion**
+```
+geom -rdkit -i tyrosine.mol -o tyrosine.pdb
+```
+
 - **Rotate geometry 90 degrees** around the Y-axis:
 
 ```
@@ -82,7 +93,7 @@ geom -create -sphere Ag 30
 geom -create -graphene rib 50 20
 ```
 
-## Starting the AI Assistant *(new in v1.1.0)*
+## Starting the AI Assistant
 
 GEOM now includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
 
@@ -106,7 +117,7 @@ To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_
 ai_geom
 ```
 
-You’ll be greeted with a chat prompt where you can type requests like:
+You’ll be greeted with a ChatGPT-like chat prompt where you can type requests like:
 
 
 ```
