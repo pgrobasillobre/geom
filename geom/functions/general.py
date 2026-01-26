@@ -163,10 +163,6 @@ def print_help():
 
            Decahedron: -create -idh atom_type radius
 
-           Bipyramid: -create -bipyramid atom_type width length
-
-           Pencil: -create -pencil -core atom_type -{full/half}shell atom_type core_width core_length shell_width shell_length
-
          -----------------------------
          Additional Options
          -----------------------------
