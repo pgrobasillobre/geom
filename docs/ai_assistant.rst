@@ -1,6 +1,5 @@
-AI Assistant *(new in v1.1.0)*
-------------------------------
-
+AI Assistant 
+------------
 
 GEOM now includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
 
