@@ -421,6 +421,126 @@ def test_create_pyramid(monkeypatch):
    # Compare the generated file with the reference
    assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
 # -------------------------------------------------------------------------------------
+def test_create_bipyramid(monkeypatch):
+   """
+   Tests the generation of a bipyramid geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for bipyramid creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
+   """
+
+   # Test folder
+   test_folder = 'bipyramid'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", '-create', '-bipyramid', 'Ag', '30.0', '50.0']
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "bipyramid_ag_width-30.0_length-50.0.xyz")
+   generated_file = f"{test_folder}/bipyramid_{inp.atomtype}_width-{inp.bipyramid_width}_length-{inp.bipyramid_length}{inp.alloy_string}.xyz" 
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_pencil_full_coated(monkeypatch):
+   """
+   Tests the generation of a pencil full coated geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for bipyramid creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
+   """
+
+   # Test folder
+   test_folder = 'pencil_full_coated'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", '-create', '-pencil', '-core', 'Ag', '-fullshell', 'Au', '20.0', '30.0', '20.0', '30.0']
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "pencil_fullshell_core_ag_shell_au_in_width-20.0_in_length-30.0_out_width_32.24_out_length-42.24.xyz")
+   generated_file = f"{test_folder}/pencil_{inp.pencil_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_width_{inp.rod_width}_out_length-{inp.rod_length}{inp.alloy_string}.xyz" 
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
+def test_create_pencil_half_coated(monkeypatch):
+   """
+   Tests the generation of a pencil half coated geometry and compares it with a reference file.
+
+   Args:
+       monkeypatch (pytest.MonkeyPatch): A fixture to modify `sys.argv`.
+
+   Returns:
+       None: Uses assertions to validate the correctness of the generated `.xyz` file.
+
+   Notes:
+       - Mocks command-line arguments for bipyramid creation.
+       - Runs the geometry creation process.
+       - Moves the created geometry files to the test folder.
+       - Compares the generated `.xyz` file with an expected reference file.
+   """
+
+   # Test folder
+   test_folder = 'pencil_half_coated'
+   
+   # Mock sys.argv to simulate the command line input
+   mock_args = ["dummy", '-create', '-pencil', '-core', 'Ag', '-halfshell', 'Au', '20.0', '30.0', '45.0', '47.0']
+   monkeypatch.setattr(sys, "argv", mock_args)
+   
+   # Manually create and populate the input class
+   inp = input_class.input_class()
+   general.read_command_line(sys.argv, inp)
+   
+   # Run the geometry creation
+   create_geom.select_case(inp)
+   
+   # Define the expected and actual output files
+   expected_file = os.path.join(os.path.dirname(__file__), test_folder, "reference", "pencil_halfshell_core_ag_shell_au_in_width-20.0_in_length-30.0_out_width_45.0_out_length-47.0.xyz")
+   generated_file = f"{test_folder}/pencil_{inp.pencil_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.bipyramid_width}_in_length-{inp.bipyramid_length}_out_width_{inp.rod_width}_out_length-{inp.rod_length}{inp.alloy_string}.xyz"
+
+   move_created_geom(test_folder)
+   
+   # Compare the generated file with the reference
+   assert filecmp.cmp(generated_file, expected_file, shallow=False), "Generated XYZ file does not match the expected output"
+# -------------------------------------------------------------------------------------
 def test_create_cone(monkeypatch):
    """
    Tests the generation of a cone geometry and compares it with a reference file.
