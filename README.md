@@ -9,6 +9,13 @@
 </p>
 
 
+## Publications
+
+GEOM has been used in the following research paper(s):
+
+- Giovannini, T.; **Grobas Illobre, P.**; Lafiosca, P.; Nicoli, L.; Bonatti, L.; Corni, S.; Cappelli, C. *plasmonX: an Open-Source Code for Nanoplasmonics.* **Comput. Phys. Commun.** *2026*, **110035**. https://doi.org/10.1016/j.cpc.2026.110035
+
+
 ## Features
 
 - **RDKit tools**: molecular visualization, file conversion, force field optimization, and conformers generation.
@@ -81,13 +88,13 @@ geom -rdkit -i tyrosine.mol -o tyrosine.pdb
 geom -r1 90 geom.xyz origin_CM_yes +y
 ```
 
-- Generate a nanoparticle sphere:
+- **Generate** a nanoparticle sphere:
 
 ```
 geom -create -sphere Ag 30
 ```
 
-- Generate a graphene ribbon: 
+- **Generate** a graphene ribbon: 
 
 ```
 geom -create -graphene rib 50 20
@@ -117,12 +124,12 @@ To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_
 ai_geom
 ```
 
-You’ll be greeted with a ChatGPT-like chat prompt where you can type requests like:
+You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometry creation:
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assistant.png" width="600">
+</p>
 
-```
-Create a gold nanorod along the z axis that is 40 angstroms long and 10 angstroms wide.
-```
 
 The assistant will automatically create and execute the corresponding GEOM command for you.
 
