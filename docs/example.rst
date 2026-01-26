@@ -1,6 +1,16 @@
 Example commands:
 ------------------
 
+- **RDKit conformers generation**: 
+```
+geom -rdkit -i tyrosine.mol -confs
+```
+
+- **RDKit file conversion**:
+```
+geom -rdkit -i tyrosine.mol -o tyrosine.pdb
+```
+
 - **Rotate geometry 90 degrees** around the Y-axis:
 
 ```
