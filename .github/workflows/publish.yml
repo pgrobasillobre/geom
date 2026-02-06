@@ -20,7 +20,7 @@ on:
   push:
     # Trigger only when pushing version tags
     tags:
-      - "v*"
+      - "v*rc*"
 
 jobs:
   build:
