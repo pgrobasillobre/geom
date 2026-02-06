@@ -1,5 +1,5 @@
 [project]
-name = "geom"
+name = "geom-x"
 version = "2.0.1rc1"
 description = "Include RDKit for molecular manipulation."
 readme = "README.md"
