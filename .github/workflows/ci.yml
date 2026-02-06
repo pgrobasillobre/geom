@@ -1,26 +1,41 @@
 # .github/workflows/ci.yml
-# This workflow runs your Continuous Integration (CI):
-# - On every Pull Request (PR)
-# - On every push to the main branch (here: "master")
-# It creates a clean machine, installs your package, and runs your test suite.
+#
+# Continuous Integration (CI) for GEOM.
+#
+# What this does:
+# - On every Pull Request and every push to master,
+#   GitHub Actions creates a fresh Linux machine,
+#   installs your project and required dependencies,
+#   and runs your test suite.
+#
+# Why this is useful:
+# - It catches "works on my machine" problems early.
+# - It prevents merging code that breaks installation/import/tests.
+#
+# Your current CI failure was:
+#   ModuleNotFoundError: No module named 'gmsh'
+# because geom/functions/create_geom.py imports gmsh at import-time.
+# So we install the Python gmsh package explicitly in CI.
 
 name: CI
 
 on:
-  # Run CI on every PR (so you see failures before merging)
+  # Run CI for every pull request (so checks run before merging)
   pull_request:
 
-  # Also run CI when you push directly to the main branch
+  # Also run CI for every push to the main branch
   push:
-    branches: [ "master" ]
+    # Your repo uses "master" as the default branch (adjust if you rename to "main")
+    branches: ["master"]
 
 jobs:
   test:
-    # GitHub provides a fresh Linux VM for the job
+    # Use a fresh Ubuntu runner (clean environment each time)
     runs-on: ubuntu-latest
 
     strategy:
-      # If one Python version fails, still run the others (useful for debugging)
+      # If one Python version fails, keep running the others.
+      # This helps you see if the failure is version-specific.
       fail-fast: false
 
       # Run the same job on multiple Python versions
@@ -28,37 +43,46 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      # 1) Download (checkout) your repository into the runner
+      # 1) Check out your repository code onto the runner.
+      # Without this, the runner has no code to test.
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # 2) Install the chosen Python version for this matrix run
+      # 2) Install the selected Python version for this matrix run.
+      # cache: "pip" speeds up repeated runs by caching downloaded wheels.
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-          # Cache pip downloads between runs to speed things up
           cache: "pip"
 
-      # 3) Install your project like a user would.
-      #    "-e ." installs in editable mode, useful in CI for source-based projects.
+      # 3) Install your package.
+      # -e . installs in "editable" mode (good for testing source trees).
+      # If your packaging metadata is broken, CI will fail here.
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
 
-      # If CI fails due to missing system libraries (e.g., gmsh),
-      # you can add an Ubuntu dependency install step BEFORE "Install package".
+      # 4) Install runtime dependency needed at import-time.
+      # Your tests import geom.functions.create_geom which does `import gmsh`.
+      # If gmsh is not installed, pytest fails during collection (before tests run).
       #
-      # - name: Install system dependencies (if needed)
+      # Pinning to your documented version reduces surprises.
+      - name: Install gmsh (Python module)
+        run: |
+          python -m pip install gmsh==4.11.1
+
+      # OPTIONAL: If later you discover gmsh needs system libraries on ubuntu-latest,
+      # you can install the system package too (uncomment if needed).
+      #
+      # - name: Install system dependency (gmsh binary) if needed
       #   run: |
       #     sudo apt-get update
       #     sudo apt-get install -y gmsh
 
-      # 4) Run your test suite.
-      #    Your repo already provides this script:
-      #    ./geom/tests/run_all_tests.sh
+      # 5) Run your tests.
+      # Your repo already provides this script, which likely calls pytest internally.
       - name: Run tests
         run: |
           chmod +x ./geom/tests/run_all_tests.sh
