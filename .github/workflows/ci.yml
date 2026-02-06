@@ -1,88 +1,86 @@
 # .github/workflows/ci.yml
 #
-# Continuous Integration (CI) for GEOM.
+# Continuous Integration (CI) workflow for the GEOM repository.
 #
-# What this does:
-# - On every Pull Request and every push to master,
-#   GitHub Actions creates a fresh Linux machine,
-#   installs your project and required dependencies,
-#   and runs your test suite.
+# What CI does here:
+# - Runs automatically on every Pull Request and on every push to "master"
+# - Creates a clean Ubuntu machine (so tests are not influenced by your local setup)
+# - Sets up Python (multiple versions)
+# - Installs system libraries needed by native dependencies (gmsh needs OpenGL/GLU libs)
+# - Installs the package and Python deps
+# - Runs your test script (which runs pytest)
 #
-# Why this is useful:
-# - It catches "works on my machine" problems early.
-# - It prevents merging code that breaks installation/import/tests.
-#
-# Your current CI failure was:
-#   ModuleNotFoundError: No module named 'gmsh'
-# because geom/functions/create_geom.py imports gmsh at import-time.
-# So we install the Python gmsh package explicitly in CI.
+# Why we need extra system libraries:
+# - Your code imports `gmsh` (Python bindings) inside geom/functions/create_geom.py
+# - On GitHub runners, importing gmsh can fail if libGLU is missing:
+#   OSError: libGLU.so.1: cannot open shared object file
+# - libGLU.so.1 is provided by the Ubuntu package `libglu1-mesa`
 
 name: CI
 
 on:
-  # Run CI for every pull request (so checks run before merging)
+  # Run on any PR (so failures are visible before merging)
   pull_request:
 
-  # Also run CI for every push to the main branch
+  # Also run on pushes to the main branch
   push:
-    # Your repo uses "master" as the default branch (adjust if you rename to "main")
     branches: ["master"]
 
 jobs:
   test:
-    # Use a fresh Ubuntu runner (clean environment each time)
+    # Use a clean Ubuntu runner
     runs-on: ubuntu-latest
 
     strategy:
-      # If one Python version fails, keep running the others.
-      # This helps you see if the failure is version-specific.
+      # If one Python version fails, continue running the others
       fail-fast: false
 
-      # Run the same job on multiple Python versions
+      # Test across multiple Python versions (common expectation in job offers)
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      # 1) Check out your repository code onto the runner.
-      # Without this, the runner has no code to test.
+      # 1) Fetch the repository content
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # 2) Install the selected Python version for this matrix run.
-      # cache: "pip" speeds up repeated runs by caching downloaded wheels.
+      # 2) Install the chosen Python version for this matrix run
+      #    and enable pip caching to speed up future CI runs.
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      # 3) Install your package.
-      # -e . installs in "editable" mode (good for testing source trees).
-      # If your packaging metadata is broken, CI will fail here.
+      # 3) Install Linux system libraries required by gmsh native library.
+      #    This fixes: OSError: libGLU.so.1: cannot open shared object file
+      #    - libglu1-mesa provides libGLU.so.1
+      #    - libgl1 provides basic OpenGL runtime libs
+      - name: Install system dependencies (for gmsh)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglu1-mesa libgl1
+
+      # 4) Install your project.
+      #    -e . installs in editable mode (tests run against your checked-out code)
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
 
-      # 4) Install runtime dependency needed at import-time.
-      # Your tests import geom.functions.create_geom which does `import gmsh`.
-      # If gmsh is not installed, pytest fails during collection (before tests run).
-      #
-      # Pinning to your documented version reduces surprises.
+      # 5) Install the gmsh Python bindings (your package imports gmsh)
+      #    Pinning version reduces surprises and matches your documented dependency.
       - name: Install gmsh (Python module)
         run: |
           python -m pip install gmsh==4.11.1
 
-      # OPTIONAL: If later you discover gmsh needs system libraries on ubuntu-latest,
-      # you can install the system package too (uncomment if needed).
-      #
-      # - name: Install system dependency (gmsh binary) if needed
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y gmsh
+      # NOTE:
+      # If you still get failures on Python 3.12 related to numpy pins
+      # (e.g., numpy==1.24.3 not compatible), either:
+      # - temporarily remove 3.12 from the matrix, OR
+      # - relax the numpy pin in pyproject.toml (recommended long-term).
 
-      # 5) Run your tests.
-      # Your repo already provides this script, which likely calls pytest internally.
+      # 6) Run the test suite using your existing script
       - name: Run tests
         run: |
           chmod +x ./geom/tests/run_all_tests.sh
