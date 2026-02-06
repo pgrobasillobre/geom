@@ -8,7 +8,7 @@ license = { text = "GPL-3.0-or-later" }
 requires-python = ">=3.8"
 
 dependencies = [
-    "numpy==1.24.3,
+    "numpy==1.24.3",
     "launchpadlib==2.1.0",
     "openai==1.3.8",
     "pyautogen==0.2.18",
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Your existing extras
+# Extras
 ui = ["PySide6>=6.7.0"]
 viz = ["py3Dmol"]
 cad = ["gmsh==4.11.1"]
