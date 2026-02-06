@@ -1,6 +1,6 @@
 [project]
 name = "geom"
-version = "2.0.0"
+version = "2.0.1rc1"
 description = "Include RDKit for molecular manipulation."
 readme = "README.md"
 authors = [{ name = "Pablo Grobas Illobre", email = "pgrobasillobre@gmail.com" }]
