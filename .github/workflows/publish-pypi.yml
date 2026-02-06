@@ -6,19 +6,20 @@
 # - Push a stable tag like v2.0.1 (NOT v2.0.1rc1)
 #
 # Safety:
-# - tags-ignore prevents accidentally publishing release candidates to PyPI.
+# - We only trigger on tags that look exactly like vX.Y.Z.
+#   This avoids publishing release candidates (rc), betas, etc.
 #
 # Requirement:
-# - pyproject.toml version must match the tag (without the leading "v").
+# - pyproject.toml version must match the tag version (without the leading "v").
+#   Example: tag v2.0.1  <->  version = "2.0.1"
 
 name: Publish to PyPI
 
 on:
   push:
+    # ONLY stable tags like v2.0.1
     tags:
-      - "v*"
-    tags-ignore:
-      - "v*rc*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   build:
