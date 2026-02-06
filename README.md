@@ -1,5 +1,8 @@
 # GEOM – Geometry File Management
 
+
+[![PyPI version](https://img.shields.io/pypi/v/geom-x.svg)](https://pypi.org/project/geom-x/)
+
 **GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
 
 **[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v2.0.0)**
@@ -11,7 +14,7 @@
 
 ## Publications
 
-GEOM has been used in the following research paper(s):
+GEOM has been cited in the following research paper(s):
 
 - Giovannini, T.; **Grobas Illobre, P.**; Lafiosca, P.; Nicoli, L.; Bonatti, L.; Corni, S.; Cappelli, C. *plasmonX: an Open-Source Code for Nanoplasmonics.* **Comput. Phys. Commun.** *2026*, **110035**. https://doi.org/10.1016/j.cpc.2026.110035
 
@@ -19,7 +22,7 @@ GEOM has been used in the following research paper(s):
 ## Features
 
 - **RDKit tools**: molecular visualization, file conversion, force field optimization, and conformers generation.
-- **AI Assistant for nanoparticle and graphene creation** 
+- **AI Assistant for nanoparticle and graphene creation**
 - **Geometry Transformations**: Translation, rotation, merging, and specular (mirror) transformations.
 - **Nanoparticle Generation**: Sphere, rod, core-shell, tip, pyramid, cone, icosahedron, and more.
 - **Graphene Structures**: Ribbons, disks, rings, and triangles.
@@ -29,28 +32,42 @@ GEOM has been used in the following research paper(s):
 
 ## Installation
 
-GEOM requires **Python 3.8+** and the following dependencies:
+GEOM can be installed in **two** supported ways:
 
-- `gmsh==4.11.1`
-- `ase==3.22.1`
-- `numpy==1.24.3`
-- `pytest==8.3.4`
-- `launchpadlib==2.1.0`
-- `pyautogen==0.2.18`
-- `flaml[automl]==2.1.1`
-- `httpx==0.27.2`
+- **pip (PyPI)**: best for quick installs, CI, and lightweight usage.
+- **conda (recommended for scientific stacks)**: best if you want the *full* ecosystem.
 
-### Setting Up the Virtual Environment
-GEOM uses **Conda** to set up a virtual environment for your project. To install it and set up your environment, run the following:
+> On PyPI, the project name is **`geom-x`** (the import/module name is still `geom`).
+
+### Option A — Install via pip (PyPI)
+
+Create/activate an environment first (venv or conda), then:
+
+```bash
+pip install geom-x
 ```
+
+Quick sanity check:
+
+```bash
+python -c "import geom; print('geom imported OK')"
+geom -h
+```
+
+### Option B — Install via Conda (recommended for full scientific setups)
+
+GEOM uses **Conda** to set up a virtual environment for your project. To install it and set up your environment, run:
+
+```bash
 ./install.sh
 ```
 
 This script will:
 
  - Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
- - Set up a virtual environment named geom_env with the necessary dependencies.
+ - Set up a virtual environment named `geom_env` with the necessary dependencies.
  - Configure environment variables and aliases for running **GEOM**.
+
 
 ## Activate the Environment
 
@@ -94,7 +111,7 @@ geom -r1 90 geom.xyz origin_CM_yes +y
 geom -create -sphere Ag 30
 ```
 
-- **Generate** a graphene ribbon: 
+- **Generate** a graphene ribbon:
 
 ```
 geom -create -graphene rib 50 20
