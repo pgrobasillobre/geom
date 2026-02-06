@@ -9,7 +9,6 @@ requires-python = ">=3.8"
 
 dependencies = [
     "numpy==1.24.3",
-    "pytest==8.3.4",
     "launchpadlib==2.1.0",
     "openai==1.3.8",
     "pyautogen==0.2.18",
@@ -19,10 +18,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Extras
 ui = ["PySide6>=6.7.0"]
 viz = ["py3Dmol"]
 cad = ["gmsh==4.11.1"]
-chem = ["rdkit-pypi"]  # only if you *really* want a PyPI fallback; otherwise omit
+
+# pip-installable fallback for CI/users without conda.
+chem = ["rdkit-pypi"]
+
+# This avoids hardcoding deps in the CI workflow.
+test = [
+    "pytest==8.3.4",
+    "ase==3.22.1",
+    "gmsh==4.11.1",
+    "py3Dmol",
+    "rdkit-pypi"
+]
 
 [project.urls]
 Homepage = "https://github.com/pgrobasillobre/geom"

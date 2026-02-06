@@ -1,0 +1,73 @@
+# .github/workflows/ci.yml
+#
+# CI (Continuous Integration) workflow for GEOM.
+#
+# This workflow will:
+# 1) Run on every Pull Request and on every push to the "master" branch.
+# 2) Create a clean Ubuntu machine for each run (so results are reproducible).
+# 3) Test multiple Python versions (matrix).
+# 4) Install Linux system libraries required by gmsh at import-time
+#    (fixes: OSError: libGLU.so.1 missing).
+# 5) Install package in editable mode *including* the "test" extra:
+#       pip install -e ".[test]"
+# 6) Run existing test script (which runs pytest).
+#
+
+name: CI
+
+on:
+  # Run checks before merging (PRs)
+  pull_request:
+
+  # Run checks after merge / direct pushes to master
+  push:
+    branches: ["master"]
+
+jobs:
+  test:
+    # Fresh Ubuntu runner each time
+    runs-on: ubuntu-latest
+
+    strategy:
+      # If one Python version fails, still run the others
+      fail-fast: false
+
+      matrix:
+        # Test multiple Python versions
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      # 1) Check out the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # 2) Install the Python version for this matrix run
+      #    and cache pip downloads to speed up CI
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      # 3) Install Linux system dependencies needed by gmsh native library
+      #    (gmsh Python module loads a shared library that needs OpenGL/GLU)
+      #    Fixes: libGLU.so.1: cannot open shared object file
+      - name: Install system dependencies (for gmsh)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglu1-mesa libgl1
+
+      # 4) Install GEOM and the dependencies needed for tests.
+      #    -e installs package in editable mode (tests run against source)
+      #    ".[test]" installs the "test" extra defined in pyproject.toml
+      - name: Install package (with test extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+
+      # 5) Run the test suite using existing script
+      - name: Run tests
+        run: |
+          chmod +x ./geom/tests/run_all_tests.sh
+          ./geom/tests/run_all_tests.sh
+
