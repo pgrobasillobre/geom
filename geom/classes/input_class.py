@@ -131,6 +131,7 @@ class input_class:
       self.gen_cto = False
       self.gen_idh = False
       self.gen_pyramid = False
+      self.gen_pentpyramid = False
       self.gen_microscope = False
       self.gen_bipyramid = False
       self.gen_pencil = False
@@ -154,6 +155,7 @@ class input_class:
       self.bipyramid_width = 0.0
       self.bipyramid_length = 0.0
       self.side_length = 0.0
+      self.base_width = 0.0
       self.radius     = 0.0
       self.radius_in  = 0.0
       self.radius_out = 0.0
@@ -279,6 +281,7 @@ class input_class:
              not self.gen_rod_core_shell    and
              not self.gen_tip               and 
              not self.gen_pyramid           and
+             not self.gen_pentpyramid       and
              not self.gen_cone              and
              not self.gen_microscope        and
              not self.gen_icosahedra        and
@@ -349,6 +352,5 @@ class input_class:
       self.dir_factor = [-x for x in self.dir_factor] 
 
       return(self)
-
 
 

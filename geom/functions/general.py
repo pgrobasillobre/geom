@@ -153,6 +153,8 @@ def print_help():
 
            Pyramid (square base): -create -pyramid atom_type z_max base_side_length
 
+           Pyramid (pentagonal base): -create -pentpyramid atom_type z_max base_width
+
            Cone: -create -cone atom_type z_max base_radius
 
            Microscope: -create -microscope atom_type z_max_paraboloid a b z_max_pyramid base_side_length
@@ -634,6 +636,12 @@ def parse_create(argv, inp):
          inp.z_max = float(argv[4])
          inp.side_length =  float(argv[5])
 
+      elif (argv[2] == '-pentpyramid'):
+         inp.gen_pentpyramid = True
+         inp.create_ase_bulk = False
+         inp.z_max = float(argv[4])
+         inp.base_width =  float(argv[5])
+
       elif (argv[2] == '-microscope'): 
          inp.gen_microscope = True
          inp.create_ase_bulk = True
@@ -792,7 +800,7 @@ def parse_bowtie_argument(argv, inp, output):
     Notes:
         - This function checks if "-bowtie" is present in `argv`.
         - If found, it ensures that the bowtie structure is only available 
-          for tip, pyramid, cone, and microscope structures.
+          for tip, pyramid (square/pentagonal base) , cone, and microscope structures.
         - The function then extracts the bowtie distance (must be a positive float).
         - If any validation fails, it calls `output.error()` to handle errors.
     """
@@ -802,8 +810,9 @@ def parse_bowtie_argument(argv, inp, output):
         # Option only available for tip, pyramid, cone, microscope structures
         if (not inp.gen_tip      and
             not inp.gen_pyramid  and 
+            not inp.gen_pentpyramid  and
             not inp.gen_cone     and 
-            not inp.gen_microscope): output.error(f'bowtie structure only available for tip, pyramid, cone, and microscope structures.')
+            not inp.gen_microscope): output.error(f'bowtie structure only available for tip, pyramid (square/pentagonal base), cone, and microscope structures.')
 
         inp.create_bowtie = True
         idx = argv.index("-bowtie")  
