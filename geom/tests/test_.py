@@ -8,9 +8,36 @@ import filecmp
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 test_folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
-from geom.classes import input_class
+from geom.classes import input_class, molecule
 from geom.functions import general, various, translate, rotate, create_geom, rdkit_module
 
+# -------------------------------------------------------------------------------------
+def test_remove_duplicate_xyz_preserves_first_atom_labels():
+   """
+   Tests that duplicate XYZ entries are removed while keeping atom labels aligned.
+   """
+
+   mol = molecule.molecule()
+   mol.atoms = ["Ag", "Au", "Cu", "Pt"]
+   mol.nAtoms = 4
+   mol.xyz = np.array([
+      [0.0, 1.0, 0.0, 2.0],
+      [0.0, 1.0, 0.0, 2.0],
+      [0.0, 1.0, 0.0, 2.0],
+   ])
+
+   mol.remove_duplicate_xyz()
+
+   assert mol.nAtoms == 3
+   assert mol.atoms == ["Ag", "Au", "Pt"]
+   assert np.array_equal(
+      mol.xyz,
+      np.array([
+         [0.0, 1.0, 2.0],
+         [0.0, 1.0, 2.0],
+         [0.0, 1.0, 2.0],
+      ]),
+   )
 # -------------------------------------------------------------------------------------
 def move_input_geom(folder, geom_file, optional_file=None):
    """
