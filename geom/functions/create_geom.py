@@ -554,6 +554,7 @@ def pentpyramid(inp):
       nearest_distance = lattice_constant / np.sqrt(2.0)
 
    layer_spacing = nearest_distance * np.sqrt(2.0 / 3.0)
+   inp.z_max = inp.z_max / 2.0 # debugpgi -- matches the bipyramid definition of zmax
    n_layers = max(2, int(round(inp.z_max / layer_spacing)) + 1)
    z_values = np.linspace(0.0, inp.z_max, n_layers)
    triangle_y_step = nearest_distance * np.sqrt(3.0) / 2.0
@@ -569,40 +570,17 @@ def pentpyramid(inp):
    positions = []
    for layer_idx, z_value in enumerate(z_values):
       offset = stacking_offsets[layer_idx % 3]
-
-      if z_value >= cap_start:
-         dz = z_value - cap_start
-         circle_radius = math.sqrt(max(0.0, cap_radius ** 2 - dz ** 2))
-
-         if circle_radius <= nearest_distance:
-            positions.append([0.0, 0.0, z_value])
-            continue
-
-         x_min = -circle_radius - nearest_distance
-         x_max = circle_radius + nearest_distance
-         y_min = -circle_radius - triangle_y_step
-         y_max = circle_radius + triangle_y_step
-         j_min = int(math.floor((y_min - offset[1]) / triangle_y_step))
-         j_max = int(math.ceil((y_max - offset[1]) / triangle_y_step))
-
-         for j in range(j_min, j_max + 1):
-            y = j * triangle_y_step + offset[1]
-            row_shift = 0.5 * nearest_distance if j % 2 else 0.0
-            i_min = int(math.floor((x_min - offset[0] - row_shift) / nearest_distance))
-            i_max = int(math.ceil((x_max - offset[0] - row_shift) / nearest_distance))
-
-            for i in range(i_min, i_max + 1):
-               x = i * nearest_distance + row_shift + offset[0]
-               point = np.array([x, y])
-               if np.linalg.norm(point) <= circle_radius + 1e-8:
-                  positions.append([x, y, z_value])
-
-         continue
-
       layer_fraction = z_value / cap_start if cap_start > 0.0 else 1.0
       layer_width = effective_base_width * (1.0 - layer_fraction) + 2.0 * cap_radius * layer_fraction
 
+      if z_value >= cap_start:
+         dz = z_value - cap_start
+         cap_width = 2.0 * math.sqrt(max(0.0, cap_radius ** 2 - dz ** 2))
+         layer_width = min(layer_width, cap_width)
+
       if layer_width <= nearest_distance:
+         if np.isclose(z_value, inp.z_max):
+            positions.append([0.0, 0.0, z_value])
          continue
 
       R = layer_width / (2.0 * math.sin(2.0 * math.pi / 5.0))
@@ -645,7 +623,7 @@ def pentpyramid(inp):
    if len(positions) == 0:
       output.error("Pentagonal pyramid generation produced no atoms. Increase z_max or base_width.")
 
-   best_positions = np.array(positions)
+   best_positions = np.unique(np.round(np.array(positions), 8), axis=0)
 
    mol = molecule.molecule()
    mol.nAtoms = len(best_positions)
@@ -655,14 +633,47 @@ def pentpyramid(inp):
    mol.xyz_max = np.max(mol.xyz, axis=1)
    mol.xyz_min = np.min(mol.xyz, axis=1)
 
+   cutoff_distance = nearest_distance + 0.1
+   for _ in range(2):
+      surface_atoms = []
+      radial_distances = np.sqrt(mol.xyz[0, :] ** 2 + mol.xyz[1, :] ** 2)
+
+      for i in range(mol.nAtoms):
+         distances = np.linalg.norm(mol.xyz.T - mol.xyz.T[i], axis=1)
+         neighbors = np.where((distances > 0) & (distances <= cutoff_distance))[0]
+         z_fraction = mol.xyz[2, i] / inp.z_max if inp.z_max > 0.0 else 0.0
+         body_radius = 0.5 * inp.base_width * (1.0 - min(z_fraction, 1.0))
+         cap_region = mol.xyz[2, i] >= cap_start
+         edge_region = radial_distances[i] >= max(0.0, body_radius - 2.0 * nearest_distance)
+
+         if mol.xyz[2, i] < inp.z_max and (cap_region or edge_region) and len(neighbors) <= 3:
+            surface_atoms.append(i)
+
+      if not surface_atoms:
+         break
+
+      keep_atoms = np.setdiff1d(np.arange(mol.nAtoms), surface_atoms)
+      mol.xyz = mol.xyz[:, keep_atoms]
+      mol.nAtoms = len(keep_atoms)
+      mol.atoms = [inp.atomtype] * mol.nAtoms
+      mol.xyz_center = np.mean(mol.xyz, axis=1)
+      mol.xyz_max = np.max(mol.xyz, axis=1)
+      mol.xyz_min = np.min(mol.xyz, axis=1)
+
    # Remove dangling atom on extreme
    mol.remove_dangling_atoms_metals(inp)
+
+   # Rotate 180 degrees to create bottom pyramid and merge
+   mol_rot = molecule.molecule()
+   mol_rot = tools.rotate(mol,180.0,'+x',mol_rot)
+   mol_rot = tools.rotate(mol_rot,180.0,'+z',mol_rot)
+   mol = tools.merge_geoms(inp,mol,mol_rot)
 
    # Alloy
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   inp.xyz_output = f'pentpyramid_{inp.atomtype}_width-{inp.base_width}_zmax-{inp.z_max}{inp.alloy_string}'
+   inp.xyz_output = f'pentpyramid_{inp.atomtype}_width-{inp.base_width}_zmax-{inp.z_max*2.0}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def bipyramid(inp):

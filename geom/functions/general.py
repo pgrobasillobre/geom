@@ -153,7 +153,7 @@ def print_help():
 
            Pyramid (square base): -create -pyramid atom_type z_max base_side_length
 
-           Pyramid (pentagonal base): -create -pentpyramid atom_type z_max base_width
+           Pyramid (pentagonal base): -create -pentpyramid atom_type z_max side_width
 
            Cone: -create -cone atom_type z_max base_radius
 
@@ -639,8 +639,8 @@ def parse_create(argv, inp):
       elif (argv[2] == '-pentpyramid'):
          inp.gen_pentpyramid = True
          inp.create_ase_bulk = False
-         inp.z_max = float(argv[4])
-         inp.base_width =  float(argv[5])
+         inp.z_max = float(argv[5])
+         inp.base_width =  float(argv[4])
 
       elif (argv[2] == '-microscope'): 
          inp.gen_microscope = True
