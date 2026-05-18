@@ -643,9 +643,10 @@ def parse_create(argv, inp):
 
       elif (argv[2] == '-pentpyramid'):
          inp.gen_pentpyramid = True
-         inp.create_ase_bulk = False
+         inp.create_ase_bulk = True
          inp.z_max = float(argv[5])
-         inp.base_width =  float(argv[4])
+         inp.base_width = float(argv[4])
+         inp.main_axis = "z"
 
       elif (argv[2] == '-microscope'): 
          inp.gen_microscope = True

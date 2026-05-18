@@ -549,132 +549,88 @@ def pentpyramid(inp):
    #out_log = output.logfile_init()
 
    param = parameters.parameters()
-   lattice_constant = param.lattice_constant.get(inp.atomtype)
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype)
+
+   mol = molecule.molecule()
+   mol.read_geom(inp.geom_file, False)
+
    nearest_distance = param.min_dist.get(inp.atomtype)
-   if nearest_distance is None:
-      nearest_distance = lattice_constant / np.sqrt(2.0)
-
-   layer_spacing = nearest_distance * np.sqrt(2.0 / 3.0)
-   inp.z_max = inp.z_max / 2.0 # debugpgi -- matches the bipyramid definition of zmax
-   n_layers = max(2, int(round(inp.z_max / layer_spacing)) + 1)
-   z_values = np.linspace(0.0, inp.z_max, n_layers)
-   triangle_y_step = nearest_distance * np.sqrt(3.0) / 2.0
-   stacking_offsets = [
-      [0.0, 0.0],
-      [nearest_distance / 2.0, nearest_distance * np.sqrt(3.0) / 6.0],
-      [0.0, nearest_distance * np.sqrt(3.0) / 3.0],
-   ]
+   z_max_half = inp.z_max / 2.0
    cap_radius = 5.0
-   cap_start = max(0.0, inp.z_max - cap_radius)
+   cap_start = max(0.0, z_max_half - cap_radius)
    effective_base_width = inp.base_width + 2.5 * nearest_distance
+   pent_angles = [math.radians(90.0 + i * 72.0) for i in range(5)]
 
-   positions = []
-   for layer_idx, z_value in enumerate(z_values):
-      offset = stacking_offsets[layer_idx % 3]
-      layer_fraction = z_value / cap_start if cap_start > 0.0 else 1.0
+   xs = mol.xyz[0]
+   ys = mol.xyz[1]
+   zs = mol.xyz[2]
+
+   keep_mask = np.zeros(mol.nAtoms, dtype=bool)
+   for idx in range(mol.nAtoms):
+      x, y, z = xs[idx], ys[idx], zs[idx]
+      if z < 0.0 or z > z_max_half + 1e-8:
+         continue
+
+      layer_fraction = min(z / cap_start, 1.0) if cap_start > 0.0 else 1.0
       layer_width = effective_base_width * (1.0 - layer_fraction) + 2.0 * cap_radius * layer_fraction
-
-      if z_value >= cap_start:
-         dz = z_value - cap_start
+      if z >= cap_start:
+         dz = z - cap_start
          cap_width = 2.0 * math.sqrt(max(0.0, cap_radius ** 2 - dz ** 2))
          layer_width = min(layer_width, cap_width)
 
       if layer_width <= nearest_distance:
-         if np.isclose(z_value, inp.z_max):
-            positions.append([0.0, 0.0, z_value])
+         if np.sqrt(x ** 2 + y ** 2) < nearest_distance:
+            keep_mask[idx] = True
          continue
 
-      R = layer_width / (2.0 * math.sin(2.0 * math.pi / 5.0))
-      apothem = R * math.cos(math.pi / 5.0)
-      corner_rounding = min(3.0 * nearest_distance, 0.18 * R)
-      rounded_radius = max(apothem + 0.35 * nearest_distance, R - corner_rounding)
-      angles = [math.radians(90.0 + i * 72.0) for i in range(5)]
-      vertices = np.array([[R * math.cos(angle), R * math.sin(angle)] for angle in angles])
+      R_layer = layer_width / (2.0 * math.sin(2.0 * math.pi / 5.0))
+      apothem = R_layer * math.cos(math.pi / 5.0)
+      corner_rounding = min(3.0 * nearest_distance, 0.18 * R_layer)
+      rounded_radius = max(apothem + 0.35 * nearest_distance, R_layer - corner_rounding)
+      vertices = np.array([[R_layer * math.cos(a), R_layer * math.sin(a)] for a in pent_angles])
 
-      x_min = np.min(vertices[:, 0]) - nearest_distance
-      x_max = np.max(vertices[:, 0]) + nearest_distance
-      y_min = np.min(vertices[:, 1]) - triangle_y_step
-      y_max = np.max(vertices[:, 1]) + triangle_y_step
-      j_min = int(math.floor((y_min - offset[1]) / triangle_y_step))
-      j_max = int(math.ceil((y_max - offset[1]) / triangle_y_step))
+      point = np.array([x, y])
+      inside = True
+      for vi in range(5):
+         edge = vertices[(vi + 1) % 5] - vertices[vi]
+         rel = point - vertices[vi]
+         if edge[0] * rel[1] - edge[1] * rel[0] < -1e-8:
+            inside = False
+            break
 
-      for j in range(j_min, j_max + 1):
-         y = j * triangle_y_step + offset[1]
-         row_shift = 0.5 * nearest_distance if j % 2 else 0.0
-         i_min = int(math.floor((x_min - offset[0] - row_shift) / nearest_distance))
-         i_max = int(math.ceil((x_max - offset[0] - row_shift) / nearest_distance))
+      if inside and np.linalg.norm(point) <= rounded_radius:
+         keep_mask[idx] = True
 
-         for i in range(i_min, i_max + 1):
-            x = i * nearest_distance + row_shift + offset[0]
-            point = np.array([x, y])
-            inside = True
-
-            for vertex_idx in range(5):
-               edge = vertices[(vertex_idx + 1) % 5] - vertices[vertex_idx]
-               rel = point - vertices[vertex_idx]
-               if edge[0] * rel[1] - edge[1] * rel[0] < -1e-8:
-                  inside = False
-                  break
-
-            if inside:
-               if np.linalg.norm(point) > rounded_radius:
-                  continue
-               positions.append([x, y, z_value])
-
-   if len(positions) == 0:
-      output.error("Pentagonal pyramid generation produced no atoms. Increase z_max or base_width.")
-
-   best_positions = np.unique(np.round(np.array(positions), 8), axis=0)
-
-   mol = molecule.molecule()
-   mol.nAtoms = len(best_positions)
+   keep_idx = np.where(keep_mask)[0]
+   mol.xyz = mol.xyz[:, keep_idx]
+   mol.nAtoms = len(keep_idx)
    mol.atoms = [inp.atomtype] * mol.nAtoms
-   mol.xyz = best_positions.T
    mol.xyz_center = np.mean(mol.xyz, axis=1)
    mol.xyz_max = np.max(mol.xyz, axis=1)
    mol.xyz_min = np.min(mol.xyz, axis=1)
 
-   cutoff_distance = nearest_distance + 0.1
-   for _ in range(2):
-      surface_atoms = []
-      radial_distances = np.sqrt(mol.xyz[0, :] ** 2 + mol.xyz[1, :] ** 2)
+   if mol.nAtoms == 0:
+      output.error("Pentagonal pyramid generation produced no atoms. Increase z_max or base_width.")
 
-      for i in range(mol.nAtoms):
-         distances = np.linalg.norm(mol.xyz.T - mol.xyz.T[i], axis=1)
-         neighbors = np.where((distances > 0) & (distances <= cutoff_distance))[0]
-         z_fraction = mol.xyz[2, i] / inp.z_max if inp.z_max > 0.0 else 0.0
-         body_radius = 0.5 * inp.base_width * (1.0 - min(z_fraction, 1.0))
-         cap_region = mol.xyz[2, i] >= cap_start
-         edge_region = radial_distances[i] >= max(0.0, body_radius - 2.0 * nearest_distance)
+   # Align base to z=0
+   z_min = mol.xyz_min[-1]
+   if z_min > 0.0:
+      mol.translate_geom(z_min, [0.0, 0.0, -1.0])
 
-         if mol.xyz[2, i] < inp.z_max and (cap_region or edge_region) and len(neighbors) <= 3:
-            surface_atoms.append(i)
-
-      if not surface_atoms:
-         break
-
-      keep_atoms = np.setdiff1d(np.arange(mol.nAtoms), surface_atoms)
-      mol.xyz = mol.xyz[:, keep_atoms]
-      mol.nAtoms = len(keep_atoms)
-      mol.atoms = [inp.atomtype] * mol.nAtoms
-      mol.xyz_center = np.mean(mol.xyz, axis=1)
-      mol.xyz_max = np.max(mol.xyz, axis=1)
-      mol.xyz_min = np.min(mol.xyz, axis=1)
-
-   # Remove dangling atom on extreme
+   # Remove dangling atoms on top-half core
    mol.remove_dangling_atoms_metals(inp)
 
    # Rotate 180 degrees to create bottom pyramid and merge
    mol_rot = molecule.molecule()
-   mol_rot = tools.rotate(mol,180.0,'+x',mol_rot)
-   mol_rot = tools.rotate(mol_rot,180.0,'+z',mol_rot)
-   mol = tools.merge_geoms(inp,mol,mol_rot)
+   mol_rot = tools.rotate(mol, 180.0, '+x', mol_rot)
+   mol_rot = tools.rotate(mol_rot, 180.0, '+z', mol_rot)
+   mol = tools.merge_geoms(inp, mol, mol_rot)
 
    # Alloy
    if inp.alloy: mol.create_alloy(inp)
 
    # Save filtered geometry
-   inp.xyz_output = f'pentpyramid_{inp.atomtype}_width-{inp.base_width}_zmax-{inp.z_max*2.0}{inp.alloy_string}'
+   inp.xyz_output = f'pentpyramid_{inp.atomtype}_width-{inp.base_width}_zmax-{inp.z_max}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
 def bipyramid(inp):
@@ -831,7 +787,7 @@ def pentbipyramid(inp):
    mol_in.change_atomtype(inp.atomtype_in)
    inp.atomtype = inp.atomtype_in
 
-   nearest_distance = inp.merge_cutoff  # bulk crystal spacing (same lattice as outer rod)
+   nearest_distance = param.min_dist.get(inp.atomtype_in)  # match pentpyramid shape parameters
    z_max_half = inp.z_max / 2.0
    cap_radius = 5.0
    cap_start = max(0.0, z_max_half - cap_radius)
@@ -1384,6 +1340,16 @@ def get_layers(inp, lattice_constant):
        axis_index = {"x": 0, "y": 1, "z": 2}[axis]
 
        layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
+
+       return layers
+
+   elif inp.gen_pentpyramid:
+
+       R = inp.base_width / 2.0
+       L = structure_scaling * inp.z_max
+
+       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3
+       layers[2] = max(3, int(L / lattice_constant) + 2)
 
        return layers
 
