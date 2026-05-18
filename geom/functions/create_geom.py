@@ -34,6 +34,7 @@ def select_case(inp):
    if (inp.gen_tip):               tip(inp)
    if (inp.gen_pyramid):           pyramid(inp)
    if (inp.gen_pentpyramid):       pentpyramid(inp)
+   if (inp.gen_pentbipyramid):    pentbipyramid(inp)
    if (inp.gen_cone):              cone(inp)
    if (inp.gen_microscope):        microscope(inp)
    if (inp.gen_icosahedra):        icosahedra(inp)
@@ -775,6 +776,157 @@ def bipyramid(inp):
    inp.xyz_output = f'bipyramid_{inp.atomtype}_width-{inp.bipyramid_width}_length-{inp.bipyramid_length}{inp.alloy_string}'
    output.print_geom(mol, inp.xyz_output)
 # -------------------------------------------------------------------------------------
+def pentbipyramid(inp):
+   """
+   Generates a pentagonal bipyramid core-shell geometry.
+   Core uses the pentpyramid atom-by-atom stacking approach (atomtype_in).
+   Shell is an outer rod, either fullshell or halfshell (atomtype_out).
+
+   Args:
+       inp (input_class): An instance containing input parameters.
+
+   Returns:
+       None: Saves the generated geometry.
+   """
+
+   # Check input
+   inp.check_input_case()
+   general.create_results_geom()
+
+   # Extract merge cutoff for outer rod
+   param = parameters.parameters()
+   inp.merge_cutoff = param.min_dist.get(inp.atomtype_out)
+
+   # -----------------------------------------------
+   # Build outer rod (atomtype_out) — same as pencil
+   # -----------------------------------------------
+
+   mol_sphere_1 = molecule.molecule()
+   mol_sphere_2 = molecule.molecule()
+   mol_cylinder  = molecule.molecule()
+
+   mol_sphere_1.read_geom(inp.geom_file, False)
+   mol_sphere_2.read_geom(inp.geom_file, False)
+   mol_cylinder.read_geom(inp.geom_file, False)
+
+   inp.atomtype = inp.atomtype_out
+
+   tools.determine_sphere_center(inp, '+')
+   mol_sphere_1.filter_xyz_in_sphere(inp)
+
+   tools.determine_sphere_center(inp, '-')
+   mol_sphere_2.filter_xyz_in_sphere(inp)
+
+   mol_cylinder.filter_xyz_in_cylinder(inp)
+
+   mol_tmp = tools.merge_geoms(inp, mol_sphere_1, mol_sphere_2)
+   mol_out  = tools.merge_geoms(inp, mol_cylinder, mol_tmp)
+
+   # -----------------------------------------------
+   # Build inner core (atomtype_in) — bulk lattice positions, rounded pentpyramid shape
+   # -----------------------------------------------
+
+   mol_in = molecule.molecule()
+   mol_in.read_geom(inp.geom_file, False)
+   mol_in.change_atomtype(inp.atomtype_in)
+   inp.atomtype = inp.atomtype_in
+
+   nearest_distance = inp.merge_cutoff  # bulk crystal spacing (same lattice as outer rod)
+   z_max_half = inp.z_max / 2.0
+   cap_radius = 5.0
+   cap_start = max(0.0, z_max_half - cap_radius)
+   effective_base_width = inp.base_width + 2.5 * nearest_distance
+   pent_angles = [math.radians(90.0 + i * 72.0) for i in range(5)]
+
+   xs = mol_in.xyz[0]
+   ys = mol_in.xyz[1]
+   zs = mol_in.xyz[2]
+
+   keep_mask = np.zeros(mol_in.nAtoms, dtype=bool)
+   for idx in range(mol_in.nAtoms):
+      x, y, z = xs[idx], ys[idx], zs[idx]
+      if z < 0.0 or z > z_max_half + 1e-8:
+         continue
+
+      layer_fraction = min(z / cap_start, 1.0) if cap_start > 0.0 else 1.0
+      layer_width = effective_base_width * (1.0 - layer_fraction) + 2.0 * cap_radius * layer_fraction
+      if z >= cap_start:
+         dz = z - cap_start
+         cap_width = 2.0 * math.sqrt(max(0.0, cap_radius ** 2 - dz ** 2))
+         layer_width = min(layer_width, cap_width)
+
+      if layer_width <= nearest_distance:
+         if np.sqrt(x ** 2 + y ** 2) < nearest_distance:
+            keep_mask[idx] = True
+         continue
+
+      R_layer = layer_width / (2.0 * math.sin(2.0 * math.pi / 5.0))
+      apothem = R_layer * math.cos(math.pi / 5.0)
+      corner_rounding = min(3.0 * nearest_distance, 0.18 * R_layer)
+      rounded_radius = max(apothem + 0.35 * nearest_distance, R_layer - corner_rounding)
+      vertices = np.array([[R_layer * math.cos(a), R_layer * math.sin(a)] for a in pent_angles])
+
+      point = np.array([x, y])
+      inside = True
+      for vi in range(5):
+         edge = vertices[(vi + 1) % 5] - vertices[vi]
+         rel = point - vertices[vi]
+         if edge[0] * rel[1] - edge[1] * rel[0] < -1e-8:
+            inside = False
+            break
+
+      if inside and np.linalg.norm(point) <= rounded_radius:
+         keep_mask[idx] = True
+
+   keep_idx = np.where(keep_mask)[0]
+   mol_in.xyz = mol_in.xyz[:, keep_idx]
+   mol_in.nAtoms = len(keep_idx)
+   mol_in.atoms = [inp.atomtype_in] * mol_in.nAtoms
+   mol_in.xyz_center = np.mean(mol_in.xyz, axis=1)
+   mol_in.xyz_max = np.max(mol_in.xyz, axis=1)
+   mol_in.xyz_min = np.min(mol_in.xyz, axis=1)
+
+   # Align base to z=0 and shift outer rod by same amount
+   z_min = mol_in.xyz_min[-1]
+   if z_min > 0.0:
+      mol_in.translate_geom(z_min, [0.0, 0.0, -1.0])
+      mol_out.translate_geom(z_min, [0.0, 0.0, -1.0])
+
+   # If halfshell: slice outer rod to keep only top half (z >= -0.1)
+   if inp.pentbipyramid_type == "halfshell":
+      inp.atomtype = inp.atomtype_out
+      mol_out.slice_xyz_by_z_threshold(inp, z_threshold=-0.1)
+
+   # Rotate core 180° to create bottom pyramid and merge into full bipyramid core
+   mol_rot = molecule.molecule()
+   mol_rot = tools.rotate(mol_in, 180.0, '+x', mol_rot)
+   mol_rot = tools.rotate(mol_rot, 180.0, '+z', mol_rot)
+   mol_in = tools.merge_geoms(inp, mol_in, mol_rot)
+
+   # Remove dangling atoms on merged bipyramid core
+   inp.atomtype = inp.atomtype_in
+   mol_in.remove_dangling_atoms_metals(inp)
+
+   # Create shell by subtracting core from outer rod
+   mol_shell = tools.subtract_geoms(inp, mol_in, mol_out)
+
+   # Alloy
+   if inp.alloy:
+      inp.alloy_string = f"_alloy_{inp.alloy_perc}_perc"
+      inp.atomtype = inp.atomtype_out
+      inp.atomtype_alloy = inp.atomtype_in
+      mol_shell.create_alloy(inp)
+      inp.atomtype = inp.atomtype_in
+      inp.atomtype_alloy = inp.atomtype_out
+      mol_in.create_alloy(inp)
+
+   # Merge core + shell
+   mol_core_shell = tools.merge_geoms(inp, mol_in, mol_shell)
+
+   # Save geometry
+   inp.xyz_output = f'pentbipyramid_{inp.pentbipyramid_type}_core_{inp.atomtype_in}_shell_{inp.atomtype_out}_in_width-{inp.base_width}_in_zmax-{inp.z_max}_out_width-{inp.rod_width}_out_length-{inp.rod_length}{inp.alloy_string}'
+   output.print_geom(mol_core_shell, inp.xyz_output)
+# -------------------------------------------------------------------------------------
 def cone(inp):
    """
    Generates a conical geometry.
@@ -1227,11 +1379,22 @@ def get_layers(inp, lattice_constant):
        R = inp.bipyramid_width / 2.0
        L = 2.0 * structure_scaling * inp.bipyramid_length
 
-       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3  
+       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3
 
        axis_index = {"x": 0, "y": 1, "z": 2}[axis]
 
        layers[axis_index] = max(3, int(L / lattice_constant) + 2)  # Adjust for rod length
+
+       return layers
+
+   elif inp.gen_pentbipyramid:
+
+       R = inp.rod_width / 2.0
+       L = 2.0 * structure_scaling * inp.rod_length
+
+       layers = [max(3, int(structure_scaling * 2 * R / lattice_constant) + 2)] * 3
+
+       layers[2] = max(3, int(L / lattice_constant) + 2)  # z axis
 
        return layers
    

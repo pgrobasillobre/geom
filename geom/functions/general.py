@@ -169,6 +169,8 @@ def print_help():
 
            Pencil: -create -pencil -core atom_type -{full/half}shell atom_type core_width core_length shell_width shell_length
 
+           Pentagonal bipyramid (core-shell): -create -pentbipyramid -core atom_type -{full/half}shell atom_type core_base_width core_zmax rod_width rod_length
+
          -----------------------------
          Additional Options
          -----------------------------
@@ -522,6 +524,9 @@ def parse_create(argv, inp):
       elif ("-pencil") in argv:
           inp.gen_pencil = True
 
+      elif ("-pentbipyramid") in argv:
+          inp.gen_pentbipyramid = True
+
       else:
          inp.atomtype = argv[3].lower()
          if inp.atomtype not in param.metal_atomtypes: output.error(f'Atom Type "{argv[3]}" not recognised')
@@ -682,13 +687,13 @@ def parse_create(argv, inp):
          inp.rod_length = inp.bipyramid_length
          inp.main_axis  = "z"
 
-      elif (inp.gen_pencil): 
+      elif (inp.gen_pencil):
          inp.create_ase_bulk = True
          inp.atomtype_in = argv[4].lower()
          inp.atomtype_out = argv[6].lower()
          inp.bipyramid_width = float(argv[7]) / 2.0
          inp.bipyramid_length = float(argv[8]) / 2.0
-         inp.rod_width = float(argv[9])  / 2.0 
+         inp.rod_width = float(argv[9])  / 2.0
          inp.rod_length = float(argv[10]) / 2.0
 
          if inp.bipyramid_length <= inp.bipyramid_width: output.error(f"Pencil shell outer radius must be greater than core inner radius.")
@@ -700,22 +705,57 @@ def parse_create(argv, inp):
          elif any("-halfshell" in arg.lower() for arg in argv):
              inp.pencil_type = "halfshell"
          else:
-             output.error("Pencil shell type not recognised. \n\n" 
+             output.error("Pencil shell type not recognised. \n\n"
                           "   Options: \n\n"
                           "     -fullshell\n\n" \
                           "     -halfshell")
-        
+
          if (inp.atomtype_in not in inp.atomtypes_core_shell):
              output.error(f'Core atom type "{inp.atomtype_in}" not supported.')
          elif (inp.atomtype_out not in inp.atomtypes_core_shell):
              output.error(f'Shell atom type "{inp.atomtype_out}" not supported.')
          elif (inp.atomtype_in == inp.atomtype_out):
              output.error(f"Core and shell atom types coincide.")
-        
+
          # Set to create bulk ase geometry
          inp.atomtype = inp.atomtype_out
          inp.rod_width  = inp.rod_width*2.0
          inp.rod_length  = inp.rod_length*2.0
+         inp.main_axis  = "z"
+
+      elif (inp.gen_pentbipyramid):
+         inp.create_ase_bulk = True
+         inp.atomtype_in  = argv[4].lower()
+         inp.atomtype_out = argv[6].lower()
+         inp.base_width   = float(argv[7])
+         inp.z_max        = float(argv[8])
+         inp.rod_width    = float(argv[9])  / 2.0
+         inp.rod_length   = float(argv[10]) / 2.0
+
+         if inp.rod_width >= inp.rod_length:
+            output.error(f"Outer rod width must be smaller than outer rod length.")
+
+         if any("-fullshell" in arg.lower() for arg in argv):
+            inp.pentbipyramid_type = "fullshell"
+         elif any("-halfshell" in arg.lower() for arg in argv):
+            inp.pentbipyramid_type = "halfshell"
+         else:
+            output.error("Pentbipyramid shell type not recognised. \n\n"
+                         "   Options: \n\n"
+                         "     -fullshell\n\n"
+                         "     -halfshell")
+
+         if inp.atomtype_in not in inp.atomtypes_core_shell:
+            output.error(f'Core atom type "{inp.atomtype_in}" not supported.')
+         elif inp.atomtype_out not in inp.atomtypes_core_shell:
+            output.error(f'Shell atom type "{inp.atomtype_out}" not supported.')
+         elif inp.atomtype_in == inp.atomtype_out:
+            output.error(f"Core and shell atom types coincide.")
+
+         # Set to create bulk ase geometry for outer rod
+         inp.atomtype   = inp.atomtype_out
+         inp.rod_width  = inp.rod_width  * 2.0
+         inp.rod_length = inp.rod_length * 2.0
          inp.main_axis  = "z"
 
       else:

@@ -135,6 +135,8 @@ class input_class:
       self.gen_microscope = False
       self.gen_bipyramid = False
       self.gen_pencil = False
+      self.gen_pentbipyramid = False
+      self.pentbipyramid_type = ''
       self.alloy = False
 
       self.mesh_size = 1.0
@@ -290,7 +292,8 @@ class input_class:
              not self.gen_3d_mesh_sphere    and
              not self.gen_3d_mesh_rod       and
              not self.gen_bipyramid         and
-             not self.gen_pencil): output.error("Create geom option not recognised.")
+             not self.gen_pencil            and
+             not self.gen_pentbipyramid): output.error("Create geom option not recognised.")
 
          if self.create_ase_bulk:
             general.check_file_exists(self.geom_file)
