@@ -3,6 +3,7 @@
 set -e
 
 ENV_NAME="geom_env"
+GEOM_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo " Setting up GEOM with conda environment..."
 
@@ -84,21 +85,36 @@ unset __conda_setup
 EOF
 fi
 
-if ! grep -q "function geom_load" "$SHELL_RC"; then
-    echo "Adding geom_load function to $SHELL_RC..."
-    
-    MAIN_PATH="$(realpath ./geom/ai_agent/desktop_chat_qt.py)"
-    ENV_PYTHON="$(conda run -n $ENV_NAME which python)"
+MAIN_PATH="$(realpath ./geom/ai_agent/desktop_chat_qt.py)"
+GUI_PATH="$(realpath ./geom/gui/structure_gui.py)"
+ENV_PYTHON="$(conda run -n $ENV_NAME which python)"
+APP_HELPER="$GEOM_ROOT/geom/gui/create_desktop_app.sh"
 
-    cat << EOF >> "$SHELL_RC"
+echo "Installing geom_load shell helper in $SHELL_RC..."
+if grep -q "# >>> geom shell helpers >>>" "$SHELL_RC"; then
+    awk '
+        /# >>> geom shell helpers >>>/ {skip=1; next}
+        /# <<< geom shell helpers <<</ {skip=0; next}
+        skip == 0 {print}
+    ' "$SHELL_RC" > "$SHELL_RC.tmp"
+    mv "$SHELL_RC.tmp" "$SHELL_RC"
+elif grep -q "function geom_load" "$SHELL_RC"; then
+    echo " Existing geom_load function detected outside the managed block; leaving it in place."
+    echo " Remove the old function manually if your shell keeps using stale aliases."
+fi
 
+cat << EOF >> "$SHELL_RC"
+
+# >>> geom shell helpers >>>
 function geom_load {
-    conda activate geom_env
+    conda activate $ENV_NAME
     alias geom='$ENV_PYTHON -m geom'
     alias ai_geom='$ENV_PYTHON $MAIN_PATH'
+    alias geomapp='$ENV_PYTHON $GUI_PATH'
+    alias geom_make_app='bash $APP_HELPER'
 }
+# <<< geom shell helpers <<<
 EOF
-fi
 
 echo " Running tests..."
 conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh || echo " Some tests failed."
@@ -107,6 +123,8 @@ echo  "  Installation complete!"
 echo  " "
 echo  "  Run: source $SHELL_RC"
 echo  "  Then load the environment with: geom_load"
+echo  "  Open the structure GUI with: geomapp"
+echo  "  Optional desktop-app helper: geom_make_app"
 echo  " "
 echo  "  Check GEOM options using: geom -h"
 echo  " "
