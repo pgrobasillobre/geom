@@ -88,8 +88,6 @@ fi
 MAIN_PATH="$(realpath ./geom/ai_agent/desktop_chat_qt.py)"
 GUI_PATH="$(realpath ./geom/gui/structure_gui.py)"
 ENV_PYTHON="$(conda run -n $ENV_NAME which python)"
-APP_HELPER="$GEOM_ROOT/geom/gui/create_desktop_app.sh"
-
 echo "Installing geom_load shell helper in $SHELL_RC..."
 if grep -q "# >>> geom shell helpers >>>" "$SHELL_RC"; then
     awk '
@@ -111,7 +109,6 @@ function geom_load {
     alias geom='$ENV_PYTHON -m geom'
     alias ai_geom='$ENV_PYTHON $MAIN_PATH'
     alias geomapp='$ENV_PYTHON $GUI_PATH'
-    alias geom_make_app='bash $APP_HELPER'
 }
 # <<< geom shell helpers <<<
 EOF
@@ -121,10 +118,17 @@ conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh || echo " Some tests f
 
 echo  "  Installation complete!"
 echo  " "
-echo  "  Run: source $SHELL_RC"
-echo  "  Then load the environment with: geom_load"
-echo  "  Open the structure GUI with: geomapp"
-echo  "  Optional desktop-app helper: geom_make_app"
+echo  "  Next steps"
+echo  "  ----------"
+echo  " "
+echo  "  1. Reload your shell:"
+echo  "     source $SHELL_RC"
+echo  " "
+echo  "  2. Load the GEOM environment:"
+echo  "     geom_load"
+echo  " "
+echo  "  3. Open the GEOM App:"
+echo  "     geomapp"
 echo  " "
 echo  "  Check GEOM options using: geom -h"
 echo  " "
