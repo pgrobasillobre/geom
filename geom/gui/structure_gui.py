@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
-    from PySide6.QtCore import QPoint, QRectF, Qt, QThread, Signal
+    from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QThread, Signal
     from PySide6.QtGui import (
         QColor,
         QFont,
@@ -17,6 +17,7 @@ try:
         QGuiApplication,
         QLinearGradient,
         QPainter,
+        QPen,
         QRadialGradient,
     )
     from PySide6.QtWidgets import (
@@ -33,23 +34,24 @@ try:
         QMessageBox,
         QPushButton,
         QSizePolicy,
-        QSlider,
+        QSpinBox,
         QTabWidget,
+        QToolButton,
         QVBoxLayout,
         QWidget,
     )
 except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users without GUI deps.
     missing_dependency = exc
-    QPoint = QRectF = Qt = QGuiApplication = QApplication = QFileDialog = QMessageBox = None
+    QPoint = QPointF = QRectF = Qt = QGuiApplication = QApplication = QFileDialog = QMessageBox = None
     QColor = lambda *args, **kwargs: None
-    QLinearGradient = QPainter = QRadialGradient = None
+    QLinearGradient = QPainter = QPen = QRadialGradient = None
 
     class QFont:
         DemiBold = 63
 
     QFontDatabase = None
     QCheckBox = QComboBox = QDoubleSpinBox = QFrame = QGridLayout = QHBoxLayout = QLabel = None
-    QPushButton = QSizePolicy = QSlider = QTabWidget = QVBoxLayout = None
+    QPushButton = QSizePolicy = QSpinBox = QTabWidget = QToolButton = QVBoxLayout = None
     QMainWindow = QWidget = object
 
     class QThread:
@@ -221,29 +223,36 @@ class VdwCanvas(QWidget):
         self.rotation_x = math.radians(18.0)
         self.rotation_y = math.radians(-28.0)
         self.zoom = 1.0
+        self.pan_x = 0.0
+        self.pan_y = 0.0
         self.vdw_scale = 1.0
-        self.high_resolution = False
+        self.render_resolution = 1
+        self.translate_mode = False
         self._last_pos: QPoint | None = None
         self.setMinimumSize(560, 420)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
+        self.setFocusPolicy(Qt.StrongFocus)
 
     def set_atoms(self, atoms: tuple[AtomRecord, ...]):
         self.atoms = atoms
         self.zoom = 1.0
+        self.pan_x = 0.0
+        self.pan_y = 0.0
         self.update()
 
     def set_vdw_scale(self, value: float):
         self.vdw_scale = value
         self.update()
 
-    def set_high_resolution(self, enabled: bool):
-        self.high_resolution = enabled
+    def set_render_resolution(self, value: int):
+        self.render_resolution = max(1, value)
         self.update()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+            self.setFocus()
             self._last_pos = event.position().toPoint()
 
     def mouseMoveEvent(self, event):
@@ -252,8 +261,15 @@ class VdwCanvas(QWidget):
         current = event.position().toPoint()
         delta = current - self._last_pos
         self._last_pos = current
-        self.rotation_y += delta.x() * 0.01
-        self.rotation_x += delta.y() * 0.01
+        modifiers = event.modifiers()
+        should_translate = self.translate_mode or bool(modifiers & Qt.ShiftModifier)
+        should_rotate = bool(modifiers & Qt.ControlModifier) or not should_translate
+        if should_translate and not bool(modifiers & Qt.ControlModifier):
+            self.pan_x += delta.x()
+            self.pan_y += delta.y()
+        elif should_rotate:
+            self.rotation_y += delta.x() * 0.01
+            self.rotation_x += delta.y() * 0.01
         self.update()
 
     def mouseReleaseEvent(self, event):
@@ -264,6 +280,14 @@ class VdwCanvas(QWidget):
         factor = 1.12 if event.angleDelta().y() > 0 else 0.89
         self.zoom = min(4.0, max(0.35, self.zoom * factor))
         self.update()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_T:
+            self.translate_mode = not self.translate_mode
+            self.update()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def dragEnterEvent(self, event):
         if self._xyz_paths_from_event(event):
@@ -292,8 +316,9 @@ class VdwCanvas(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, self.high_resolution)
+        fine_render = self.render_resolution > 1
+        painter.setRenderHint(QPainter.Antialiasing, fine_render)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, fine_render)
         self._paint_background(painter)
 
         if not self.atoms:
@@ -303,6 +328,7 @@ class VdwCanvas(QWidget):
         projected = self._project_atoms()
         for atom in projected:
             self._paint_atom(painter, atom)
+        self._paint_axes(painter)
 
     def _paint_background(self, painter: QPainter):
         painter.fillRect(self.rect(), QColor("#FFFFFF"))
@@ -319,23 +345,17 @@ class VdwCanvas(QWidget):
         cx = sum(atom.x for atom in self.atoms) / len(self.atoms)
         cy = sum(atom.y for atom in self.atoms) / len(self.atoms)
         cz = sum(atom.z for atom in self.atoms) / len(self.atoms)
-        cos_x, sin_x = math.cos(self.rotation_x), math.sin(self.rotation_x)
-        cos_y, sin_y = math.cos(self.rotation_y), math.sin(self.rotation_y)
-
         rotated: list[tuple[AtomRecord, float, float, float]] = []
         max_span = 1.0
         for atom in self.atoms:
             x, y, z = atom.x - cx, atom.y - cy, atom.z - cz
-            xz = x * cos_y + z * sin_y
-            zz = -x * sin_y + z * cos_y
-            yz = y * cos_x - zz * sin_x
-            zz2 = y * sin_x + zz * cos_x
+            xz, yz, zz2 = self._rotate_point(x, y, z)
             rotated.append((atom, xz, yz, zz2))
             max_span = max(max_span, abs(xz), abs(yz))
 
         scale = min(self.width(), self.height()) * 0.42 * self.zoom / max_span
-        center_x = self.width() * 0.52
-        center_y = self.height() * 0.50
+        center_x = self.width() * 0.52 + self.pan_x
+        center_y = self.height() * 0.50 + self.pan_y
 
         atoms = []
         for atom, x, y, z in rotated:
@@ -357,14 +377,121 @@ class VdwCanvas(QWidget):
 
         rect = QRectF(atom.x - atom.radius, atom.y - atom.radius, atom.radius * 2, atom.radius * 2)
         gradient = QRadialGradient(rect.center() - QPoint(int(atom.radius * 0.35), int(atom.radius * 0.40)), atom.radius)
-        highlight = QColor(255, 255, 255, 230)
-        gradient.setColorAt(0.0, highlight)
-        gradient.setColorAt(0.18, shaded.lighter(132))
-        gradient.setColorAt(0.76, shaded)
-        gradient.setColorAt(1.0, shaded.darker(165))
-        painter.setPen(QColor(0, 0, 0, 22 if self.high_resolution else 34))
+        if self.render_resolution > 1:
+            highlight = QColor(255, 255, 255, 230)
+            gradient.setColorAt(0.0, highlight)
+            gradient.setColorAt(0.18, shaded.lighter(132))
+            gradient.setColorAt(0.76, shaded)
+            gradient.setColorAt(1.0, shaded.darker(165))
+            painter.setPen(QColor(0, 0, 0, 22))
+        else:
+            gradient.setColorAt(0.0, shaded.lighter(125))
+            gradient.setColorAt(0.70, shaded)
+            gradient.setColorAt(1.0, shaded.darker(150))
+            painter.setPen(Qt.NoPen)
         painter.setBrush(gradient)
         painter.drawEllipse(rect)
+
+    def _rotate_point(self, x: float, y: float, z: float) -> tuple[float, float, float]:
+        cos_x, sin_x = math.cos(self.rotation_x), math.sin(self.rotation_x)
+        cos_y, sin_y = math.cos(self.rotation_y), math.sin(self.rotation_y)
+        xz = x * cos_y + z * sin_y
+        zz = -x * sin_y + z * cos_y
+        yz = y * cos_x - zz * sin_x
+        zz2 = y * sin_x + zz * cos_x
+        return xz, yz, zz2
+
+    def _paint_axes(self, painter: QPainter):
+        origin = QPointF(54.0, max(78.0, self.height() - 58.0))
+        axis_length = 46.0
+        axes = [
+            ("X", QColor("#E25555"), self._rotate_point(1.0, 0.0, 0.0)),
+            ("Y", QColor("#1F9D68"), self._rotate_point(0.0, 1.0, 0.0)),
+            ("Z", QColor("#3A72E8"), self._rotate_point(0.0, 0.0, 1.0)),
+        ]
+        axes.sort(key=lambda item: item[2][2])
+
+        font = QFontDatabase.systemFont(QFontDatabase.GeneralFont)
+        font.setPointSize(11)
+        font.setWeight(QFont.DemiBold)
+        painter.setFont(font)
+
+        for label, color, (x, y, z) in axes:
+            end = QPointF(origin.x() + x * axis_length, origin.y() - y * axis_length)
+            label_pos = QPointF(origin.x() + x * (axis_length + 14.0), origin.y() - y * (axis_length + 14.0))
+            direction = QPointF(end.x() - origin.x(), end.y() - origin.y())
+            length = math.hypot(direction.x(), direction.y()) or 1.0
+            unit = QPointF(direction.x() / length, direction.y() / length)
+            normal = QPointF(-unit.y(), unit.x())
+            arrow_back = 12.0
+            arrow_half_width = 6.5
+            left = QPointF(
+                end.x() - unit.x() * arrow_back + normal.x() * arrow_half_width,
+                end.y() - unit.y() * arrow_back + normal.y() * arrow_half_width,
+            )
+            right = QPointF(
+                end.x() - unit.x() * arrow_back - normal.x() * arrow_half_width,
+                end.y() - unit.y() * arrow_back - normal.y() * arrow_half_width,
+            )
+            alpha = 125 if z < -0.25 else 225
+            pen = QPen(QColor(color.red(), color.green(), color.blue(), alpha), 5.0)
+            pen.setCapStyle(Qt.RoundCap)
+            painter.setPen(pen)
+            painter.drawLine(origin, end)
+            painter.setBrush(QColor(color.red(), color.green(), color.blue(), alpha))
+            painter.setPen(Qt.NoPen)
+            painter.drawPolygon([end, left, right])
+            painter.setPen(QColor("#202123"))
+            painter.drawText(QRectF(label_pos.x() - 9.0, label_pos.y() - 9.0, 18.0, 18.0), Qt.AlignCenter, label)
+
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor("#202123"))
+        painter.drawEllipse(origin, 3.5, 3.5)
+
+
+class ViewerStepper(QWidget):
+    valueChanged = Signal(int)
+
+    def __init__(self, value: int, minimum: int, maximum: int, suffix: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName("viewerStepper")
+        self.spin = QSpinBox()
+        self.spin.setObjectName("viewerSpin")
+        self.spin.setButtonSymbols(QSpinBox.NoButtons)
+        self.spin.setRange(minimum, maximum)
+        self.spin.setSingleStep(1)
+        self.spin.setValue(value)
+        self.spin.setSuffix(f" {suffix}")
+        self.spin.setAlignment(Qt.AlignCenter)
+        self.spin.valueChanged.connect(self.valueChanged)
+
+        self.up_button = QToolButton()
+        self.up_button.setObjectName("stepperButton")
+        self.up_button.setText("▲")
+        self.up_button.clicked.connect(self.spin.stepUp)
+
+        self.down_button = QToolButton()
+        self.down_button.setObjectName("stepperButton")
+        self.down_button.setText("▼")
+        self.down_button.clicked.connect(self.spin.stepDown)
+
+        arrows = QVBoxLayout()
+        arrows.setContentsMargins(0, 3, 5, 3)
+        arrows.setSpacing(0)
+        arrows.addWidget(self.up_button)
+        arrows.addWidget(self.down_button)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.spin, 1)
+        layout.addLayout(arrows)
+
+    def setValue(self, value: int):
+        self.spin.setValue(value)
+
+    def value(self) -> int:
+        return self.spin.value()
 
 
 class StructureWindow(QMainWindow):
@@ -375,7 +502,7 @@ class StructureWindow(QMainWindow):
         self.output_root: Path | None = None
         self.empty_canvas: VdwCanvas | None = None
         self.vdw_scale = 1.0
-        self.high_resolution = False
+        self.render_resolution = 1
         self.setWindowTitle(APP_TITLE)
         self.resize(1180, 760)
         self._build_ui()
@@ -402,9 +529,6 @@ class StructureWindow(QMainWindow):
         title = QLabel("GEOM")
         title.setObjectName("appTitle")
         title.setAlignment(Qt.AlignHCenter)
-        subtitle = QLabel("Structure generation")
-        subtitle.setObjectName("subtitle")
-        subtitle.setAlignment(Qt.AlignHCenter)
         accent_bar = QFrame()
         accent_bar.setObjectName("accentBar")
         accent_bar.setFixedHeight(4)
@@ -489,19 +613,14 @@ class StructureWindow(QMainWindow):
         self.create_button.setObjectName("primaryButton")
         self.create_button.clicked.connect(self.create_structure)
         self.load_button = QPushButton("Load XYZ file")
-        self.load_button.setObjectName("secondaryButton")
+        self.load_button.setObjectName("loadButton")
         self.load_button.clicked.connect(self.load_files_from_dialog)
 
-        self.vdw_scale_label = QLabel("100%")
-        self.vdw_scale_label.setObjectName("valueLabel")
-        self.vdw_scale_slider = QSlider(Qt.Horizontal)
-        self.vdw_scale_slider.setRange(60, 180)
-        self.vdw_scale_slider.setValue(100)
-        self.vdw_scale_slider.valueChanged.connect(self._set_vdw_scale_from_slider)
+        self.vdw_scale_input = self._make_viewer_spin(100, 60, 180, "%")
+        self.vdw_scale_input.valueChanged.connect(self._set_vdw_scale_from_input)
 
-        self.resolution_button = QPushButton("Increase resolution")
-        self.resolution_button.setObjectName("secondaryButton")
-        self.resolution_button.clicked.connect(self.toggle_high_resolution)
+        self.resolution_input = self._make_viewer_spin(1, 1, 4, "x")
+        self.resolution_input.valueChanged.connect(self._set_render_resolution_from_input)
 
         generator_page = QWidget()
         generator_layout = QVBoxLayout(generator_page)
@@ -524,10 +643,14 @@ class StructureWindow(QMainWindow):
         vdw_label = self._field_label("VdW radius")
         vdw_row.addWidget(vdw_label)
         vdw_row.addStretch(1)
-        vdw_row.addWidget(self.vdw_scale_label)
+        vdw_row.addWidget(self.vdw_scale_input)
         viewer_layout.addLayout(vdw_row)
-        viewer_layout.addWidget(self.vdw_scale_slider)
-        viewer_layout.addWidget(self.resolution_button)
+
+        resolution_row = QHBoxLayout()
+        resolution_row.addWidget(self._field_label("Resolution"))
+        resolution_row.addStretch(1)
+        resolution_row.addWidget(self.resolution_input)
+        viewer_layout.addLayout(resolution_row)
         viewer_layout.addStretch(1)
 
         self.side_tabs = QTabWidget()
@@ -536,7 +659,6 @@ class StructureWindow(QMainWindow):
         self.side_tabs.addTab(viewer_page, "Viewer")
 
         side.addWidget(title)
-        side.addWidget(subtitle)
         side.addWidget(accent_bar)
         side.addWidget(self.side_tabs, 1)
 
@@ -575,9 +697,12 @@ class StructureWindow(QMainWindow):
         canvas = VdwCanvas()
         canvas.setObjectName("canvas")
         canvas.set_vdw_scale(self.vdw_scale)
-        canvas.set_high_resolution(self.high_resolution)
+        canvas.set_render_resolution(self.render_resolution)
         canvas.files_dropped.connect(self.load_files)
         return canvas
+
+    def _make_viewer_spin(self, value: int, minimum: int, maximum: int, suffix: str) -> ViewerStepper:
+        return ViewerStepper(value, minimum, maximum, suffix)
 
     def _make_option_spin(self, value: float, minimum: float, maximum: float) -> QDoubleSpinBox:
         spin = QDoubleSpinBox()
@@ -656,17 +781,15 @@ class StructureWindow(QMainWindow):
         for widget in widgets:
             widget.setEnabled(enabled)
 
-    def _set_vdw_scale_from_slider(self, value: int):
+    def _set_vdw_scale_from_input(self, value: int):
         self.vdw_scale = value / 100.0
-        self.vdw_scale_label.setText(f"{value}%")
         for canvas in self._all_canvases():
             canvas.set_vdw_scale(self.vdw_scale)
 
-    def toggle_high_resolution(self):
-        self.high_resolution = not self.high_resolution
-        self.resolution_button.setText("Standard resolution" if self.high_resolution else "Increase resolution")
+    def _set_render_resolution_from_input(self, value: int):
+        self.render_resolution = value
         for canvas in self._all_canvases():
-            canvas.set_high_resolution(self.high_resolution)
+            canvas.set_render_resolution(self.render_resolution)
 
     def _all_canvases(self) -> list[VdwCanvas]:
         return [
@@ -824,27 +947,58 @@ class StructureWindow(QMainWindow):
             QPushButton#secondaryButton:hover {{
                 color: {ACCENT_INDIGO};
             }}
-            QSlider::groove:horizontal {{
-                height: 4px;
-                border: 0;
-                border-radius: 2px;
-                background: #E8E5F1;
-            }}
-            QSlider::sub-page:horizontal {{
-                border-radius: 2px;
+            QPushButton#loadButton {{
                 background: qlineargradient(
                     x1: 0, y1: 0, x2: 1, y2: 0,
                     stop: 0 {ACCENT_VIOLET},
                     stop: 1 {ACCENT_INDIGO}
                 );
+                color: #FFFFFF;
+                border: 1px solid {ACCENT_VIOLET};
+                border-radius: 20px;
+                min-height: 44px;
+                padding: 4px 16px;
+                font-weight: 750;
             }}
-            QSlider::handle:horizontal {{
-                width: 18px;
-                height: 18px;
-                margin: -7px 0;
-                border-radius: 9px;
-                background: white;
-                border: 1px solid #DAD5EA;
+            QPushButton#loadButton:hover {{
+                border-color: {ACCENT_INDIGO};
+            }}
+            QWidget#viewerStepper {{
+                background: #FFFFFF;
+                border: 1px solid #E8E4F2;
+                border-radius: 14px;
+                min-width: 88px;
+                min-height: 34px;
+            }}
+            QWidget#viewerStepper:focus-within {{
+                border-color: {ACCENT_VIOLET};
+            }}
+            QSpinBox#viewerSpin {{
+                background: transparent;
+                color: {TEXT};
+                border: 0;
+                min-width: 66px;
+                min-height: 34px;
+                padding: 0 4px 0 12px;
+                font-weight: 700;
+                selection-background-color: {ACCENT_SOFT};
+            }}
+            QToolButton#stepperButton {{
+                background: transparent;
+                color: {ACCENT_VIOLET};
+                border: 0;
+                min-width: 16px;
+                max-width: 16px;
+                min-height: 13px;
+                max-height: 13px;
+                padding: 0;
+                font-size: 8px;
+                font-weight: 900;
+            }}
+            QToolButton#stepperButton:hover {{
+                color: {ACCENT_INDIGO};
+                background: {ACCENT_SOFT};
+                border-radius: 5px;
             }}
             QTabWidget#viewerTabs::pane {{
                 border: 0;
