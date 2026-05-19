@@ -9,6 +9,7 @@ import threading
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 from geom.classes.parameters import parameters
 
@@ -153,6 +154,45 @@ def smiles_to_xyz(smiles: str) -> Path:
     smi_path = input_dir / f"smiles_{uuid.uuid4().hex[:8]}.smi"
     smi_path.write_text(smiles + "\n", encoding="utf-8")
     return convert_molecule_to_xyz(smi_path)
+
+
+def manipulate_xyz(input_path: Path, command_args: Callable[[str], list[str]]) -> Path:
+    """Run an existing GEOM manipulation command in the GUI temp folder."""
+
+    input_path = Path(input_path)
+    if input_path.suffix.lower() != ".xyz":
+        raise ValueError("GEOM manipulation requires an XYZ file.")
+
+    GUI_TMP_ROOT.mkdir(parents=True, exist_ok=True)
+    results_dir = GUI_TMP_ROOT / "results_geom"
+    before = _xyz_snapshot(results_dir)
+    local_input = GUI_TMP_ROOT / f"{input_path.stem}_{uuid.uuid4().hex[:8]}.xyz"
+    shutil.copy2(input_path, local_input)
+
+    runner = (
+        "import sys; "
+        "from geom.classes import input_class; "
+        "from geom.functions import general, translate, rotate; "
+        "inp = input_class.input_class(); "
+        "general.read_command_line(['geom', *sys.argv[1:]], inp); "
+        "translate.select_case(inp) if inp.translate else rotate.select_case(inp)"
+    )
+    command = (sys.executable, "-c", runner, *command_args(local_input.name))
+
+    with _CONVERSION_LOCK:
+        completed = subprocess.run(
+            command,
+            cwd=GUI_TMP_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    if completed.returncode != 0:
+        message = completed.stderr.strip() or completed.stdout.strip() or "GEOM manipulation failed."
+        raise RuntimeError(message)
+
+    return _newest_generated_xyz(results_dir, before)
 
 
 def cleanup_gui_tmp() -> None:

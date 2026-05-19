@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import shutil
 import sys
 import traceback
 from dataclasses import dataclass
@@ -32,10 +33,12 @@ try:
         QLabel,
         QLineEdit,
         QMainWindow,
+        QMenu,
         QMessageBox,
         QPushButton,
         QSizePolicy,
         QSpinBox,
+        QTabBar,
         QTabWidget,
         QToolButton,
         QVBoxLayout,
@@ -52,7 +55,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users with
 
     QFontDatabase = None
     QCheckBox = QComboBox = QDoubleSpinBox = QFrame = QGridLayout = QHBoxLayout = QLabel = QLineEdit = None
-    QPushButton = QSizePolicy = QSpinBox = QTabWidget = QToolButton = QVBoxLayout = None
+    QPushButton = QSizePolicy = QMenu = QSpinBox = QTabBar = QTabWidget = QToolButton = QVBoxLayout = None
     QMainWindow = QWidget = object
 
     class QThread:
@@ -69,6 +72,7 @@ from geom.gui.structure_generator import (
     cleanup_gui_tmp,
     convert_molecule_to_xyz,
     generate_structure,
+    manipulate_xyz,
     read_xyz,
     smiles_to_xyz,
     supported_atomistic_metals,
@@ -638,6 +642,24 @@ class StructureWindow(QMainWindow):
         self.resolution_input = self._make_viewer_spin(1, 1, 4, "x")
         self.resolution_input.valueChanged.connect(self._set_render_resolution_from_input)
 
+        self.manipulator_source = QComboBox()
+        self.manipulator_source.setObjectName("manipulatorSource")
+        self.center_button = QPushButton("Center to origin")
+        self.center_button.setObjectName("loadButton")
+        self.center_button.clicked.connect(self.center_selected_structure)
+        self.rotate_axis = QComboBox()
+        self.rotate_axis.addItems(("+x", "-x", "+y", "-y", "+z", "-z"))
+        self.rotate_angle = self._make_manipulator_spin(90.0, -360.0, 360.0, "°")
+        self.rotate_button = QPushButton("Rotate")
+        self.rotate_button.setObjectName("smilesButton")
+        self.rotate_button.clicked.connect(self.rotate_selected_structure)
+        self.translate_axis = QComboBox()
+        self.translate_axis.addItems(("+x", "-x", "+y", "-y", "+z", "-z"))
+        self.translate_distance = self._make_manipulator_spin(5.0, -10000.0, 10000.0, " Å")
+        self.translate_button = QPushButton("Translate")
+        self.translate_button.setObjectName("smilesButton")
+        self.translate_button.clicked.connect(self.translate_selected_structure)
+
         generator_page = QWidget()
         generator_layout = QVBoxLayout(generator_page)
         generator_layout.setContentsMargins(0, 24, 0, 0)
@@ -674,10 +696,49 @@ class StructureWindow(QMainWindow):
         viewer_layout.addLayout(resolution_row)
         viewer_layout.addStretch(1)
 
+        manipulator_page = QWidget()
+        manipulator_layout = QVBoxLayout(manipulator_page)
+        manipulator_layout.setContentsMargins(0, 24, 0, 0)
+        manipulator_layout.setSpacing(14)
+        manipulator_layout.addWidget(self._section_label("Loaded structure"))
+        manipulator_layout.addWidget(self.manipulator_source)
+        manipulator_layout.addSpacing(12)
+        manipulator_layout.addWidget(self._section_label("Translate"))
+        translate_group = QFrame()
+        translate_group.setObjectName("toolGroup")
+        translate_group_layout = QVBoxLayout(translate_group)
+        translate_group_layout.setContentsMargins(0, 0, 0, 0)
+        translate_group_layout.setSpacing(10)
+        translate_row = QHBoxLayout()
+        translate_row.setSpacing(8)
+        translate_row.addWidget(self.translate_axis)
+        translate_row.addWidget(self.translate_distance)
+        translate_group_layout.addLayout(translate_row)
+        translate_group_layout.addWidget(self.translate_button)
+        manipulator_layout.addWidget(translate_group)
+        manipulator_layout.addSpacing(12)
+        manipulator_layout.addWidget(self._section_label("Rotate"))
+        rotate_group = QFrame()
+        rotate_group.setObjectName("toolGroup")
+        rotate_group_layout = QVBoxLayout(rotate_group)
+        rotate_group_layout.setContentsMargins(0, 0, 0, 0)
+        rotate_group_layout.setSpacing(10)
+        rotate_row = QHBoxLayout()
+        rotate_row.setSpacing(8)
+        rotate_row.addWidget(self.rotate_axis)
+        rotate_row.addWidget(self.rotate_angle)
+        rotate_group_layout.addLayout(rotate_row)
+        rotate_group_layout.addWidget(self.rotate_button)
+        manipulator_layout.addWidget(rotate_group)
+        manipulator_layout.addSpacing(12)
+        manipulator_layout.addWidget(self.center_button)
+        manipulator_layout.addStretch(1)
+
         self.side_tabs = QTabWidget()
         self.side_tabs.setObjectName("sideTabs")
         self.side_tabs.addTab(viewer_page, "Viewer")
         self.side_tabs.addTab(generator_page, "Generator")
+        self.side_tabs.addTab(manipulator_page, "Manipulator")
 
         side.addWidget(title)
         side.addWidget(accent_bar)
@@ -698,6 +759,7 @@ class StructureWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.setObjectName("viewerTabs")
         self.tabs.currentChanged.connect(self._sync_current_tab_meta)
+        self.tabs.currentChanged.connect(self._refresh_manipulator_sources)
         self.canvas = self._make_canvas()
         self.empty_canvas = self.canvas
         self.tabs.addTab(self.canvas, "Visualizer")
@@ -709,6 +771,7 @@ class StructureWindow(QMainWindow):
         self._apply_styles()
         self._refresh_structure_controls()
         self._refresh_smiles_button_state()
+        self._refresh_manipulator_sources()
 
     def _field_label(self, text: str) -> QLabel:
         label = QLabel(text)
@@ -730,6 +793,17 @@ class StructureWindow(QMainWindow):
 
     def _make_viewer_spin(self, value: int, minimum: int, maximum: int, suffix: str) -> ViewerStepper:
         return ViewerStepper(value, minimum, maximum, suffix)
+
+    def _make_manipulator_spin(self, value: float, minimum: float, maximum: float, suffix: str) -> QDoubleSpinBox:
+        spin = QDoubleSpinBox()
+        spin.setButtonSymbols(QDoubleSpinBox.NoButtons)
+        spin.setRange(minimum, maximum)
+        spin.setDecimals(2)
+        spin.setSingleStep(1.0)
+        spin.setValue(value)
+        spin.setSuffix(suffix)
+        spin.setAlignment(Qt.AlignCenter)
+        return spin
 
     def _make_option_spin(self, value: float, minimum: float, maximum: float) -> QDoubleSpinBox:
         spin = QDoubleSpinBox()
@@ -860,6 +934,12 @@ class StructureWindow(QMainWindow):
                 border: 0;
                 border-radius: 0;
             }}
+            QFrame#toolGroup {{
+                background: #FFFFFF;
+                border: 1px solid #F0EDF7;
+                border-radius: 16px;
+                padding: 10px;
+            }}
             QLabel#appTitle {{
                 color: {TEXT};
                 font-size: 42px;
@@ -917,6 +997,23 @@ class StructureWindow(QMainWindow):
                 min-height: 38px;
                 padding: 4px 4px;
                 font-size: 14px;
+            }}
+            QFrame#toolGroup QComboBox,
+            QFrame#toolGroup QDoubleSpinBox {{
+                background: #FFFFFF;
+                border: 1px solid #E8E4F2;
+                border-radius: 14px;
+                min-height: 36px;
+                padding: 0 10px;
+                font-weight: 600;
+            }}
+            QFrame#toolGroup QComboBox:focus,
+            QFrame#toolGroup QDoubleSpinBox:focus {{
+                border: 1px solid {ACCENT_VIOLET};
+            }}
+            QFrame#toolGroup QComboBox::drop-down {{
+                border: 0;
+                width: 28px;
             }}
             QComboBox:disabled, QDoubleSpinBox:disabled {{
                 background: transparent;
@@ -1088,6 +1185,44 @@ class StructureWindow(QMainWindow):
                 background: {ACCENT_SOFT};
                 border-radius: 5px;
             }}
+            QToolButton#tabMenuButton {{
+                background: #FFFFFF;
+                color: #7C7C88;
+                border: 1px solid #EEEAF7;
+                border-radius: 11px;
+                min-width: 28px;
+                max-width: 28px;
+                min-height: 22px;
+                max-height: 22px;
+                padding: 0;
+                font-size: 13px;
+                font-weight: 900;
+            }}
+            QToolButton#tabMenuButton::menu-indicator {{
+                image: none;
+                width: 0;
+                height: 0;
+            }}
+            QToolButton#tabMenuButton:hover {{
+                background: {ACCENT_SOFT};
+                color: {ACCENT_VIOLET};
+            }}
+            QMenu {{
+                background: #FFFFFF;
+                color: {TEXT};
+                border: 1px solid #E8E4F2;
+                border-radius: 10px;
+                padding: 6px;
+            }}
+            QMenu::item {{
+                padding: 7px 26px 7px 12px;
+                border-radius: 7px;
+                font-size: 13px;
+            }}
+            QMenu::item:selected {{
+                background: {ACCENT_SOFT};
+                color: {ACCENT_VIOLET};
+            }}
             QTabWidget#viewerTabs::pane {{
                 border: 0;
                 top: -1px;
@@ -1178,9 +1313,150 @@ class StructureWindow(QMainWindow):
             canvas.setProperty("path", str(path))
 
         tab_index = self.tabs.addTab(canvas, self._short_tab_title(title))
+        self._install_tab_menu(tab_index, canvas)
         self.tabs.setCurrentIndex(tab_index)
         self.canvas = canvas
         self._sync_current_tab_meta()
+        self._refresh_manipulator_sources()
+
+    def _install_tab_menu(self, tab_index: int, canvas: VdwCanvas):
+        button = QToolButton()
+        button.setObjectName("tabMenuButton")
+        button.setText("···")
+        button.setPopupMode(QToolButton.InstantPopup)
+        button.setAutoRaise(True)
+        menu = QMenu(button)
+        save_action = menu.addAction("Save...")
+        save_action.triggered.connect(lambda checked=False, source=canvas: self.save_structure(source))
+        menu.addSeparator()
+        delete_action = menu.addAction("Delete tab...")
+        delete_action.triggered.connect(lambda checked=False, source=canvas: self.delete_structure_tab(source))
+        button.setMenu(menu)
+        self.tabs.tabBar().setTabButton(tab_index, QTabBar.RightSide, button)
+
+    def save_structure(self, canvas: VdwCanvas):
+        source_path = Path(canvas.property("path")) if canvas.property("path") else None
+        default_name = (source_path.stem if source_path else "structure") + ".xyz"
+        destination, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save structure as XYZ",
+            str(Path.cwd() / default_name),
+            "XYZ files (*.xyz)",
+        )
+        if not destination:
+            return
+
+        destination_path = Path(destination)
+        if destination_path.suffix.lower() != ".xyz":
+            destination_path = destination_path.with_suffix(".xyz")
+
+        try:
+            destination_path.parent.mkdir(parents=True, exist_ok=True)
+            if source_path is not None and source_path.exists():
+                shutil.copyfile(source_path, destination_path)
+            else:
+                self._write_xyz(destination_path, canvas.atoms)
+        except Exception as exc:
+            QMessageBox.warning(self, "Could not save structure", f"{destination_path}\n\n{exc}")
+
+    def _write_xyz(self, path: Path, atoms: tuple[AtomRecord, ...]):
+        with path.open("w", encoding="utf-8") as handle:
+            handle.write(f"{len(atoms)}\n")
+            handle.write("Generated with GEOM GUI\n")
+            for atom in atoms:
+                handle.write(f"{atom.element.capitalize():2} {atom.x:20.8f} {atom.y:20.8f} {atom.z:20.8f}\n")
+
+    def delete_structure_tab(self, canvas: VdwCanvas):
+        index = self.tabs.indexOf(canvas)
+        if index < 0:
+            return
+
+        title = self.tabs.tabText(index)
+        answer = QMessageBox.question(
+            self,
+            "Delete structure tab",
+            f'Delete "{title}" from the viewer?',
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer != QMessageBox.Yes:
+            return
+
+        self.tabs.removeTab(index)
+        canvas.deleteLater()
+
+        if self.tabs.count() == 0:
+            self.canvas = self._make_canvas()
+            self.empty_canvas = self.canvas
+            self.tabs.addTab(self.canvas, "Visualizer")
+        else:
+            current = self.tabs.currentWidget()
+            if isinstance(current, VdwCanvas):
+                self.canvas = current
+        self._sync_current_tab_meta()
+        self._refresh_manipulator_sources()
+
+    def _refresh_manipulator_sources(self):
+        if not hasattr(self, "manipulator_source"):
+            return
+
+        current_path = self.manipulator_source.currentData()
+        self.manipulator_source.blockSignals(True)
+        self.manipulator_source.clear()
+        for index in range(self.tabs.count()):
+            widget = self.tabs.widget(index)
+            if not isinstance(widget, VdwCanvas) or not widget.atoms:
+                continue
+            path = widget.property("path")
+            if not path:
+                continue
+            self.manipulator_source.addItem(self.tabs.tabText(index), path)
+        if current_path:
+            found = self.manipulator_source.findData(current_path)
+            if found >= 0:
+                self.manipulator_source.setCurrentIndex(found)
+        self.manipulator_source.blockSignals(False)
+
+        has_sources = self.manipulator_source.count() > 0
+        for widget in (
+            self.manipulator_source,
+            self.center_button,
+            self.rotate_axis,
+            self.rotate_angle,
+            self.rotate_button,
+            self.translate_axis,
+            self.translate_distance,
+            self.translate_button,
+        ):
+            widget.setEnabled(has_sources)
+
+    def _selected_manipulator_path(self) -> Path:
+        path = self.manipulator_source.currentData()
+        if not path:
+            raise ValueError("Load a structure before using the manipulator.")
+        return Path(path)
+
+    def _run_manipulation(self, command_builder):
+        try:
+            xyz_path = manipulate_xyz(self._selected_manipulator_path(), command_builder)
+            atoms = read_xyz(xyz_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Could not manipulate structure", str(exc))
+            return
+        self._add_structure_tab(xyz_path.stem, atoms, xyz_path)
+
+    def center_selected_structure(self):
+        self._run_manipulation(lambda filename: ["-tc", filename])
+
+    def rotate_selected_structure(self):
+        angle = self._fmt(self.rotate_angle.value())
+        axis = self.rotate_axis.currentText()
+        self._run_manipulation(lambda filename: ["-r1", angle, filename, "origin_CM_no", axis])
+
+    def translate_selected_structure(self):
+        distance = self._fmt(self.translate_distance.value())
+        axis = self.translate_axis.currentText()
+        self._run_manipulation(lambda filename: ["-t1", distance, filename, "origin_CM_no", axis])
 
     def _short_tab_title(self, title: str) -> str:
         return title if len(title) <= 24 else title[:21] + "..."
