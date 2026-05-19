@@ -33,6 +33,8 @@ try:
         QMessageBox,
         QPushButton,
         QSizePolicy,
+        QSlider,
+        QTabWidget,
         QVBoxLayout,
         QWidget,
     )
@@ -47,7 +49,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users with
 
     QFontDatabase = None
     QCheckBox = QComboBox = QDoubleSpinBox = QFrame = QGridLayout = QHBoxLayout = QLabel = None
-    QPushButton = QSizePolicy = QVBoxLayout = None
+    QPushButton = QSizePolicy = QSlider = QTabWidget = QVBoxLayout = None
     QMainWindow = QWidget = object
 
     class QThread:
@@ -62,6 +64,7 @@ from geom.gui.structure_generator import (
     AtomRecord,
     StructureResult,
     generate_structure,
+    read_xyz,
     supported_atomistic_metals,
     supported_fcc_metals,
 )
@@ -77,6 +80,10 @@ CANVAS = "#F7F7F8"
 BORDER = "#D9D9E3"
 SIDEBAR = "#ECECF1"
 SOFT_BORDER = "#ECECF1"
+PANEL = "#FFFFFF"
+ACCENT_VIOLET = "#4F00B5"
+ACCENT_INDIGO = "#0600A0"
+ACCENT_SOFT = "#F4F0FF"
 
 # VMD's periodic table VDW radii in Angstrom.
 # Source: VMD PeriodicTable.C, pte_vdw_radius/get_pte_vdw_radius.
@@ -206,20 +213,33 @@ class GenerationWorker(QThread):
 
 
 class VdwCanvas(QWidget):
+    files_dropped = Signal(list)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.atoms: tuple[AtomRecord, ...] = ()
         self.rotation_x = math.radians(18.0)
         self.rotation_y = math.radians(-28.0)
         self.zoom = 1.0
+        self.vdw_scale = 1.0
+        self.high_resolution = False
         self._last_pos: QPoint | None = None
         self.setMinimumSize(560, 420)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMouseTracking(True)
+        self.setAcceptDrops(True)
 
     def set_atoms(self, atoms: tuple[AtomRecord, ...]):
         self.atoms = atoms
         self.zoom = 1.0
+        self.update()
+
+    def set_vdw_scale(self, value: float):
+        self.vdw_scale = value
+        self.update()
+
+    def set_high_resolution(self, enabled: bool):
+        self.high_resolution = enabled
         self.update()
 
     def mousePressEvent(self, event):
@@ -245,9 +265,35 @@ class VdwCanvas(QWidget):
         self.zoom = min(4.0, max(0.35, self.zoom * factor))
         self.update()
 
+    def dragEnterEvent(self, event):
+        if self._xyz_paths_from_event(event):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        paths = self._xyz_paths_from_event(event)
+        if paths:
+            self.files_dropped.emit(paths)
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def _xyz_paths_from_event(self, event) -> list[Path]:
+        paths = []
+        if not event.mimeData().hasUrls():
+            return paths
+        for url in event.mimeData().urls():
+            if url.isLocalFile():
+                path = Path(url.toLocalFile())
+                if path.suffix.lower() == ".xyz":
+                    paths.append(path)
+        return paths
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, self.high_resolution)
         self._paint_background(painter)
 
         if not self.atoms:
@@ -294,7 +340,7 @@ class VdwCanvas(QWidget):
         atoms = []
         for atom, x, y, z in rotated:
             element = atom.element.capitalize()
-            radius = VDW_RADII.get(element, VDW_RADII["X"]) * scale * 0.68
+            radius = VDW_RADII.get(element, VDW_RADII["X"]) * scale * 0.68 * self.vdw_scale
             atoms.append(ProjectedAtom(element, center_x + x * scale, center_y - y * scale, z, radius))
 
         atoms.sort(key=lambda item: item.z)
@@ -316,7 +362,7 @@ class VdwCanvas(QWidget):
         gradient.setColorAt(0.18, shaded.lighter(132))
         gradient.setColorAt(0.76, shaded)
         gradient.setColorAt(1.0, shaded.darker(165))
-        painter.setPen(QColor(0, 0, 0, 34))
+        painter.setPen(QColor(0, 0, 0, 22 if self.high_resolution else 34))
         painter.setBrush(gradient)
         painter.drawEllipse(rect)
 
@@ -327,6 +373,9 @@ class StructureWindow(QMainWindow):
         self.worker: GenerationWorker | None = None
         self.current_result: StructureResult | None = None
         self.output_root: Path | None = None
+        self.empty_canvas: VdwCanvas | None = None
+        self.vdw_scale = 1.0
+        self.high_resolution = False
         self.setWindowTitle(APP_TITLE)
         self.resize(1180, 760)
         self._build_ui()
@@ -345,10 +394,10 @@ class StructureWindow(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(380)
+        sidebar.setFixedWidth(390)
         side = QVBoxLayout(sidebar)
-        side.setContentsMargins(24, 24, 24, 24)
-        side.setSpacing(18)
+        side.setContentsMargins(32, 34, 32, 24)
+        side.setSpacing(20)
 
         title = QLabel("GEOM")
         title.setObjectName("appTitle")
@@ -356,6 +405,9 @@ class StructureWindow(QMainWindow):
         subtitle = QLabel("Structure generation")
         subtitle.setObjectName("subtitle")
         subtitle.setAlignment(Qt.AlignHCenter)
+        accent_bar = QFrame()
+        accent_bar.setObjectName("accentBar")
+        accent_bar.setFixedHeight(4)
 
         self.structure_combo = QComboBox()
         self.structure_combo.addItems(STRUCTURES.keys())
@@ -373,6 +425,7 @@ class StructureWindow(QMainWindow):
         for _ in range(3):
             label = self._field_label("")
             spin = QDoubleSpinBox()
+            spin.setButtonSymbols(QDoubleSpinBox.NoButtons)
             spin.setDecimals(3)
             spin.setSingleStep(1.0)
             spin.setSuffix(" Å")
@@ -382,9 +435,9 @@ class StructureWindow(QMainWindow):
         controls = QFrame()
         controls.setObjectName("controls")
         form = QGridLayout(controls)
-        form.setContentsMargins(16, 16, 16, 16)
+        form.setContentsMargins(0, 0, 0, 0)
         form.setHorizontalSpacing(12)
-        form.setVerticalSpacing(14)
+        form.setVerticalSpacing(18)
         form.addWidget(self._field_label("Structure"), 0, 0)
         form.addWidget(self.structure_combo, 0, 1)
         form.addWidget(self._field_label("Metal"), 1, 0)
@@ -398,7 +451,7 @@ class StructureWindow(QMainWindow):
         options = QFrame()
         options.setObjectName("controls")
         option_layout = QGridLayout(options)
-        option_layout.setContentsMargins(16, 16, 16, 16)
+        option_layout.setContentsMargins(0, 0, 0, 0)
         option_layout.setHorizontalSpacing(12)
         option_layout.setVerticalSpacing(12)
 
@@ -435,19 +488,62 @@ class StructureWindow(QMainWindow):
         self.create_button = QPushButton("Create structure")
         self.create_button.setObjectName("primaryButton")
         self.create_button.clicked.connect(self.create_structure)
+        self.load_button = QPushButton("Load XYZ file")
+        self.load_button.setObjectName("secondaryButton")
+        self.load_button.clicked.connect(self.load_files_from_dialog)
+
+        self.vdw_scale_label = QLabel("100%")
+        self.vdw_scale_label.setObjectName("valueLabel")
+        self.vdw_scale_slider = QSlider(Qt.Horizontal)
+        self.vdw_scale_slider.setRange(60, 180)
+        self.vdw_scale_slider.setValue(100)
+        self.vdw_scale_slider.valueChanged.connect(self._set_vdw_scale_from_slider)
+
+        self.resolution_button = QPushButton("Increase resolution")
+        self.resolution_button.setObjectName("secondaryButton")
+        self.resolution_button.clicked.connect(self.toggle_high_resolution)
+
+        generator_page = QWidget()
+        generator_layout = QVBoxLayout(generator_page)
+        generator_layout.setContentsMargins(0, 24, 0, 0)
+        generator_layout.setSpacing(18)
+        generator_layout.addWidget(controls)
+        generator_layout.addSpacing(6)
+        generator_layout.addWidget(options)
+        generator_layout.addStretch(1)
+        generator_layout.addWidget(self.create_button)
+
+        viewer_page = QWidget()
+        viewer_layout = QVBoxLayout(viewer_page)
+        viewer_layout.setContentsMargins(0, 24, 0, 0)
+        viewer_layout.setSpacing(18)
+        viewer_layout.addWidget(self.load_button)
+        viewer_layout.addSpacing(10)
+
+        vdw_row = QHBoxLayout()
+        vdw_label = self._field_label("VdW radius")
+        vdw_row.addWidget(vdw_label)
+        vdw_row.addStretch(1)
+        vdw_row.addWidget(self.vdw_scale_label)
+        viewer_layout.addLayout(vdw_row)
+        viewer_layout.addWidget(self.vdw_scale_slider)
+        viewer_layout.addWidget(self.resolution_button)
+        viewer_layout.addStretch(1)
+
+        self.side_tabs = QTabWidget()
+        self.side_tabs.setObjectName("sideTabs")
+        self.side_tabs.addTab(generator_page, "Generator")
+        self.side_tabs.addTab(viewer_page, "Viewer")
 
         side.addWidget(title)
         side.addWidget(subtitle)
-        side.addSpacing(22)
-        side.addWidget(controls)
-        side.addWidget(options)
-        side.addStretch(1)
-        side.addWidget(self.create_button)
+        side.addWidget(accent_bar)
+        side.addWidget(self.side_tabs, 1)
 
         main = QFrame()
         main.setObjectName("main")
         main_layout = QVBoxLayout(main)
-        main_layout.setContentsMargins(24, 20, 24, 24)
+        main_layout.setContentsMargins(28, 22, 24, 24)
         main_layout.setSpacing(8)
 
         header = QHBoxLayout()
@@ -456,10 +552,14 @@ class StructureWindow(QMainWindow):
         header.addStretch(1)
         header.addWidget(self.meta_label)
 
-        self.canvas = VdwCanvas()
-        self.canvas.setObjectName("canvas")
+        self.tabs = QTabWidget()
+        self.tabs.setObjectName("viewerTabs")
+        self.tabs.currentChanged.connect(self._sync_current_tab_meta)
+        self.canvas = self._make_canvas()
+        self.empty_canvas = self.canvas
+        self.tabs.addTab(self.canvas, "Visualizer")
         main_layout.addLayout(header)
-        main_layout.addWidget(self.canvas)
+        main_layout.addWidget(self.tabs)
 
         layout.addWidget(sidebar)
         layout.addWidget(main, 1)
@@ -471,8 +571,17 @@ class StructureWindow(QMainWindow):
         label.setObjectName("fieldLabel")
         return label
 
+    def _make_canvas(self) -> VdwCanvas:
+        canvas = VdwCanvas()
+        canvas.setObjectName("canvas")
+        canvas.set_vdw_scale(self.vdw_scale)
+        canvas.set_high_resolution(self.high_resolution)
+        canvas.files_dropped.connect(self.load_files)
+        return canvas
+
     def _make_option_spin(self, value: float, minimum: float, maximum: float) -> QDoubleSpinBox:
         spin = QDoubleSpinBox()
+        spin.setButtonSymbols(QDoubleSpinBox.NoButtons)
         spin.setRange(minimum, maximum)
         spin.setDecimals(2)
         spin.setSingleStep(1.0)
@@ -547,6 +656,25 @@ class StructureWindow(QMainWindow):
         for widget in widgets:
             widget.setEnabled(enabled)
 
+    def _set_vdw_scale_from_slider(self, value: int):
+        self.vdw_scale = value / 100.0
+        self.vdw_scale_label.setText(f"{value}%")
+        for canvas in self._all_canvases():
+            canvas.set_vdw_scale(self.vdw_scale)
+
+    def toggle_high_resolution(self):
+        self.high_resolution = not self.high_resolution
+        self.resolution_button.setText("Standard resolution" if self.high_resolution else "Increase resolution")
+        for canvas in self._all_canvases():
+            canvas.set_high_resolution(self.high_resolution)
+
+    def _all_canvases(self) -> list[VdwCanvas]:
+        return [
+            self.tabs.widget(index)
+            for index in range(self.tabs.count())
+            if isinstance(self.tabs.widget(index), VdwCanvas)
+        ]
+
     def _apply_styles(self):
         self.setStyleSheet(f"""
             QWidget#root {{
@@ -554,45 +682,83 @@ class StructureWindow(QMainWindow):
                 color: {TEXT};
             }}
             QFrame#sidebar {{
-                background: {SURFACE};
-                border-right: 1px solid {SOFT_BORDER};
+                background: #FCFCFE;
+                border-right: 1px solid #F1F1F4;
             }}
             QFrame#main {{
                 background: {SURFACE};
             }}
+            QFrame#accentBar {{
+                border: 0;
+                border-radius: 2px;
+                margin-left: 112px;
+                margin-right: 112px;
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 {ACCENT_VIOLET},
+                    stop: 1 {ACCENT_INDIGO}
+                );
+            }}
             QFrame#controls {{
-                background: {SURFACE};
-                border: 1px solid {SOFT_BORDER};
-                border-radius: 14px;
+                background: transparent;
+                border: 0;
+                border-radius: 0;
             }}
             QLabel#appTitle {{
                 color: {TEXT};
-                font-size: 38px;
-                font-weight: 750;
+                font-size: 42px;
+                font-weight: 760;
                 letter-spacing: 0;
             }}
             QLabel#subtitle, QLabel#fieldLabel {{
-                color: {MUTED};
+                color: #7C7C88;
                 font-size: 13px;
+            }}
+            QLabel#valueLabel {{
+                color: {TEXT};
+                font-size: 13px;
+                font-weight: 650;
             }}
             QLabel#meta {{
                 color: {TEXT};
                 font-size: 20px;
                 font-weight: 750;
             }}
-            QComboBox, QDoubleSpinBox {{
-                background: {SURFACE};
+            QTabWidget#sideTabs::pane {{
+                border: 0;
+            }}
+            QTabWidget#sideTabs QTabBar::tab {{
+                background: transparent;
+                color: #7C7C88;
+                border: 0;
+                border-bottom: 2px solid transparent;
+                padding: 9px 16px 8px 16px;
+                margin-right: 8px;
+                font-size: 13px;
+                font-weight: 650;
+            }}
+            QTabWidget#sideTabs QTabBar::tab:selected {{
                 color: {TEXT};
-                border: 1px solid {SOFT_BORDER};
-                border-radius: 10px;
-                min-height: 40px;
-                padding: 4px 12px;
+                border-bottom: 2px solid {ACCENT_VIOLET};
+            }}
+            QComboBox, QDoubleSpinBox {{
+                background: transparent;
+                color: {TEXT};
+                border: 0;
+                border-bottom: 1px solid #E8E5F1;
+                border-radius: 0;
+                min-height: 38px;
+                padding: 4px 4px;
                 font-size: 14px;
             }}
             QComboBox:disabled, QDoubleSpinBox:disabled {{
-                background: #F7F7F8;
+                background: transparent;
                 color: #A8A8B3;
-                border-color: #EEEEF2;
+                border-bottom: 1px solid #F0F0F3;
+            }}
+            QComboBox:focus, QDoubleSpinBox:focus {{
+                border-bottom: 2px solid {ACCENT_VIOLET};
+                background: transparent;
             }}
             QCheckBox {{
                 color: {TEXT};
@@ -605,13 +771,17 @@ class StructureWindow(QMainWindow):
             QCheckBox::indicator {{
                 width: 18px;
                 height: 18px;
-                border: 1px solid {SOFT_BORDER};
-                border-radius: 5px;
+                border: 1px solid #E0DCEA;
+                border-radius: 9px;
                 background: {SURFACE};
             }}
             QCheckBox::indicator:checked {{
-                background: {CHATGPT_GREEN};
-                border-color: {CHATGPT_GREEN};
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 1,
+                    stop: 0 {ACCENT_VIOLET},
+                    stop: 1 {ACCENT_INDIGO}
+                );
+                border-color: {ACCENT_VIOLET};
             }}
             QCheckBox::indicator:disabled {{
                 background: #F4F4F5;
@@ -619,24 +789,80 @@ class StructureWindow(QMainWindow):
             QPushButton {{
                 background: {SURFACE};
                 color: {TEXT};
-                border: 1px solid {SOFT_BORDER};
-                border-radius: 10px;
-                min-height: 44px;
+                border: 1px solid #ECEAF3;
+                border-radius: 24px;
+                min-height: 48px;
                 padding: 6px 12px;
                 font-weight: 600;
                 font-size: 15px;
             }}
             QPushButton:hover {{
-                border-color: {CHATGPT_GREEN};
+                border-color: {ACCENT_VIOLET};
             }}
             QPushButton#primaryButton {{
-                background: {CHATGPT_GREEN};
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 {ACCENT_VIOLET},
+                    stop: 1 {ACCENT_INDIGO}
+                );
                 color: white;
-                border-color: {CHATGPT_GREEN};
+                border-color: {ACCENT_VIOLET};
+                border-radius: 24px;
             }}
             QPushButton#primaryButton:disabled {{
-                background: #9ED9C8;
-                border-color: #9ED9C8;
+                background: #D9D2EA;
+                border-color: #D9D2EA;
+            }}
+            QPushButton#secondaryButton {{
+                background: transparent;
+                color: {ACCENT_VIOLET};
+                border: 0;
+                min-height: 36px;
+                font-weight: 650;
+                text-align: center;
+            }}
+            QPushButton#secondaryButton:hover {{
+                color: {ACCENT_INDIGO};
+            }}
+            QSlider::groove:horizontal {{
+                height: 4px;
+                border: 0;
+                border-radius: 2px;
+                background: #E8E5F1;
+            }}
+            QSlider::sub-page:horizontal {{
+                border-radius: 2px;
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 {ACCENT_VIOLET},
+                    stop: 1 {ACCENT_INDIGO}
+                );
+            }}
+            QSlider::handle:horizontal {{
+                width: 18px;
+                height: 18px;
+                margin: -7px 0;
+                border-radius: 9px;
+                background: white;
+                border: 1px solid #DAD5EA;
+            }}
+            QTabWidget#viewerTabs::pane {{
+                border: 0;
+                top: -1px;
+            }}
+            QTabWidget#viewerTabs QTabBar::tab {{
+                background: transparent;
+                color: #7C7C88;
+                border: 0;
+                border-bottom: 2px solid transparent;
+                padding: 8px 12px;
+                margin-right: 10px;
+                font-size: 13px;
+                font-weight: 600;
+            }}
+            QTabWidget#viewerTabs QTabBar::tab:selected {{
+                color: {TEXT};
+                border-bottom: 2px solid {ACCENT_VIOLET};
             }}
             QWidget#canvas {{
                 background: {SURFACE};
@@ -665,6 +891,52 @@ class StructureWindow(QMainWindow):
         self.worker.generated.connect(self._structure_ready)
         self.worker.failed.connect(self._structure_failed)
         self.worker.start()
+
+    def load_files_from_dialog(self):
+        files, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Load XYZ structure",
+            str(Path.cwd()),
+            "XYZ files (*.xyz)",
+        )
+        if files:
+            self.load_files([Path(file) for file in files])
+
+    def load_files(self, paths: list[Path]):
+        for path in paths:
+            try:
+                atoms = read_xyz(path)
+            except Exception as exc:
+                QMessageBox.warning(self, "Could not load XYZ file", f"{path}\n\n{exc}")
+                continue
+            self._add_structure_tab(path.stem, atoms, path)
+
+    def _add_structure_tab(self, title: str, atoms: tuple[AtomRecord, ...], path: Path | None = None):
+        if self.empty_canvas is not None and self.tabs.count() == 1 and not self.empty_canvas.atoms:
+            self.tabs.removeTab(0)
+            self.empty_canvas = None
+
+        canvas = self._make_canvas()
+        canvas.set_atoms(atoms)
+        canvas.setProperty("atom_count", len(atoms))
+        if path is not None:
+            canvas.setProperty("path", str(path))
+
+        tab_index = self.tabs.addTab(canvas, self._short_tab_title(title))
+        self.tabs.setCurrentIndex(tab_index)
+        self.canvas = canvas
+        self._sync_current_tab_meta()
+
+    def _short_tab_title(self, title: str) -> str:
+        return title if len(title) <= 24 else title[:21] + "..."
+
+    def _sync_current_tab_meta(self):
+        widget = self.tabs.currentWidget()
+        if not widget:
+            self.meta_label.setText("")
+            return
+        atom_count = widget.property("atom_count")
+        self.meta_label.setText(f"{atom_count:,} atoms" if atom_count else "")
 
     def _build_command_args(self) -> list[str]:
         structure = self.structure_combo.currentText()
@@ -715,8 +987,7 @@ class StructureWindow(QMainWindow):
 
     def _structure_ready(self, result: StructureResult):
         self.current_result = result
-        self.canvas.set_atoms(result.atoms)
-        self.meta_label.setText(f"{result.atom_count:,} atoms")
+        self._add_structure_tab(result.xyz_path.stem, result.atoms, result.xyz_path)
         self.create_button.setEnabled(True)
         self.create_button.setText("Create structure")
         self.worker = None
