@@ -30,6 +30,7 @@ try:
         QGridLayout,
         QHBoxLayout,
         QLabel,
+        QLineEdit,
         QMainWindow,
         QMessageBox,
         QPushButton,
@@ -50,7 +51,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users with
         DemiBold = 63
 
     QFontDatabase = None
-    QCheckBox = QComboBox = QDoubleSpinBox = QFrame = QGridLayout = QHBoxLayout = QLabel = None
+    QCheckBox = QComboBox = QDoubleSpinBox = QFrame = QGridLayout = QHBoxLayout = QLabel = QLineEdit = None
     QPushButton = QSizePolicy = QSpinBox = QTabWidget = QToolButton = QVBoxLayout = None
     QMainWindow = QWidget = object
 
@@ -65,14 +66,18 @@ else:
 from geom.gui.structure_generator import (
     AtomRecord,
     StructureResult,
+    cleanup_gui_tmp,
+    convert_molecule_to_xyz,
     generate_structure,
     read_xyz,
+    smiles_to_xyz,
     supported_atomistic_metals,
     supported_fcc_metals,
 )
 
 
 APP_TITLE = "GEOM Structure Studio"
+SUPPORTED_VIEWER_SUFFIXES = {".xyz", ".pdb", ".smi"}
 
 CHATGPT_GREEN = "#10A37F"
 TEXT = "#202123"
@@ -290,27 +295,27 @@ class VdwCanvas(QWidget):
         super().keyPressEvent(event)
 
     def dragEnterEvent(self, event):
-        if self._xyz_paths_from_event(event):
+        if self._structure_paths_from_event(event):
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dropEvent(self, event):
-        paths = self._xyz_paths_from_event(event)
+        paths = self._structure_paths_from_event(event)
         if paths:
             self.files_dropped.emit(paths)
             event.acceptProposedAction()
         else:
             event.ignore()
 
-    def _xyz_paths_from_event(self, event) -> list[Path]:
+    def _structure_paths_from_event(self, event) -> list[Path]:
         paths = []
         if not event.mimeData().hasUrls():
             return paths
         for url in event.mimeData().urls():
             if url.isLocalFile():
                 path = Path(url.toLocalFile())
-                if path.suffix.lower() == ".xyz":
+                if path.suffix.lower() in SUPPORTED_VIEWER_SUFFIXES:
                     paths.append(path)
         return paths
 
@@ -612,9 +617,20 @@ class StructureWindow(QMainWindow):
         self.create_button = QPushButton("Create structure")
         self.create_button.setObjectName("primaryButton")
         self.create_button.clicked.connect(self.create_structure)
-        self.load_button = QPushButton("Load XYZ file")
+        self.load_button = QPushButton("Choose file")
         self.load_button.setObjectName("loadButton")
         self.load_button.clicked.connect(self.load_files_from_dialog)
+        self.file_hint = QLabel("XYZ, PDB, SMI")
+        self.file_hint.setObjectName("helperText")
+        self.file_hint.setAlignment(Qt.AlignHCenter)
+        self.smiles_input = QLineEdit()
+        self.smiles_input.setObjectName("smilesInput")
+        self.smiles_input.setPlaceholderText("e.g. CCO")
+        self.smiles_input.textChanged.connect(self._refresh_smiles_button_state)
+        self.smiles_input.returnPressed.connect(self.load_smiles_from_input)
+        self.smiles_button = QPushButton("Load SMILES")
+        self.smiles_button.setObjectName("smilesButton")
+        self.smiles_button.clicked.connect(self.load_smiles_from_input)
 
         self.vdw_scale_input = self._make_viewer_spin(100, 60, 180, "%")
         self.vdw_scale_input.valueChanged.connect(self._set_vdw_scale_from_input)
@@ -635,9 +651,14 @@ class StructureWindow(QMainWindow):
         viewer_page = QWidget()
         viewer_layout = QVBoxLayout(viewer_page)
         viewer_layout.setContentsMargins(0, 24, 0, 0)
-        viewer_layout.setSpacing(18)
+        viewer_layout.setSpacing(14)
         viewer_layout.addWidget(self.load_button)
-        viewer_layout.addSpacing(10)
+        viewer_layout.addWidget(self.file_hint)
+        viewer_layout.addSpacing(8)
+        viewer_layout.addWidget(self._section_label("Load from SMILES"))
+        viewer_layout.addWidget(self.smiles_input)
+        viewer_layout.addWidget(self.smiles_button)
+        viewer_layout.addSpacing(12)
 
         vdw_row = QHBoxLayout()
         vdw_label = self._field_label("VdW radius")
@@ -655,8 +676,8 @@ class StructureWindow(QMainWindow):
 
         self.side_tabs = QTabWidget()
         self.side_tabs.setObjectName("sideTabs")
-        self.side_tabs.addTab(generator_page, "Generator")
         self.side_tabs.addTab(viewer_page, "Viewer")
+        self.side_tabs.addTab(generator_page, "Generator")
 
         side.addWidget(title)
         side.addWidget(accent_bar)
@@ -687,10 +708,16 @@ class StructureWindow(QMainWindow):
         layout.addWidget(main, 1)
         self._apply_styles()
         self._refresh_structure_controls()
+        self._refresh_smiles_button_state()
 
     def _field_label(self, text: str) -> QLabel:
         label = QLabel(text)
         label.setObjectName("fieldLabel")
+        return label
+
+    def _section_label(self, text: str) -> QLabel:
+        label = QLabel(text)
+        label.setObjectName("sectionLabel")
         return label
 
     def _make_canvas(self) -> VdwCanvas:
@@ -791,6 +818,12 @@ class StructureWindow(QMainWindow):
         for canvas in self._all_canvases():
             canvas.set_render_resolution(self.render_resolution)
 
+    def _refresh_smiles_button_state(self):
+        has_smiles = bool(self.smiles_input.text().strip())
+        self.smiles_button.setProperty("active", has_smiles)
+        self.smiles_button.style().unpolish(self.smiles_button)
+        self.smiles_button.style().polish(self.smiles_button)
+
     def _all_canvases(self) -> list[VdwCanvas]:
         return [
             self.tabs.widget(index)
@@ -836,6 +869,17 @@ class StructureWindow(QMainWindow):
             QLabel#subtitle, QLabel#fieldLabel {{
                 color: #7C7C88;
                 font-size: 13px;
+            }}
+            QLabel#sectionLabel {{
+                color: {TEXT};
+                font-size: 13px;
+                font-weight: 700;
+                margin-top: 4px;
+            }}
+            QLabel#helperText {{
+                color: #8A8795;
+                font-size: 12px;
+                font-weight: 500;
             }}
             QLabel#valueLabel {{
                 color: {TEXT};
@@ -963,6 +1007,50 @@ class StructureWindow(QMainWindow):
             QPushButton#loadButton:hover {{
                 border-color: {ACCENT_INDIGO};
             }}
+            QLineEdit#smilesInput {{
+                background: #FFFFFF;
+                color: {TEXT};
+                border: 1px solid #E8E4F2;
+                border-radius: 16px;
+                min-height: 40px;
+                padding: 0 13px;
+                font-size: 14px;
+                selection-background-color: {ACCENT_SOFT};
+            }}
+            QLineEdit#smilesInput:focus {{
+                border-color: {ACCENT_VIOLET};
+            }}
+            QPushButton#smilesButton {{
+                background: #FFFFFF;
+                color: {ACCENT_VIOLET};
+                border: 1px solid #DED8EF;
+                border-radius: 16px;
+                min-height: 40px;
+                padding: 0 14px;
+                font-weight: 700;
+                font-size: 13px;
+            }}
+            QPushButton#smilesButton:hover {{
+                border-color: {ACCENT_VIOLET};
+                background: #FAF8FF;
+            }}
+            QPushButton#smilesButton[active="true"] {{
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 {ACCENT_VIOLET},
+                    stop: 1 {ACCENT_INDIGO}
+                );
+                color: #FFFFFF;
+                border-color: {ACCENT_VIOLET};
+            }}
+            QPushButton#smilesButton[active="true"]:hover {{
+                border-color: {ACCENT_INDIGO};
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 {ACCENT_VIOLET},
+                    stop: 1 {ACCENT_INDIGO}
+                );
+            }}
             QWidget#viewerStepper {{
                 background: #FFFFFF;
                 border: 1px solid #E8E4F2;
@@ -1049,9 +1137,9 @@ class StructureWindow(QMainWindow):
     def load_files_from_dialog(self):
         files, _ = QFileDialog.getOpenFileNames(
             self,
-            "Load XYZ structure",
+            "Load structure",
             str(Path.cwd()),
-            "XYZ files (*.xyz)",
+            "Structure files (*.xyz *.pdb *.smi)",
         )
         if files:
             self.load_files([Path(file) for file in files])
@@ -1059,11 +1147,24 @@ class StructureWindow(QMainWindow):
     def load_files(self, paths: list[Path]):
         for path in paths:
             try:
-                atoms = read_xyz(path)
+                xyz_path = convert_molecule_to_xyz(path)
+                atoms = read_xyz(xyz_path)
             except Exception as exc:
-                QMessageBox.warning(self, "Could not load XYZ file", f"{path}\n\n{exc}")
+                QMessageBox.warning(self, "Could not load structure file", f"{path}\n\n{exc}")
                 continue
-            self._add_structure_tab(path.stem, atoms, path)
+            self._add_structure_tab(path.stem, atoms, xyz_path)
+
+    def load_smiles_from_input(self):
+        smiles = self.smiles_input.text().strip()
+        try:
+            xyz_path = smiles_to_xyz(smiles)
+            atoms = read_xyz(xyz_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Could not load SMILES", str(exc))
+            return
+
+        self._add_structure_tab("SMILES", atoms, xyz_path)
+        self.smiles_input.clear()
 
     def _add_structure_tab(self, title: str, atoms: tuple[AtomRecord, ...], path: Path | None = None):
         if self.empty_canvas is not None and self.tabs.count() == 1 and not self.empty_canvas.atoms:
@@ -1152,6 +1253,10 @@ class StructureWindow(QMainWindow):
         self.worker = None
         QMessageBox.critical(self, "GEOM structure generation failed", details)
 
+    def closeEvent(self, event):
+        cleanup_gui_tmp()
+        super().closeEvent(event)
+
 
 def main() -> int:
     if missing_dependency is not None:
@@ -1167,7 +1272,10 @@ def main() -> int:
     app = QApplication(sys.argv)
     window = StructureWindow()
     window.show()
-    return app.exec()
+    try:
+        return app.exec()
+    finally:
+        cleanup_gui_tmp()
 
 
 if __name__ == "__main__":

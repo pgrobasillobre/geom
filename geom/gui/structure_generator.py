@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import subprocess
+import shutil
 import sys
 import threading
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -12,6 +14,8 @@ from geom.classes.parameters import parameters
 
 
 _GENERATION_LOCK = threading.Lock()
+_CONVERSION_LOCK = threading.Lock()
+GUI_TMP_ROOT = Path(__file__).resolve().parent / "tmp"
 
 
 @dataclass(frozen=True)
@@ -88,6 +92,74 @@ def generate_structure(command_args: list[str], output_root: Path) -> StructureR
 
     xyz_path = _newest_generated_xyz(results_dir, before)
     return StructureResult(xyz_path=xyz_path, atoms=read_xyz(xyz_path), command=tuple(command))
+
+
+def convert_molecule_to_xyz(input_path: Path) -> Path:
+    """Convert a PDB/SMI-like molecule file to XYZ through GEOM's RDKit command path."""
+
+    input_path = Path(input_path)
+    if input_path.suffix.lower() == ".xyz":
+        return input_path
+
+    GUI_TMP_ROOT.mkdir(parents=True, exist_ok=True)
+    results_dir = GUI_TMP_ROOT / "results_geom"
+    before = _xyz_snapshot(results_dir)
+    output_name = f"{input_path.stem}_{uuid.uuid4().hex[:8]}.xyz"
+    runner = (
+        "import sys; "
+        "from geom.classes import input_class; "
+        "from geom.functions import general, rdkit_module; "
+        "inp = input_class.input_class(); "
+        "general.read_command_line(['geom', *sys.argv[1:]], inp); "
+        "rdkit_module.select_case(inp)"
+    )
+    command = (
+        sys.executable,
+        "-c",
+        runner,
+        "-rdkit",
+        "-i",
+        str(input_path),
+        "-o",
+        output_name,
+    )
+
+    with _CONVERSION_LOCK:
+        completed = subprocess.run(
+            command,
+            cwd=GUI_TMP_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    if completed.returncode != 0:
+        message = completed.stderr.strip() or completed.stdout.strip() or "GEOM RDKit conversion failed."
+        raise RuntimeError(message)
+
+    expected = results_dir / output_name
+    return expected if expected.exists() else _newest_generated_xyz(results_dir, before)
+
+
+def smiles_to_xyz(smiles: str) -> Path:
+    """Write a SMILES string into GEOM's GUI temp folder and convert it to XYZ."""
+
+    smiles = smiles.strip()
+    if not smiles:
+        raise ValueError("Enter a SMILES string first.")
+
+    input_dir = GUI_TMP_ROOT / "smiles"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    smi_path = input_dir / f"smiles_{uuid.uuid4().hex[:8]}.smi"
+    smi_path.write_text(smiles + "\n", encoding="utf-8")
+    return convert_molecule_to_xyz(smi_path)
+
+
+def cleanup_gui_tmp() -> None:
+    """Remove GUI-generated temporary conversion files."""
+
+    if GUI_TMP_ROOT.exists():
+        shutil.rmtree(GUI_TMP_ROOT)
 
 
 def _xyz_snapshot(results_dir: Path) -> dict[Path, int]:
