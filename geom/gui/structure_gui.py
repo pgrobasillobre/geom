@@ -271,19 +271,13 @@ GRAPHENE_VARIANTS = {
         "graphene": "disk",
         "fields": (("radius", "Radius", 30.0, 2.0, 300.0),),
     },
+    "Triangle": {
+        "graphene": "triangle",
+        "fields": (("side_length", "Side length", 50.0, 2.0, 500.0),),
+    },
     "Ribbon": {
         "graphene": "rib",
         "fields": (("x_length", "X length", 40.0, 2.0, 500.0), ("y_length", "Y length", 20.0, 2.0, 500.0)),
-    },
-    "Triangle armchair": {
-        "graphene": "triangle",
-        "edge": "armchair",
-        "fields": (("side_length", "Side length", 50.0, 2.0, 500.0),),
-    },
-    "Triangle zigzag": {
-        "graphene": "triangle",
-        "edge": "zigzag",
-        "fields": (("side_length", "Side length", 50.0, 2.0, 500.0),),
     },
     "Ring": {
         "graphene": "ring",
@@ -1110,6 +1104,9 @@ class StructureWindow(QMainWindow):
         self.graphene_variant_combo = QComboBox()
         self.graphene_variant_combo.addItems(GRAPHENE_VARIANTS.keys())
         self.graphene_variant_combo.currentTextChanged.connect(self._refresh_structure_controls)
+        self.graphene_edge_label = self._field_label("Edge")
+        self.graphene_edge_combo = QComboBox()
+        self.graphene_edge_combo.addItems(("armchair", "zigzag"))
 
         self.param_labels: list[QLabel] = []
         self.param_spins: list[QDoubleSpinBox] = []
@@ -1137,6 +1134,8 @@ class StructureWindow(QMainWindow):
         form.addWidget(self.graphene_variant_combo, 1, 1)
         form.addWidget(self.axis_label, 2, 0)
         form.addWidget(self.axis_combo, 2, 1)
+        form.addWidget(self.graphene_edge_label, 2, 0)
+        form.addWidget(self.graphene_edge_combo, 2, 1)
         for index, (label, spin) in enumerate(zip(self.param_labels, self.param_spins), start=3):
             form.addWidget(label, index, 0)
             form.addWidget(spin, index, 1)
@@ -1488,6 +1487,9 @@ class StructureWindow(QMainWindow):
         self.axis_combo.setVisible(has_axis)
         self.graphene_variant_label.setVisible(is_graphene)
         self.graphene_variant_combo.setVisible(is_graphene)
+        has_graphene_edge = is_graphene and active_definition.get("graphene") == "triangle"
+        self.graphene_edge_label.setVisible(has_graphene_edge)
+        self.graphene_edge_combo.setVisible(has_graphene_edge)
 
         fields = active_definition["fields"]
         for index, (label, spin) in enumerate(zip(self.param_labels, self.param_spins)):
@@ -1691,6 +1693,34 @@ class StructureWindow(QMainWindow):
                 padding: 4px 4px;
                 font-size: 14px;
             }}
+            QComboBox:hover {{
+                color: #000000;
+                border-bottom: 2px solid {ACCENT_VIOLET};
+                background: {ACCENT_SOFT};
+            }}
+            QComboBox::drop-down {{
+                border: 0;
+                width: 28px;
+            }}
+            QComboBox QAbstractItemView {{
+                background: #FFFFFF;
+                color: {TEXT};
+                border: 1px solid #E8E4F2;
+                border-radius: 10px;
+                padding: 6px;
+                selection-background-color: {ACCENT_SOFT};
+                selection-color: #000000;
+                outline: 0;
+            }}
+            QComboBox QAbstractItemView::item {{
+                min-height: 30px;
+                padding: 5px 10px;
+                border-radius: 7px;
+            }}
+            QComboBox QAbstractItemView::item:hover {{
+                background: {ACCENT_SOFT};
+                color: #000000;
+            }}
             QFrame#toolGroup QComboBox,
             QFrame#toolGroup QDoubleSpinBox {{
                 background: #FFFFFF;
@@ -1702,6 +1732,10 @@ class StructureWindow(QMainWindow):
             }}
             QFrame#toolGroup QComboBox:focus,
             QFrame#toolGroup QDoubleSpinBox:focus {{
+                border: 1px solid {ACCENT_VIOLET};
+            }}
+            QFrame#toolGroup QComboBox:hover {{
+                background: {ACCENT_SOFT};
                 border: 1px solid {ACCENT_VIOLET};
             }}
             QFrame#toolGroup QComboBox::drop-down {{
@@ -2307,7 +2341,7 @@ class StructureWindow(QMainWindow):
                 "-create",
                 "-graphene",
                 "triangle",
-                active_definition["edge"],
+                self.graphene_edge_combo.currentText(),
                 self._fmt(values["side_length"]),
             ]
         args = ["-create", definition["flag"], atomtype]
