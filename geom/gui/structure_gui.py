@@ -116,12 +116,17 @@ GL_TRIANGLE_STRIP = 0x0005
 GL_COMPILE = 0x1300
 GL_LEQUAL = 0x0203
 GL_FRONT_AND_BACK = 0x0408
+GL_FRONT = 0x0404
+GL_BACK = 0x0405
 GL_CULL_FACE = 0x0B44
 GL_DEPTH_TEST = 0x0B71
 GL_LIGHTING = 0x0B50
 GL_LIGHT0 = 0x4000
 GL_COLOR_MATERIAL = 0x0B57
 GL_NORMALIZE = 0x0BA1
+GL_POLYGON_OFFSET_FILL = 0x8037
+GL_LINE = 0x1B01
+GL_FILL = 0x1B02
 GL_MODELVIEW = 0x1700
 GL_PROJECTION = 0x1701
 GL_AMBIENT = 0x1200
@@ -505,6 +510,7 @@ class VdwCanvas(QOpenGLWidget):
         if self._uses_vdw_opengl(projected):
             self._paint_vdw_opengl(projected)
             painter = QPainter(self)
+            painter.setRenderHint(QPainter.Antialiasing, True)
             self._paint_axes(painter)
             return
 
@@ -597,12 +603,12 @@ class VdwCanvas(QOpenGLWidget):
         gl.glShadeModel(GL_SMOOTH)
         light_x, light_y, light_z = 0.50, -0.62, 0.74
         gl.glLightfv(GL_LIGHT0, GL_POSITION, [light_x, light_y, light_z, 0.0])
-        gl.glLightfv(GL_LIGHT0, GL_AMBIENT, [0.58, 0.58, 0.58, 1.0])
-        gl.glLightfv(GL_LIGHT0, GL_DIFFUSE, [0.44, 0.44, 0.44, 1.0])
-        gl.glLightfv(GL_LIGHT0, GL_SPECULAR, [0.10, 0.10, 0.10, 1.0])
+        gl.glLightfv(GL_LIGHT0, GL_AMBIENT, [0.32, 0.32, 0.32, 1.0])
+        gl.glLightfv(GL_LIGHT0, GL_DIFFUSE, [0.76, 0.76, 0.76, 1.0])
+        gl.glLightfv(GL_LIGHT0, GL_SPECULAR, [0.06, 0.06, 0.06, 1.0])
         gl.glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-        gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0.14, 0.14, 0.14, 1.0])
-        gl.glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 22.0)
+        gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0.08, 0.08, 0.08, 1.0])
+        gl.glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 14.0)
 
         for atom in projected:
             base = ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
