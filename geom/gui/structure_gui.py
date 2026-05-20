@@ -77,6 +77,7 @@ from geom.gui.structure_generator import (
     smiles_to_xyz,
     supported_atomistic_metals,
     supported_fcc_metals,
+    translate_pair_controlled_distance,
 )
 
 
@@ -659,6 +660,14 @@ class StructureWindow(QMainWindow):
         self.translate_button = QPushButton("Translate")
         self.translate_button.setObjectName("smilesButton")
         self.translate_button.clicked.connect(self.translate_selected_structure)
+        self.pair_fixed_source = QComboBox()
+        self.pair_moving_source = QComboBox()
+        self.pair_axis = QComboBox()
+        self.pair_axis.addItems(("+x", "-x", "+y", "-y", "+z", "-z"))
+        self.pair_distance = self._make_manipulator_spin(5.0, 0.01, 10000.0, " Å")
+        self.pair_translate_button = QPushButton("Translate at distance")
+        self.pair_translate_button.setObjectName("loadButton")
+        self.pair_translate_button.clicked.connect(self.translate_pair_selected_structures)
 
         generator_page = QWidget()
         generator_layout = QVBoxLayout(generator_page)
@@ -696,14 +705,14 @@ class StructureWindow(QMainWindow):
         viewer_layout.addLayout(resolution_row)
         viewer_layout.addStretch(1)
 
-        manipulator_page = QWidget()
-        manipulator_layout = QVBoxLayout(manipulator_page)
-        manipulator_layout.setContentsMargins(0, 24, 0, 0)
-        manipulator_layout.setSpacing(14)
-        manipulator_layout.addWidget(self._section_label("Loaded structure"))
-        manipulator_layout.addWidget(self.manipulator_source)
-        manipulator_layout.addSpacing(12)
-        manipulator_layout.addWidget(self._section_label("Translate"))
+        single_page = QWidget()
+        single_layout = QVBoxLayout(single_page)
+        single_layout.setContentsMargins(0, 18, 0, 0)
+        single_layout.setSpacing(14)
+        single_layout.addWidget(self._section_label("Loaded structure"))
+        single_layout.addWidget(self.manipulator_source)
+        single_layout.addSpacing(12)
+        single_layout.addWidget(self._section_label("Translate"))
         translate_group = QFrame()
         translate_group.setObjectName("toolGroup")
         translate_group_layout = QVBoxLayout(translate_group)
@@ -715,9 +724,9 @@ class StructureWindow(QMainWindow):
         translate_row.addWidget(self.translate_distance)
         translate_group_layout.addLayout(translate_row)
         translate_group_layout.addWidget(self.translate_button)
-        manipulator_layout.addWidget(translate_group)
-        manipulator_layout.addSpacing(12)
-        manipulator_layout.addWidget(self._section_label("Rotate"))
+        single_layout.addWidget(translate_group)
+        single_layout.addSpacing(12)
+        single_layout.addWidget(self._section_label("Rotate"))
         rotate_group = QFrame()
         rotate_group.setObjectName("toolGroup")
         rotate_group_layout = QVBoxLayout(rotate_group)
@@ -729,10 +738,43 @@ class StructureWindow(QMainWindow):
         rotate_row.addWidget(self.rotate_angle)
         rotate_group_layout.addLayout(rotate_row)
         rotate_group_layout.addWidget(self.rotate_button)
-        manipulator_layout.addWidget(rotate_group)
-        manipulator_layout.addSpacing(12)
-        manipulator_layout.addWidget(self.center_button)
-        manipulator_layout.addStretch(1)
+        single_layout.addWidget(rotate_group)
+        single_layout.addSpacing(12)
+        single_layout.addWidget(self.center_button)
+        single_layout.addStretch(1)
+
+        pair_page = QWidget()
+        pair_layout = QVBoxLayout(pair_page)
+        pair_layout.setContentsMargins(0, 18, 0, 0)
+        pair_layout.setSpacing(14)
+        pair_layout.addWidget(self._section_label("Controlled distance"))
+        pair_group = QFrame()
+        pair_group.setObjectName("toolGroup")
+        pair_group_layout = QVBoxLayout(pair_group)
+        pair_group_layout.setContentsMargins(0, 0, 0, 0)
+        pair_group_layout.setSpacing(10)
+        pair_group_layout.addWidget(self._field_label("Fixed"))
+        pair_group_layout.addWidget(self.pair_fixed_source)
+        pair_group_layout.addWidget(self._field_label("Translated"))
+        pair_group_layout.addWidget(self.pair_moving_source)
+        pair_row = QHBoxLayout()
+        pair_row.setSpacing(8)
+        pair_row.addWidget(self.pair_axis)
+        pair_row.addWidget(self.pair_distance)
+        pair_group_layout.addLayout(pair_row)
+        pair_group_layout.addWidget(self.pair_translate_button)
+        pair_layout.addWidget(pair_group)
+        pair_layout.addStretch(1)
+
+        manipulator_page = QWidget()
+        manipulator_layout = QVBoxLayout(manipulator_page)
+        manipulator_layout.setContentsMargins(0, 24, 0, 0)
+        manipulator_layout.setSpacing(0)
+        self.manipulator_tabs = QTabWidget()
+        self.manipulator_tabs.setObjectName("manipulatorTabs")
+        self.manipulator_tabs.addTab(single_page, "Single")
+        self.manipulator_tabs.addTab(pair_page, "Pair")
+        manipulator_layout.addWidget(self.manipulator_tabs)
 
         self.side_tabs = QTabWidget()
         self.side_tabs.setObjectName("sideTabs")
@@ -987,6 +1029,26 @@ class StructureWindow(QMainWindow):
             QTabWidget#sideTabs QTabBar::tab:selected {{
                 color: {TEXT};
                 border-bottom: 2px solid {ACCENT_VIOLET};
+            }}
+            QTabWidget#manipulatorTabs::pane {{
+                border: 0;
+            }}
+            QTabWidget#manipulatorTabs QTabBar::tab {{
+                background: transparent;
+                color: #7C7C88;
+                border: 0;
+                border-bottom: 2px solid transparent;
+                padding: 8px 15px 7px 15px;
+                margin-right: 8px;
+                font-size: 13px;
+                font-weight: 650;
+            }}
+            QTabWidget#manipulatorTabs QTabBar::tab:selected {{
+                color: #000000;
+                border-bottom: 2px solid {ACCENT_VIOLET};
+            }}
+            QTabWidget#manipulatorTabs QTabBar::tab:disabled {{
+                color: #BAB8C3;
             }}
             QComboBox, QDoubleSpinBox {{
                 background: transparent;
@@ -1335,7 +1397,9 @@ class StructureWindow(QMainWindow):
         self.tabs.tabBar().setTabButton(tab_index, QTabBar.RightSide, button)
 
     def save_structure(self, canvas: VdwCanvas):
-        source_path = Path(canvas.property("path")) if canvas.property("path") else None
+        source_path = self._save_source_for_canvas(canvas)
+        if source_path is False:
+            return
         default_name = (source_path.stem if source_path else "structure") + ".xyz"
         destination, _ = QFileDialog.getSaveFileName(
             self,
@@ -1358,6 +1422,27 @@ class StructureWindow(QMainWindow):
                 self._write_xyz(destination_path, canvas.atoms)
         except Exception as exc:
             QMessageBox.warning(self, "Could not save structure", f"{destination_path}\n\n{exc}")
+
+    def _save_source_for_canvas(self, canvas: VdwCanvas) -> Path | None | bool:
+        fixed_path = canvas.property("fixed_path")
+        translated_path = canvas.property("translated_path")
+        if fixed_path and translated_path:
+            message = QMessageBox(self)
+            message.setIcon(QMessageBox.Question)
+            message.setWindowTitle("Save joint visualization")
+            message.setText("Which structure do you want to save?")
+            fixed_button = message.addButton("Fixed", QMessageBox.AcceptRole)
+            translated_button = message.addButton("Translated", QMessageBox.AcceptRole)
+            message.addButton(QMessageBox.Cancel)
+            message.exec()
+            clicked = message.clickedButton()
+            if clicked is fixed_button:
+                return Path(fixed_path)
+            if clicked is translated_button:
+                return Path(translated_path)
+            return False
+
+        return Path(canvas.property("path")) if canvas.property("path") else None
 
     def _write_xyz(self, path: Path, atoms: tuple[AtomRecord, ...]):
         with path.open("w", encoding="utf-8") as handle:
@@ -1401,8 +1486,15 @@ class StructureWindow(QMainWindow):
             return
 
         current_path = self.manipulator_source.currentData()
+        fixed_path = self.pair_fixed_source.currentData()
+        moving_path = self.pair_moving_source.currentData()
+        entries: list[tuple[str, str]] = []
         self.manipulator_source.blockSignals(True)
+        self.pair_fixed_source.blockSignals(True)
+        self.pair_moving_source.blockSignals(True)
         self.manipulator_source.clear()
+        self.pair_fixed_source.clear()
+        self.pair_moving_source.clear()
         for index in range(self.tabs.count()):
             widget = self.tabs.widget(index)
             if not isinstance(widget, VdwCanvas) or not widget.atoms:
@@ -1410,14 +1502,32 @@ class StructureWindow(QMainWindow):
             path = widget.property("path")
             if not path:
                 continue
+            entries.append((self.tabs.tabText(index), path))
             self.manipulator_source.addItem(self.tabs.tabText(index), path)
+            self.pair_fixed_source.addItem(self.tabs.tabText(index), path)
+            self.pair_moving_source.addItem(self.tabs.tabText(index), path)
         if current_path:
             found = self.manipulator_source.findData(current_path)
             if found >= 0:
                 self.manipulator_source.setCurrentIndex(found)
+        if fixed_path:
+            found = self.pair_fixed_source.findData(fixed_path)
+            if found >= 0:
+                self.pair_fixed_source.setCurrentIndex(found)
+        if moving_path:
+            found = self.pair_moving_source.findData(moving_path)
+            if found >= 0:
+                self.pair_moving_source.setCurrentIndex(found)
+        elif len(entries) > 1:
+            self.pair_moving_source.setCurrentIndex(1)
+        if len(entries) > 1 and self.pair_moving_source.currentData() == self.pair_fixed_source.currentData():
+            self.pair_moving_source.setCurrentIndex(1 if self.pair_fixed_source.currentIndex() != 1 else 0)
         self.manipulator_source.blockSignals(False)
+        self.pair_fixed_source.blockSignals(False)
+        self.pair_moving_source.blockSignals(False)
 
         has_sources = self.manipulator_source.count() > 0
+        has_pair_sources = self.manipulator_source.count() > 0
         for widget in (
             self.manipulator_source,
             self.center_button,
@@ -1429,6 +1539,18 @@ class StructureWindow(QMainWindow):
             self.translate_button,
         ):
             widget.setEnabled(has_sources)
+        for widget in (
+            self.pair_fixed_source,
+            self.pair_moving_source,
+            self.pair_axis,
+            self.pair_distance,
+            self.pair_translate_button,
+        ):
+            widget.setEnabled(has_pair_sources)
+        if hasattr(self, "manipulator_tabs"):
+            self.manipulator_tabs.setTabEnabled(1, has_pair_sources)
+            if not has_pair_sources and self.manipulator_tabs.currentIndex() == 1:
+                self.manipulator_tabs.setCurrentIndex(0)
 
     def _selected_manipulator_path(self) -> Path:
         path = self.manipulator_source.currentData()
@@ -1458,6 +1580,48 @@ class StructureWindow(QMainWindow):
         axis = self.translate_axis.currentText()
         self._run_manipulation(lambda filename: ["-t1", distance, filename, "origin_CM_no", axis])
 
+    def translate_pair_selected_structures(self):
+        fixed_path = self.pair_fixed_source.currentData()
+        moving_path = self.pair_moving_source.currentData()
+        if not fixed_path or not moving_path:
+            QMessageBox.warning(self, "Controlled distance", "Load two structures before using controlled distance.")
+            return
+        try:
+            fixed_xyz, translated_xyz = translate_pair_controlled_distance(
+                Path(fixed_path),
+                Path(moving_path),
+                self.pair_distance.value(),
+                self.pair_axis.currentText(),
+            )
+            fixed_atoms = read_xyz(fixed_xyz)
+            translated_atoms = read_xyz(translated_xyz)
+        except Exception as exc:
+            QMessageBox.warning(self, "Could not translate pair", str(exc))
+            return
+
+        joint_atoms = fixed_atoms + translated_atoms
+        min_distance = self._minimum_distance(fixed_atoms, translated_atoms)
+        title = f"{Path(fixed_path).stem}+{translated_xyz.stem}"
+        self._add_structure_tab(title, joint_atoms, None)
+        canvas = self.tabs.currentWidget()
+        if isinstance(canvas, VdwCanvas):
+            canvas.setProperty("fixed_path", str(fixed_xyz))
+            canvas.setProperty("translated_path", str(translated_xyz))
+            canvas.setProperty("min_distance", min_distance)
+            self._sync_current_tab_meta()
+
+    def _minimum_distance(self, first: tuple[AtomRecord, ...], second: tuple[AtomRecord, ...]) -> float:
+        min_distance = float("inf")
+        for atom_a in first:
+            for atom_b in second:
+                distance = math.sqrt(
+                    (atom_a.x - atom_b.x) ** 2
+                    + (atom_a.y - atom_b.y) ** 2
+                    + (atom_a.z - atom_b.z) ** 2
+                )
+                min_distance = min(min_distance, distance)
+        return min_distance
+
     def _short_tab_title(self, title: str) -> str:
         return title if len(title) <= 24 else title[:21] + "..."
 
@@ -1467,7 +1631,13 @@ class StructureWindow(QMainWindow):
             self.meta_label.setText("")
             return
         atom_count = widget.property("atom_count")
-        self.meta_label.setText(f"{atom_count:,} atoms" if atom_count else "")
+        min_distance = widget.property("min_distance")
+        parts = []
+        if atom_count:
+            parts.append(f"{atom_count} atoms")
+        if min_distance is not None:
+            parts.append(f"distance {float(min_distance):.2f} Å")
+        self.meta_label.setText("  |  ".join(parts))
 
     def _build_command_args(self) -> list[str]:
         structure = self.structure_combo.currentText()

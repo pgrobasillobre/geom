@@ -195,6 +195,67 @@ def manipulate_xyz(input_path: Path, command_args: Callable[[str], list[str]]) -
     return _newest_generated_xyz(results_dir, before)
 
 
+def translate_pair_controlled_distance(
+    fixed_path: Path,
+    moving_path: Path,
+    distance: float,
+    axis: str,
+) -> tuple[Path, Path]:
+    """Run GEOM -t for two XYZ files, translating the second to a controlled distance."""
+
+    fixed_path = Path(fixed_path)
+    moving_path = Path(moving_path)
+    if fixed_path.suffix.lower() != ".xyz" or moving_path.suffix.lower() != ".xyz":
+        raise ValueError("Controlled-distance translation requires two XYZ files.")
+
+    GUI_TMP_ROOT.mkdir(parents=True, exist_ok=True)
+    results_dir = GUI_TMP_ROOT / "results_geom"
+    before = _xyz_snapshot(results_dir)
+    fixed_input = GUI_TMP_ROOT / f"{fixed_path.stem}_{uuid.uuid4().hex[:8]}.xyz"
+    moving_input = GUI_TMP_ROOT / f"{moving_path.stem}_{uuid.uuid4().hex[:8]}.xyz"
+    distances_input = GUI_TMP_ROOT / f"distance_{uuid.uuid4().hex[:8]}.txt"
+    shutil.copy2(fixed_path, fixed_input)
+    shutil.copy2(moving_path, moving_input)
+    distances_input.write_text(f"{distance:.8f}\n", encoding="utf-8")
+
+    runner = (
+        "import sys; "
+        "from geom.classes import input_class; "
+        "from geom.functions import general, translate; "
+        "inp = input_class.input_class(); "
+        "general.read_command_line(['geom', *sys.argv[1:]], inp); "
+        "translate.select_case(inp)"
+    )
+    command = (
+        sys.executable,
+        "-c",
+        runner,
+        "-t",
+        distances_input.name,
+        fixed_input.name,
+        "origin_CM_1_no",
+        moving_input.name,
+        "origin_CM_2_no",
+        axis,
+        "verbose_no",
+    )
+
+    with _CONVERSION_LOCK:
+        completed = subprocess.run(
+            command,
+            cwd=GUI_TMP_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    if completed.returncode != 0:
+        message = completed.stderr.strip() or completed.stdout.strip() or "GEOM controlled-distance translation failed."
+        raise RuntimeError(message)
+
+    return fixed_input, _newest_generated_xyz(results_dir, before)
+
+
 def cleanup_gui_tmp() -> None:
     """Remove GUI-generated temporary conversion files."""
 
