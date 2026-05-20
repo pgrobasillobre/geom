@@ -16,10 +16,12 @@ try:
         QFont,
         QFontDatabase,
         QGuiApplication,
+        QKeySequence,
         QLinearGradient,
         QPainter,
         QPen,
         QRadialGradient,
+        QShortcut,
     )
     from PySide6.QtWidgets import (
         QApplication,
@@ -48,7 +50,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users with
     missing_dependency = exc
     QPoint = QPointF = QRectF = Qt = QGuiApplication = QApplication = QFileDialog = QMessageBox = None
     QColor = lambda *args, **kwargs: None
-    QLinearGradient = QPainter = QPen = QRadialGradient = None
+    QKeySequence = QLinearGradient = QPainter = QPen = QRadialGradient = QShortcut = None
 
     class QFont:
         DemiBold = 63
@@ -72,6 +74,7 @@ from geom.gui.structure_generator import (
     cleanup_gui_tmp,
     convert_molecule_to_xyz,
     generate_structure,
+    GUI_TMP_ROOT,
     manipulate_xyz,
     read_xyz,
     smiles_to_xyz,
@@ -224,20 +227,16 @@ STRUCTURES = {
         "metals": "bulk",
         "fields": (("width", "Width", 30.0, 2.0, 300.0), ("length", "Length", 50.0, 4.0, 500.0)),
     },
-    "Graphene": {
-        "graphene": True,
-        "fields": (),
-    },
 }
 
 GRAPHENE_VARIANTS = {
-    "Ring": {
-        "graphene": "ring",
-        "fields": (("radius_out", "Outer radius", 60.0, 3.0, 500.0), ("radius_in", "Inner radius", 30.0, 1.0, 499.0)),
-    },
     "Disk": {
         "graphene": "disk",
         "fields": (("radius", "Radius", 30.0, 2.0, 300.0),),
+    },
+    "Ribbon": {
+        "graphene": "rib",
+        "fields": (("x_length", "X length", 40.0, 2.0, 500.0), ("y_length", "Y length", 20.0, 2.0, 500.0)),
     },
     "Triangle armchair": {
         "graphene": "triangle",
@@ -249,9 +248,9 @@ GRAPHENE_VARIANTS = {
         "edge": "zigzag",
         "fields": (("side_length", "Side length", 50.0, 2.0, 500.0),),
     },
-    "Ribbon": {
-        "graphene": "rib",
-        "fields": (("x_length", "X length", 40.0, 2.0, 500.0), ("y_length", "Y length", 20.0, 2.0, 500.0)),
+    "Ring": {
+        "graphene": "ring",
+        "fields": (("radius_out", "Outer radius", 60.0, 3.0, 500.0), ("radius_in", "Inner radius", 30.0, 1.0, 499.0)),
     },
 }
 
@@ -264,6 +263,7 @@ class ProjectedAtom:
     y: float
     z: float
     radius: float
+    cpk: bool
     ox: float
     oy: float
     oz: float
@@ -298,15 +298,16 @@ class VdwCanvas(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.atoms: tuple[AtomRecord, ...] = ()
-        self.rotation_x = math.radians(18.0)
-        self.rotation_y = math.radians(-28.0)
+        self.rotation_x = 0.0
+        self.rotation_y = 0.0
         self.zoom = 1.0
         self.pan_x = 0.0
         self.pan_y = 0.0
-        self.vdw_scale = 1.0
-        self.bond_width_scale = 1.0
+        self.vdw_scale = 1.6
+        self.bond_width_scale = 1.35
         self.render_resolution = 1
         self.translate_mode = False
+        self._is_interacting = False
         self._last_pos: QPoint | None = None
         self.setMinimumSize(560, 420)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -316,6 +317,12 @@ class VdwCanvas(QWidget):
 
     def set_atoms(self, atoms: tuple[AtomRecord, ...]):
         self.atoms = atoms
+        self.reset_view()
+        self.update()
+
+    def reset_view(self):
+        self.rotation_x = 0.0
+        self.rotation_y = 0.0
         self.zoom = 1.0
         self.pan_x = 0.0
         self.pan_y = 0.0
@@ -351,6 +358,7 @@ class VdwCanvas(QWidget):
             self.pan_x += delta.x()
             self.pan_y += delta.y()
         elif should_rotate:
+            self._is_interacting = True
             self.rotation_y += delta.x() * 0.01
             self.rotation_x += delta.y() * 0.01
         self.update()
@@ -358,19 +366,45 @@ class VdwCanvas(QWidget):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             self._last_pos = None
+            self._is_interacting = False
+            self.update()
 
     def wheelEvent(self, event):
-        factor = 1.12 if event.angleDelta().y() > 0 else 0.89
+        delta = event.pixelDelta().y() if not event.pixelDelta().isNull() else event.angleDelta().y()
+        if abs(delta) < 1:
+            event.accept()
+            return
+        factor = math.exp(delta / 900.0)
         self.zoom = min(4.0, max(0.35, self.zoom * factor))
         self.update()
+        event.accept()
 
     def keyPressEvent(self, event):
+        if self._is_reset_view_key(event):
+            self.reset_view()
+            event.accept()
+            return
         if event.key() == Qt.Key_T:
             self.translate_mode = not self.translate_mode
             self.update()
             event.accept()
             return
+        if event.key() == Qt.Key_R:
+            self.translate_mode = False
+            self.update()
+            event.accept()
+            return
         super().keyPressEvent(event)
+
+    def _is_reset_view_key(self, event) -> bool:
+        key = event.key()
+        text = event.text()
+        modifiers = event.modifiers()
+        return (
+            (key == Qt.Key_0 and bool(modifiers & Qt.ShiftModifier))
+            or key == Qt.Key_ParenRight
+            or text == ")"
+        )
 
     def dragEnterEvent(self, event):
         if self._structure_paths_from_event(event):
@@ -399,22 +433,20 @@ class VdwCanvas(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        fine_render = self.render_resolution > 1
+        fine_render = self.render_resolution > 1 and not (self._is_interacting and self._scene_has_cpk())
         painter.setRenderHint(QPainter.Antialiasing, fine_render)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, fine_render)
         self._paint_background(painter)
 
         if not self.atoms:
-            self._paint_empty_state(painter)
+            self._paint_axes(painter)
             return
 
         projected = self._project_atoms()
-        cpk_mode = self._uses_cpk()
-        if cpk_mode:
-            for bond in self._projected_bonds(projected):
-                self._paint_bond(painter, bond)
+        for bond in self._projected_bonds(projected):
+            self._paint_bond(painter, bond)
         for atom in projected:
-            self._paint_atom(painter, atom, cpk_mode)
+            self._paint_atom(painter, atom)
         self._paint_axes(painter)
 
     def _paint_background(self, painter: QPainter):
@@ -428,45 +460,49 @@ class VdwCanvas(QWidget):
         cy = sum(atom.y for atom in self.atoms) / len(self.atoms)
         cz = sum(atom.z for atom in self.atoms) / len(self.atoms)
         rotated: list[tuple[AtomRecord, float, float, float]] = []
-        max_span = 1.0
+        model_radius = 1.0
         for atom in self.atoms:
             x, y, z = atom.x - cx, atom.y - cy, atom.z - cz
+            model_radius = max(model_radius, math.sqrt(x * x + y * y + z * z))
             xz, yz, zz2 = self._rotate_point(x, y, z)
             rotated.append((atom, xz, yz, zz2))
-            max_span = max(max_span, abs(xz), abs(yz))
 
-        scale = min(self.width(), self.height()) * 0.42 * self.zoom / max_span
+        scale = min(self.width(), self.height()) * 0.40 * self.zoom / model_radius
         center_x = self.width() * 0.52 + self.pan_x
         center_y = self.height() * 0.50 + self.pan_y
 
         atoms = []
-        cpk_mode = self._uses_cpk()
         for index, (atom, x, y, z) in enumerate(rotated):
             element = atom.element.capitalize()
+            cpk_mode = self._atom_uses_cpk(element)
             if cpk_mode:
                 radius = COVALENT_RADII.get(element, 0.77) * scale * 0.32 * self.vdw_scale
             else:
                 radius = VDW_RADII.get(element, VDW_RADII["X"]) * scale * 0.68 * self.vdw_scale
-            atoms.append(ProjectedAtom(index, element, center_x + x * scale, center_y - y * scale, z, radius, atom.x, atom.y, atom.z))
+            atoms.append(ProjectedAtom(index, element, center_x + x * scale, center_y - y * scale, z, radius, cpk_mode, atom.x, atom.y, atom.z))
 
         atoms.sort(key=lambda item: item.z)
         return atoms
 
-    def _uses_cpk(self) -> bool:
-        if not self.atoms:
-            return False
-        elements = {atom.element.capitalize() for atom in self.atoms}
-        return not elements.issubset(METAL_ELEMENTS)
+    def _atom_uses_cpk(self, element: str) -> bool:
+        return element not in METAL_ELEMENTS
+
+    def _scene_has_cpk(self) -> bool:
+        return any(self._atom_uses_cpk(atom.element.capitalize()) for atom in self.atoms)
 
     def _projected_bonds(self, projected: list[ProjectedAtom]) -> list[ProjectedBond]:
         bonds = []
         by_index = {atom.index: atom for atom in projected}
         for i, atom_a in enumerate(self.atoms):
             element_a = atom_a.element.capitalize()
+            if not self._atom_uses_cpk(element_a):
+                continue
             radius_a = COVALENT_RADII.get(element_a, 0.77)
             for j in range(i + 1, len(self.atoms)):
                 atom_b = self.atoms[j]
                 element_b = atom_b.element.capitalize()
+                if not self._atom_uses_cpk(element_b):
+                    continue
                 radius_b = COVALENT_RADII.get(element_b, 0.77)
                 dx = atom_a.x - atom_b.x
                 dy = atom_a.y - atom_b.y
@@ -480,42 +516,45 @@ class VdwCanvas(QWidget):
         return bonds
 
     def _paint_bond(self, painter: QPainter, bond: ProjectedBond):
-        depth = max(0.55, min(1.15, 0.84 + bond.z * 0.015))
-        color = QColor(
-            min(255, int(150 * depth)),
-            min(255, int(150 * depth)),
-            min(255, int(150 * depth)),
-        )
+        color = QColor("#777777")
         pen = QPen(color, max(1.0, 5.0 * self.bond_width_scale))
         pen.setCapStyle(Qt.RoundCap)
         painter.setPen(pen)
         painter.drawLine(QPointF(bond.first.x, bond.first.y), QPointF(bond.second.x, bond.second.y))
 
-    def _paint_atom(self, painter: QPainter, atom: ProjectedAtom, cpk_mode: bool):
-        base = CPK_COLORS.get(atom.element, CPK_DEFAULT) if cpk_mode else ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
-        depth = max(0.55, min(1.15, 0.84 + atom.z * 0.015))
-        shaded = QColor(
-            min(255, int(base.red() * depth)),
-            min(255, int(base.green() * depth)),
-            min(255, int(base.blue() * depth)),
-        )
+    def _paint_atom(self, painter: QPainter, atom: ProjectedAtom):
+        base = CPK_COLORS.get(atom.element, CPK_DEFAULT) if atom.cpk else ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
+        shaded = QColor(base)
 
         rect = QRectF(atom.x - atom.radius, atom.y - atom.radius, atom.radius * 2, atom.radius * 2)
-        gradient = QRadialGradient(rect.center() - QPoint(int(atom.radius * 0.35), int(atom.radius * 0.40)), atom.radius)
-        if self.render_resolution > 1:
-            highlight = QColor(255, 255, 255, 230)
+        outline = QPen(QColor("#111111"), 1.1 if atom.cpk else 0.8)
+        if self._use_fine_atom_rendering():
+            gradient = QRadialGradient(rect.center() - QPoint(int(atom.radius * 0.34), int(atom.radius * 0.38)), atom.radius)
+            highlight = QColor(255, 255, 255, 235)
             gradient.setColorAt(0.0, highlight)
-            gradient.setColorAt(0.18, shaded.lighter(132))
-            gradient.setColorAt(0.76, shaded)
-            gradient.setColorAt(1.0, shaded.darker(165))
-            painter.setPen(QColor(0, 0, 0, 22))
+            gradient.setColorAt(0.16, shaded.lighter(128))
+            gradient.setColorAt(0.82, shaded)
+            gradient.setColorAt(1.0, shaded.darker(112))
+            painter.setPen(outline)
+            painter.setBrush(gradient)
+            painter.drawEllipse(rect)
         else:
-            gradient.setColorAt(0.0, shaded.lighter(125))
-            gradient.setColorAt(0.70, shaded)
-            gradient.setColorAt(1.0, shaded.darker(150))
-            painter.setPen(QColor(0, 0, 0, 32) if cpk_mode else Qt.NoPen)
-        painter.setBrush(gradient)
-        painter.drawEllipse(rect)
+            painter.setPen(outline)
+            painter.setBrush(shaded)
+            painter.drawEllipse(rect)
+            highlight_size = max(2.0, atom.radius * 0.24)
+            highlight = QRectF(
+                rect.center().x() - atom.radius * 0.38,
+                rect.center().y() - atom.radius * 0.42,
+                highlight_size,
+                highlight_size,
+            )
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(255, 255, 255, 82))
+            painter.drawEllipse(highlight)
+
+    def _use_fine_atom_rendering(self) -> bool:
+        return self.render_resolution > 1 and not (self._is_interacting and self._scene_has_cpk())
 
     def _rotate_point(self, x: float, y: float, z: float) -> tuple[float, float, float]:
         cos_x, sin_x = math.cos(self.rotation_x), math.sin(self.rotation_x)
@@ -528,28 +567,42 @@ class VdwCanvas(QWidget):
 
     def _paint_axes(self, painter: QPainter):
         origin = QPointF(54.0, max(78.0, self.height() - 58.0))
-        axis_length = 46.0
+        axis_length = 48.0
         axes = [
-            ("X", QColor("#E25555"), self._rotate_point(1.0, 0.0, 0.0)),
-            ("Y", QColor("#1F9D68"), self._rotate_point(0.0, 1.0, 0.0)),
-            ("Z", QColor("#3A72E8"), self._rotate_point(0.0, 0.0, 1.0)),
+            ("X", QColor("#C84A4A"), self._rotate_point(1.0, 0.0, 0.0)),
+            ("Y", QColor("#2E8B57"), self._rotate_point(0.0, 1.0, 0.0)),
+            ("Z", QColor("#4169B1"), self._rotate_point(0.0, 0.0, 1.0)),
         ]
         axes.sort(key=lambda item: item[2][2])
 
         font = QFontDatabase.systemFont(QFontDatabase.GeneralFont)
-        font.setPointSize(11)
-        font.setWeight(QFont.DemiBold)
+        font.setPointSize(10)
+        font.setWeight(QFont.Bold)
         painter.setFont(font)
 
         for label, color, (x, y, z) in axes:
             end = QPointF(origin.x() + x * axis_length, origin.y() - y * axis_length)
-            label_pos = QPointF(origin.x() + x * (axis_length + 14.0), origin.y() - y * (axis_length + 14.0))
             direction = QPointF(end.x() - origin.x(), end.y() - origin.y())
-            length = math.hypot(direction.x(), direction.y()) or 1.0
+            length = math.hypot(direction.x(), direction.y())
+            if length < 2.0:
+                radius = 7.5 if z >= 0 else 5.5
+                alpha = 230 if z >= 0 else 120
+                painter.setPen(QPen(QColor("#111111"), 1.1))
+                painter.setBrush(QColor(color.red(), color.green(), color.blue(), alpha))
+                painter.drawEllipse(origin, radius, radius)
+                if z >= 0:
+                    painter.setBrush(QColor("#FFFFFF"))
+                    painter.setPen(Qt.NoPen)
+                    painter.drawEllipse(origin.x() - 2.0, origin.y() - 2.0, 3.5, 3.5)
+                painter.setPen(QColor("#111111"))
+                painter.drawText(QRectF(origin.x() + 11.0, origin.y() - 21.0, 18.0, 16.0), Qt.AlignCenter, label)
+                continue
             unit = QPointF(direction.x() / length, direction.y() / length)
             normal = QPointF(-unit.y(), unit.x())
-            arrow_back = 12.0
-            arrow_half_width = 6.5
+            label_pos = QPointF(origin.x() + unit.x() * (axis_length + 15.0), origin.y() + unit.y() * (axis_length + 15.0))
+            shaft_end = QPointF(end.x() - unit.x() * 8.0, end.y() - unit.y() * 8.0)
+            arrow_back = 10.0
+            arrow_half_width = 4.8
             left = QPointF(
                 end.x() - unit.x() * arrow_back + normal.x() * arrow_half_width,
                 end.y() - unit.y() * arrow_back + normal.y() * arrow_half_width,
@@ -558,20 +611,27 @@ class VdwCanvas(QWidget):
                 end.x() - unit.x() * arrow_back - normal.x() * arrow_half_width,
                 end.y() - unit.y() * arrow_back - normal.y() * arrow_half_width,
             )
-            alpha = 125 if z < -0.25 else 225
-            pen = QPen(QColor(color.red(), color.green(), color.blue(), alpha), 5.0)
+            alpha = 135 if z < -0.25 else 235
+            outline = QPen(QColor("#111111"), 5.0)
+            outline.setCapStyle(Qt.RoundCap)
+            painter.setPen(outline)
+            painter.drawLine(origin, shaft_end)
+            pen = QPen(QColor(color.red(), color.green(), color.blue(), alpha), 3.0)
             pen.setCapStyle(Qt.RoundCap)
             painter.setPen(pen)
-            painter.drawLine(origin, end)
-            painter.setBrush(QColor(color.red(), color.green(), color.blue(), alpha))
+            painter.drawLine(origin, shaft_end)
+            painter.setBrush(QColor("#111111"))
             painter.setPen(Qt.NoPen)
             painter.drawPolygon([end, left, right])
-            painter.setPen(QColor("#202123"))
-            painter.drawText(QRectF(label_pos.x() - 9.0, label_pos.y() - 9.0, 18.0, 18.0), Qt.AlignCenter, label)
+            painter.setBrush(QColor(color.red(), color.green(), color.blue(), alpha))
+            painter.setPen(QPen(QColor("#111111"), 1.0))
+            painter.drawPolygon([end, left, right])
+            painter.setPen(QColor("#111111"))
+            painter.drawText(QRectF(label_pos.x() - 8.0, label_pos.y() - 8.0, 16.0, 16.0), Qt.AlignCenter, label)
 
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor("#202123"))
-        painter.drawEllipse(origin, 3.5, 3.5)
+        painter.setPen(QPen(QColor("#111111"), 1.0))
+        painter.setBrush(QColor("#E8E8E8"))
+        painter.drawEllipse(origin, 3.2, 3.2)
 
 
 class ViewerStepper(QWidget):
@@ -626,8 +686,8 @@ class StructureWindow(QMainWindow):
         self.current_result: StructureResult | None = None
         self.output_root: Path | None = None
         self.empty_canvas: VdwCanvas | None = None
-        self.vdw_scale = 1.0
-        self.bond_width_scale = 1.0
+        self.vdw_scale = 1.6
+        self.bond_width_scale = 1.35
         self.render_resolution = 1
         self.setWindowTitle(APP_TITLE)
         self.resize(1180, 760)
@@ -659,12 +719,14 @@ class StructureWindow(QMainWindow):
         accent_bar.setObjectName("accentBar")
         accent_bar.setFixedHeight(4)
 
+        self.metal_combo = QComboBox()
+        self.metal_combo.addItems(self._material_items())
+        self.metal_combo.currentTextChanged.connect(self._refresh_material_controls)
+        self.metal_label = self._field_label("Material")
         self.structure_combo = QComboBox()
         self.structure_combo.addItems(STRUCTURES.keys())
         self.structure_combo.currentTextChanged.connect(self._refresh_structure_controls)
-        self.metal_combo = QComboBox()
-        self.metal_combo.currentTextChanged.connect(self._refresh_option_controls)
-        self.metal_label = self._field_label("Metal")
+        self.structure_label = self._field_label("Structure")
 
         self.axis_label = self._field_label("Axis")
         self.axis_combo = QComboBox()
@@ -693,15 +755,15 @@ class StructureWindow(QMainWindow):
         form.setContentsMargins(0, 0, 0, 0)
         form.setHorizontalSpacing(12)
         form.setVerticalSpacing(18)
-        form.addWidget(self._field_label("Structure"), 0, 0)
-        form.addWidget(self.structure_combo, 0, 1)
-        form.addWidget(self.metal_label, 1, 0)
-        form.addWidget(self.metal_combo, 1, 1)
+        form.addWidget(self.metal_label, 0, 0)
+        form.addWidget(self.metal_combo, 0, 1)
+        form.addWidget(self.structure_label, 1, 0)
+        form.addWidget(self.structure_combo, 1, 1)
+        form.addWidget(self.graphene_variant_label, 1, 0)
+        form.addWidget(self.graphene_variant_combo, 1, 1)
         form.addWidget(self.axis_label, 2, 0)
         form.addWidget(self.axis_combo, 2, 1)
-        form.addWidget(self.graphene_variant_label, 3, 0)
-        form.addWidget(self.graphene_variant_combo, 3, 1)
-        for index, (label, spin) in enumerate(zip(self.param_labels, self.param_spins), start=4):
+        for index, (label, spin) in enumerate(zip(self.param_labels, self.param_spins), start=3):
             form.addWidget(label, index, 0)
             form.addWidget(spin, index, 1)
 
@@ -760,13 +822,13 @@ class StructureWindow(QMainWindow):
         self.smiles_button.setObjectName("smilesButton")
         self.smiles_button.clicked.connect(self.load_smiles_from_input)
 
-        self.vdw_scale_input = self._make_viewer_spin(100, 60, 180, "%")
+        self.vdw_scale_input = self._make_viewer_spin(160, 60, 260, "%")
         self.vdw_scale_input.valueChanged.connect(self._set_vdw_scale_from_input)
 
         self.resolution_input = self._make_viewer_spin(1, 1, 4, "x")
         self.resolution_input.valueChanged.connect(self._set_render_resolution_from_input)
 
-        self.bond_width_input = self._make_viewer_spin(100, 40, 240, "%")
+        self.bond_width_input = self._make_viewer_spin(135, 40, 260, "%")
         self.bond_width_input.valueChanged.connect(self._set_bond_width_from_input)
 
         self.manipulator_source = QComboBox()
@@ -818,7 +880,7 @@ class StructureWindow(QMainWindow):
         viewer_layout.addSpacing(12)
 
         vdw_row = QHBoxLayout()
-        vdw_label = self._field_label("VdW radius")
+        vdw_label = self._field_label("Sphere size")
         vdw_row.addWidget(vdw_label)
         vdw_row.addStretch(1)
         vdw_row.addWidget(self.vdw_scale_input)
@@ -920,10 +982,11 @@ class StructureWindow(QMainWindow):
         main = QFrame()
         main.setObjectName("main")
         main_layout = QVBoxLayout(main)
-        main_layout.setContentsMargins(28, 22, 24, 24)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(0, 0, 24, 24)
+        main_layout.setSpacing(0)
 
         header = QHBoxLayout()
+        header.setContentsMargins(28, 22, 0, 0)
         self.meta_label = QLabel("")
         self.meta_label.setObjectName("meta")
         header.addStretch(1)
@@ -931,18 +994,24 @@ class StructureWindow(QMainWindow):
 
         self.tabs = QTabWidget()
         self.tabs.setObjectName("viewerTabs")
+        self.tabs.setUsesScrollButtons(True)
+        self.tabs.setElideMode(Qt.ElideNone)
+        self.tabs.tabBar().setExpanding(False)
         self.tabs.currentChanged.connect(self._sync_current_tab_meta)
         self.tabs.currentChanged.connect(self._refresh_manipulator_sources)
         self.canvas = self._make_canvas()
         self.empty_canvas = self.canvas
-        self.tabs.addTab(self.canvas, "Visualizer")
+        self.tabs.addTab(self.canvas, "")
+        self.tabs.tabBar().hide()
         main_layout.addLayout(header)
         main_layout.addWidget(self.tabs)
 
         layout.addWidget(sidebar)
         layout.addWidget(main, 1)
         self._apply_styles()
-        self._refresh_structure_controls()
+        self.reset_view_shortcut = QShortcut(QKeySequence("Shift+0"), self)
+        self.reset_view_shortcut.activated.connect(self.reset_current_view)
+        self._refresh_material_controls()
         self._refresh_smiles_button_state()
         self._refresh_manipulator_sources()
 
@@ -968,6 +1037,19 @@ class StructureWindow(QMainWindow):
     def _make_viewer_spin(self, value: int, minimum: int, maximum: int, suffix: str) -> ViewerStepper:
         return ViewerStepper(value, minimum, maximum, suffix)
 
+    def reset_current_view(self):
+        current = self.tabs.currentWidget()
+        if isinstance(current, VdwCanvas):
+            current.reset_view()
+
+    def keyPressEvent(self, event):
+        current = self.tabs.currentWidget()
+        if isinstance(current, VdwCanvas) and current._is_reset_view_key(event):
+            current.reset_view()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
     def _make_manipulator_spin(self, value: float, minimum: float, maximum: float, suffix: str) -> QDoubleSpinBox:
         spin = QDoubleSpinBox()
         spin.setButtonSymbols(QDoubleSpinBox.NoButtons)
@@ -989,23 +1071,45 @@ class StructureWindow(QMainWindow):
         spin.setSuffix(" Å")
         return spin
 
-    def _refresh_structure_controls(self):
-        definition = STRUCTURES[self.structure_combo.currentText()]
-        is_graphene = bool(definition.get("graphene"))
-        active_definition = GRAPHENE_VARIANTS[self.graphene_variant_combo.currentText()] if is_graphene else definition
-        metals = [] if is_graphene else self._ordered_metals(supported_fcc_metals() if definition["metals"] == "fcc" else supported_atomistic_metals())
-        current_metal = self.metal_combo.currentText() or "Au"
+    def _material_items(self) -> list[str]:
+        metals = supported_atomistic_metals()
+        priority = ["Au", "Ag", "Graphene", "Na"]
+        rest = [metal for metal in metals if metal not in priority]
+        return [item for item in priority if item == "Graphene" or item in metals] + rest
 
-        self.metal_combo.blockSignals(True)
-        self.metal_combo.clear()
-        if metals:
-            self.metal_combo.addItems(metals)
-            self.metal_combo.setCurrentText(current_metal if current_metal in metals else metals[0])
-        self.metal_combo.blockSignals(False)
-        self.metal_label.setVisible(not is_graphene)
-        self.metal_combo.setVisible(not is_graphene)
+    def _refresh_material_controls(self):
+        material = self.metal_combo.currentText()
+        current_structure = self.structure_combo.currentText()
+        available_structures = self._available_structures_for_material(material)
+
+        self.structure_combo.blockSignals(True)
+        self.structure_combo.clear()
+        self.structure_combo.addItems(available_structures)
+        if current_structure in available_structures:
+            self.structure_combo.setCurrentText(current_structure)
+        elif available_structures:
+            self.structure_combo.setCurrentText(available_structures[0])
+        self.structure_combo.blockSignals(False)
+        self._refresh_structure_controls()
+
+    def _available_structures_for_material(self, material: str) -> list[str]:
+        if material == "Graphene":
+            return []
+        fcc_metals = set(supported_fcc_metals())
+        return [
+            name
+            for name, definition in STRUCTURES.items()
+            if definition["metals"] != "fcc" or material in fcc_metals
+        ]
+
+    def _refresh_structure_controls(self):
+        is_graphene = self.metal_combo.currentText() == "Graphene"
+        definition = STRUCTURES[self.structure_combo.currentText()] if not is_graphene else {"fields": (), "graphene": True}
+        active_definition = GRAPHENE_VARIANTS[self.graphene_variant_combo.currentText()] if is_graphene else definition
 
         has_axis = bool(definition.get("axis")) and not is_graphene
+        self.structure_label.setVisible(not is_graphene)
+        self.structure_combo.setVisible(not is_graphene)
         self.axis_label.setVisible(has_axis)
         self.axis_combo.setVisible(has_axis)
         self.graphene_variant_label.setVisible(is_graphene)
@@ -1034,9 +1138,9 @@ class StructureWindow(QMainWindow):
 
     def _refresh_option_controls(self):
         metal = self.metal_combo.currentText()
-        is_graphene = bool(STRUCTURES[self.structure_combo.currentText()].get("graphene"))
+        is_graphene = metal == "Graphene"
         alloy_allowed = metal in {"Ag", "Au"}
-        bowtie_allowed = bool(STRUCTURES[self.structure_combo.currentText()].get("bowtie"))
+        bowtie_allowed = bool(STRUCTURES[self.structure_combo.currentText()].get("bowtie")) if not is_graphene else False
 
         if is_graphene:
             self.dimer_check.setChecked(False)
@@ -1442,6 +1546,11 @@ class StructureWindow(QMainWindow):
                 border: 0;
                 top: -1px;
             }}
+            QTabWidget#viewerTabs QTabBar {{
+                alignment: left;
+                left: 28px;
+                top: 22px;
+            }}
             QTabWidget#viewerTabs QTabBar::tab {{
                 background: transparent;
                 color: #7C7C88;
@@ -1449,12 +1558,26 @@ class StructureWindow(QMainWindow):
                 border-bottom: 2px solid transparent;
                 padding: 8px 12px;
                 margin-right: 10px;
+                min-width: 260px;
                 font-size: 13px;
                 font-weight: 600;
             }}
             QTabWidget#viewerTabs QTabBar::tab:selected {{
                 color: {TEXT};
                 border-bottom: 2px solid {ACCENT_VIOLET};
+            }}
+            QTabWidget#viewerTabs QTabBar QToolButton {{
+                background: #FFFFFF;
+                color: {ACCENT_VIOLET};
+                border: 1px solid #EEEAF7;
+                border-radius: 10px;
+                min-width: 22px;
+                min-height: 22px;
+                margin-top: 4px;
+            }}
+            QTabWidget#viewerTabs QTabBar QToolButton:hover {{
+                background: {ACCENT_SOFT};
+                color: {ACCENT_INDIGO};
             }}
             QWidget#canvas {{
                 background: {SURFACE};
@@ -1464,11 +1587,7 @@ class StructureWindow(QMainWindow):
         """)
 
     def create_structure(self):
-        if self.output_root is None:
-            folder = QFileDialog.getExistingDirectory(self, "Save generated XYZ structures in", str(Path.cwd()))
-            if not folder:
-                return
-            self.output_root = Path(folder)
+        self.output_root = GUI_TMP_ROOT
 
         try:
             command_args = self._build_command_args()
@@ -1529,6 +1648,7 @@ class StructureWindow(QMainWindow):
 
         tab_index = self.tabs.addTab(canvas, self._short_tab_title(title))
         self._install_tab_menu(tab_index, canvas)
+        self.tabs.tabBar().show()
         self.tabs.setCurrentIndex(tab_index)
         self.canvas = canvas
         self._sync_current_tab_meta()
@@ -1541,10 +1661,10 @@ class StructureWindow(QMainWindow):
         button.setPopupMode(QToolButton.InstantPopup)
         button.setAutoRaise(True)
         menu = QMenu(button)
-        save_action = menu.addAction("Save...")
+        save_action = menu.addAction("Save")
         save_action.triggered.connect(lambda checked=False, source=canvas: self.save_structure(source))
         menu.addSeparator()
-        delete_action = menu.addAction("Delete tab...")
+        delete_action = menu.addAction("Delete")
         delete_action.triggered.connect(lambda checked=False, source=canvas: self.delete_structure_tab(source))
         button.setMenu(menu)
         self.tabs.tabBar().setTabButton(tab_index, QTabBar.RightSide, button)
@@ -1626,7 +1746,8 @@ class StructureWindow(QMainWindow):
         if self.tabs.count() == 0:
             self.canvas = self._make_canvas()
             self.empty_canvas = self.canvas
-            self.tabs.addTab(self.canvas, "Visualizer")
+            self.tabs.addTab(self.canvas, "")
+            self.tabs.tabBar().hide()
         else:
             current = self.tabs.currentWidget()
             if isinstance(current, VdwCanvas):
@@ -1776,7 +1897,7 @@ class StructureWindow(QMainWindow):
         return min_distance
 
     def _short_tab_title(self, title: str) -> str:
-        return title if len(title) <= 24 else title[:21] + "..."
+        return title if len(title) <= 40 else f"{title[:18]}...{title[-16:]}"
 
     def _sync_current_tab_meta(self):
         widget = self.tabs.currentWidget()
@@ -1793,10 +1914,11 @@ class StructureWindow(QMainWindow):
         self.meta_label.setText("  |  ".join(parts))
 
     def _build_command_args(self) -> list[str]:
-        structure = self.structure_combo.currentText()
-        definition = STRUCTURES[structure]
         atomtype = self.metal_combo.currentText()
-        active_definition = GRAPHENE_VARIANTS[self.graphene_variant_combo.currentText()] if definition.get("graphene") else definition
+        is_graphene = atomtype == "Graphene"
+        structure = self.structure_combo.currentText()
+        definition = STRUCTURES[structure] if not is_graphene else {"graphene": True}
+        active_definition = GRAPHENE_VARIANTS[self.graphene_variant_combo.currentText()] if is_graphene else definition
         values = {field[0]: self.param_spins[index].value() for index, field in enumerate(active_definition["fields"])}
         if active_definition.get("graphene") == "rib":
             return ["-create", "-graphene", "rib", self._fmt(values["x_length"]), self._fmt(values["y_length"])]
