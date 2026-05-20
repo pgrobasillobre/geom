@@ -9,17 +9,21 @@ import traceback
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+
 try:
-    from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QThread, Signal
+    from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QThread, QTimer, Signal
     from PySide6.QtGui import (
         QColor,
         QFont,
         QFontDatabase,
         QGuiApplication,
+        QImage,
         QKeySequence,
         QLinearGradient,
         QPainter,
         QPen,
+        QPixmap,
         QRadialGradient,
         QShortcut,
     )
@@ -46,11 +50,13 @@ try:
         QVBoxLayout,
         QWidget,
     )
+    from PySide6.QtOpenGL import QOpenGLFunctions_1_1
+    from PySide6.QtOpenGLWidgets import QOpenGLWidget
 except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users without GUI deps.
     missing_dependency = exc
     QPoint = QPointF = QRectF = Qt = QGuiApplication = QApplication = QFileDialog = QMessageBox = None
     QColor = lambda *args, **kwargs: None
-    QKeySequence = QLinearGradient = QPainter = QPen = QRadialGradient = QShortcut = None
+    QImage = QKeySequence = QLinearGradient = QPainter = QPen = QPixmap = QRadialGradient = QShortcut = None
 
     class QFont:
         DemiBold = 63
@@ -58,9 +64,13 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users with
     QFontDatabase = None
     QCheckBox = QComboBox = QDoubleSpinBox = QFrame = QGridLayout = QHBoxLayout = QLabel = QLineEdit = None
     QPushButton = QSizePolicy = QMenu = QSpinBox = QTabBar = QTabWidget = QToolButton = QVBoxLayout = None
-    QMainWindow = QWidget = object
+    QMainWindow = QWidget = QOpenGLWidget = object
+    QOpenGLFunctions_1_1 = None
 
     class QThread:
+        pass
+
+    class QTimer:
         pass
 
     def Signal(*args, **kwargs):
@@ -99,6 +109,28 @@ PANEL = "#FFFFFF"
 ACCENT_VIOLET = "#4F00B5"
 ACCENT_INDIGO = "#0600A0"
 ACCENT_SOFT = "#F4F0FF"
+
+GL_COLOR_BUFFER_BIT = 0x00004000
+GL_DEPTH_BUFFER_BIT = 0x00000100
+GL_TRIANGLE_STRIP = 0x0005
+GL_COMPILE = 0x1300
+GL_LEQUAL = 0x0203
+GL_FRONT_AND_BACK = 0x0408
+GL_CULL_FACE = 0x0B44
+GL_DEPTH_TEST = 0x0B71
+GL_LIGHTING = 0x0B50
+GL_LIGHT0 = 0x4000
+GL_COLOR_MATERIAL = 0x0B57
+GL_NORMALIZE = 0x0BA1
+GL_MODELVIEW = 0x1700
+GL_PROJECTION = 0x1701
+GL_AMBIENT = 0x1200
+GL_DIFFUSE = 0x1201
+GL_POSITION = 0x1203
+GL_SPECULAR = 0x1202
+GL_SHININESS = 0x1601
+GL_AMBIENT_AND_DIFFUSE = 0x1602
+GL_SMOOTH = 0x1D01
 
 # VMD's periodic table VDW radii in Angstrom.
 # Source: VMD PeriodicTable.C, pte_vdw_radius/get_pte_vdw_radius.
@@ -263,6 +295,7 @@ class ProjectedAtom:
     y: float
     z: float
     radius: float
+    depth_radius: float
     cpk: bool
     ox: float
     oy: float
@@ -274,6 +307,7 @@ class ProjectedBond:
     first: ProjectedAtom
     second: ProjectedAtom
     z: float
+    width: float
 
 
 class GenerationWorker(QThread):
@@ -292,7 +326,7 @@ class GenerationWorker(QThread):
             self.failed.emit(traceback.format_exc())
 
 
-class VdwCanvas(QWidget):
+class VdwCanvas(QOpenGLWidget):
     files_dropped = Signal(list)
 
     def __init__(self, parent=None):
@@ -303,12 +337,19 @@ class VdwCanvas(QWidget):
         self.zoom = 1.0
         self.pan_x = 0.0
         self.pan_y = 0.0
-        self.vdw_scale = 1.6
+        self.vdw_scale = 1.45
         self.bond_width_scale = 1.35
         self.render_resolution = 1
         self.translate_mode = False
         self._is_interacting = False
         self._last_pos: QPoint | None = None
+        self._sphere_cache: dict[tuple[str, int, int, bool], QPixmap] = {}
+        self._gl = None
+        self._sphere_list = 0
+        self._sphere_mesh = self._build_sphere_mesh(6, 8)
+        self._interaction_timer = QTimer(self)
+        self._interaction_timer.setSingleShot(True)
+        self._interaction_timer.timeout.connect(self._finish_interaction)
         self.setMinimumSize(560, 420)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMouseTracking(True)
@@ -340,6 +381,15 @@ class VdwCanvas(QWidget):
         self.render_resolution = max(1, value)
         self.update()
 
+    def _begin_interaction(self):
+        self._is_interacting = True
+        self._interaction_timer.start(110)
+
+    def _finish_interaction(self):
+        if self._is_interacting:
+            self._is_interacting = False
+            self.update()
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.setFocus()
@@ -355,10 +405,11 @@ class VdwCanvas(QWidget):
         should_translate = self.translate_mode or bool(modifiers & Qt.ShiftModifier)
         should_rotate = bool(modifiers & Qt.ControlModifier) or not should_translate
         if should_translate and not bool(modifiers & Qt.ControlModifier):
+            self._begin_interaction()
             self.pan_x += delta.x()
             self.pan_y += delta.y()
         elif should_rotate:
-            self._is_interacting = True
+            self._begin_interaction()
             self.rotation_y += delta.x() * 0.01
             self.rotation_x += delta.y() * 0.01
         self.update()
@@ -366,8 +417,7 @@ class VdwCanvas(QWidget):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             self._last_pos = None
-            self._is_interacting = False
-            self.update()
+            self._interaction_timer.start(80)
 
     def wheelEvent(self, event):
         delta = event.pixelDelta().y() if not event.pixelDelta().isNull() else event.angleDelta().y()
@@ -375,6 +425,7 @@ class VdwCanvas(QWidget):
             event.accept()
             return
         factor = math.exp(delta / 900.0)
+        self._begin_interaction()
         self.zoom = min(4.0, max(0.35, self.zoom * factor))
         self.update()
         event.accept()
@@ -431,7 +482,32 @@ class VdwCanvas(QWidget):
                     paths.append(path)
         return paths
 
-    def paintEvent(self, event):
+    def initializeGL(self):
+        self._gl = QOpenGLFunctions_1_1()
+        self._gl.initializeOpenGLFunctions()
+        self._gl.glClearColor(1.0, 1.0, 1.0, 1.0)
+        self._gl.glEnable(GL_DEPTH_TEST)
+        self._gl.glDepthFunc(GL_LEQUAL)
+        self._gl.glEnable(GL_NORMALIZE)
+        self._gl.glShadeModel(GL_SMOOTH)
+        self._sphere_list = self._gl.glGenLists(1)
+        self._gl.glNewList(self._sphere_list, GL_COMPILE)
+        self._draw_unit_sphere_mesh(self._gl)
+        self._gl.glEndList()
+
+    def resizeGL(self, width: int, height: int):
+        if self._gl is not None:
+            dpr = self.devicePixelRatioF()
+            self._gl.glViewport(0, 0, max(1, int(width * dpr)), max(1, int(height * dpr)))
+
+    def paintGL(self):
+        projected = self._project_atoms() if self.atoms else []
+        if self._uses_vdw_opengl(projected):
+            self._paint_vdw_opengl(projected)
+            painter = QPainter(self)
+            self._paint_axes(painter)
+            return
+
         painter = QPainter(self)
         fine_render = self.render_resolution > 1 and not (self._is_interacting and self._scene_has_cpk())
         painter.setRenderHint(QPainter.Antialiasing, fine_render)
@@ -442,7 +518,6 @@ class VdwCanvas(QWidget):
             self._paint_axes(painter)
             return
 
-        projected = self._project_atoms()
         for bond in self._projected_bonds(projected):
             self._paint_bond(painter, bond)
         for atom in projected:
@@ -468,7 +543,7 @@ class VdwCanvas(QWidget):
             rotated.append((atom, xz, yz, zz2))
 
         scale = min(self.width(), self.height()) * 0.40 * self.zoom / model_radius
-        center_x = self.width() * 0.52 + self.pan_x
+        center_x = self.width() * 0.50 + self.pan_x
         center_y = self.height() * 0.50 + self.pan_y
 
         atoms = []
@@ -476,10 +551,11 @@ class VdwCanvas(QWidget):
             element = atom.element.capitalize()
             cpk_mode = self._atom_uses_cpk(element)
             if cpk_mode:
-                radius = COVALENT_RADII.get(element, 0.77) * scale * 0.32 * self.vdw_scale
+                depth_radius = COVALENT_RADII.get(element, 0.77) * 0.32 * self.vdw_scale
             else:
-                radius = VDW_RADII.get(element, VDW_RADII["X"]) * scale * 0.68 * self.vdw_scale
-            atoms.append(ProjectedAtom(index, element, center_x + x * scale, center_y - y * scale, z, radius, cpk_mode, atom.x, atom.y, atom.z))
+                depth_radius = VDW_RADII.get(element, VDW_RADII["X"]) * 0.68 * self.vdw_scale
+            radius = depth_radius * scale
+            atoms.append(ProjectedAtom(index, element, center_x + x * scale, center_y - y * scale, z, radius, depth_radius, cpk_mode, atom.x, atom.y, atom.z))
 
         atoms.sort(key=lambda item: item.z)
         return atoms
@@ -489,6 +565,296 @@ class VdwCanvas(QWidget):
 
     def _scene_has_cpk(self) -> bool:
         return any(self._atom_uses_cpk(atom.element.capitalize()) for atom in self.atoms)
+
+    def _uses_vdw_opengl(self, projected: list[ProjectedAtom]) -> bool:
+        return bool(projected) and self._gl is not None and not any(atom.cpk for atom in projected)
+
+    def _paint_vdw_opengl(self, projected: list[ProjectedAtom]):
+        gl = self._gl
+        if gl is None:
+            return
+
+        width = max(1, self.width())
+        height = max(1, self.height())
+        dpr = self.devicePixelRatioF()
+        far = max(1000.0, max(abs(atom.z) * (atom.radius / max(atom.depth_radius, 1.0e-6)) + atom.radius for atom in projected) + 100.0)
+        gl.glViewport(0, 0, max(1, int(width * dpr)), max(1, int(height * dpr)))
+        gl.glClearColor(1.0, 1.0, 1.0, 1.0)
+        gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        gl.glMatrixMode(GL_PROJECTION)
+        gl.glLoadIdentity()
+        gl.glOrtho(0.0, float(width), float(height), 0.0, -far, far)
+        gl.glMatrixMode(GL_MODELVIEW)
+        gl.glLoadIdentity()
+
+        gl.glEnable(GL_DEPTH_TEST)
+        gl.glDepthFunc(GL_LEQUAL)
+        gl.glEnable(GL_LIGHTING)
+        gl.glEnable(GL_LIGHT0)
+        gl.glEnable(GL_COLOR_MATERIAL)
+        gl.glEnable(GL_NORMALIZE)
+        gl.glDisable(GL_CULL_FACE)
+        gl.glShadeModel(GL_SMOOTH)
+        light_x, light_y, light_z = 0.50, -0.62, 0.74
+        gl.glLightfv(GL_LIGHT0, GL_POSITION, [light_x, light_y, light_z, 0.0])
+        gl.glLightfv(GL_LIGHT0, GL_AMBIENT, [0.58, 0.58, 0.58, 1.0])
+        gl.glLightfv(GL_LIGHT0, GL_DIFFUSE, [0.44, 0.44, 0.44, 1.0])
+        gl.glLightfv(GL_LIGHT0, GL_SPECULAR, [0.10, 0.10, 0.10, 1.0])
+        gl.glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+        gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0.14, 0.14, 0.14, 1.0])
+        gl.glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 22.0)
+
+        for atom in projected:
+            base = ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
+            scale = atom.radius / max(atom.depth_radius, 1.0e-6)
+            gl.glPushMatrix()
+            gl.glTranslatef(float(atom.x), float(atom.y), float(atom.z * scale))
+            gl.glScalef(float(atom.radius), float(atom.radius), float(atom.radius))
+            gl.glColor3f(base.redF(), base.greenF(), base.blueF())
+            self._draw_unit_sphere(gl)
+            gl.glPopMatrix()
+
+        gl.glDisable(GL_LIGHTING)
+        gl.glDisable(GL_COLOR_MATERIAL)
+
+    def _build_sphere_mesh(self, stacks: int, slices: int) -> list[list[tuple[float, float, float]]]:
+        strips = []
+        for stack in range(stacks):
+            phi0 = math.pi * stack / stacks
+            phi1 = math.pi * (stack + 1) / stacks
+            strip = []
+            for slice_index in range(slices + 1):
+                theta = 2.0 * math.pi * slice_index / slices
+                for phi in (phi1, phi0):
+                    x = math.sin(phi) * math.cos(theta)
+                    y = math.cos(phi)
+                    z = math.sin(phi) * math.sin(theta)
+                    strip.append((x, y, z))
+            strips.append(strip)
+        return strips
+
+    def _draw_unit_sphere(self, gl):
+        if self._sphere_list:
+            gl.glCallList(self._sphere_list)
+            return
+        self._draw_unit_sphere_mesh(gl)
+
+    def _draw_unit_sphere_mesh(self, gl):
+        for strip in self._sphere_mesh:
+            gl.glBegin(GL_TRIANGLE_STRIP)
+            for x, y, z in strip:
+                gl.glNormal3f(float(x), float(y), float(z))
+                gl.glVertex3f(float(x), float(y), float(z))
+            gl.glEnd()
+
+    def _uses_vdw_impostors(self, projected: list[ProjectedAtom]) -> bool:
+        return bool(projected) and not any(atom.cpk for atom in projected)
+
+    def _uses_vdw_surface_buffer(self, projected: list[ProjectedAtom]) -> bool:
+        return bool(projected) and not any(atom.cpk for atom in projected)
+
+    def _paint_vdw_surface_buffer(self, painter: QPainter, projected: list[ProjectedAtom]):
+        width = self.width()
+        height = self.height()
+        render_scale = self._vdw_surface_render_scale(width, height, len(projected))
+        render_width = max(1, int(width * render_scale))
+        render_height = max(1, int(height * render_scale))
+        rgba = np.zeros((render_height, render_width, 4), dtype=np.uint8)
+        zbuffer = np.full((render_height, render_width), -np.inf, dtype=np.float32)
+
+        z_min = min(atom.z - atom.depth_radius for atom in projected)
+        z_max = max(atom.z + atom.depth_radius for atom in projected)
+        z_span = max(1.0e-6, z_max - z_min)
+        light_x, light_y, light_z = self._view_light_vector()
+        light_len = math.sqrt(light_x * light_x + light_y * light_y + light_z * light_z)
+        light_x, light_y, light_z = light_x / light_len, light_y / light_len, light_z / light_len
+
+        for atom in projected:
+            base = ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
+            base_rgb = np.array([base.red(), base.green(), base.blue()], dtype=np.float32)
+            center_x = atom.x * render_scale
+            center_y = atom.y * render_scale
+            radius = max(1.0, atom.radius * render_scale)
+            x_min = max(0, int(center_x - radius - 1))
+            x_max = min(render_width - 1, int(center_x + radius + 1))
+            y_min = max(0, int(center_y - radius - 1))
+            y_max = min(render_height - 1, int(center_y + radius + 1))
+            if x_min > x_max or y_min > y_max:
+                continue
+
+            yy, xx = np.ogrid[y_min:y_max + 1, x_min:x_max + 1]
+            dx = (xx + 0.5 - center_x) / radius
+            dy = (yy + 0.5 - center_y) / radius
+            dist_sq = dx * dx + dy * dy
+            inside = dist_sq <= 1.0
+            if not np.any(inside):
+                continue
+
+            nz = np.sqrt(np.maximum(0.0, 1.0 - dist_sq))
+            surface_z = atom.z + nz * atom.depth_radius
+            current_z = zbuffer[y_min:y_max + 1, x_min:x_max + 1]
+            visible = inside & (surface_z > current_z)
+            if not np.any(visible):
+                continue
+
+            normal_y = -dy
+            ndotl = np.maximum(0.0, dx * light_x + normal_y * light_y + nz * light_z)
+            depth = (surface_z - z_min) / z_span
+            shade = 0.60 + 0.30 * ndotl + 0.10 * depth
+            edge = np.clip((1.0 - np.sqrt(np.maximum(0.0, dist_sq))) / 0.12, 0.0, 1.0)
+            shade *= 0.86 + 0.14 * edge
+            spec = np.power(ndotl, 26) * 46.0
+            color = np.clip(base_rgb * shade[..., None] + spec[..., None], 0, 255).astype(np.uint8)
+
+            tile = rgba[y_min:y_max + 1, x_min:x_max + 1]
+            tile[visible, :3] = color[visible]
+            tile[visible, 3] = 255
+            current_z[visible] = surface_z[visible]
+
+        image = QImage(rgba.data, render_width, render_height, render_width * 4, QImage.Format_RGBA8888).copy()
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        painter.drawImage(QRectF(0.0, 0.0, width, height), image)
+
+    def _vdw_surface_render_scale(self, width: int, height: int, atom_count: int) -> float:
+        max_dimension = max(width, height, 1)
+        target_dimension = 900
+        if atom_count > 1500:
+            target_dimension = min(target_dimension, 380)
+        elif atom_count > 700:
+            target_dimension = min(target_dimension, 520)
+        elif atom_count > 250:
+            target_dimension = min(target_dimension, 700)
+        if self.render_resolution > 1:
+            target_dimension = min(1300, target_dimension + 180)
+        return min(1.0, target_dimension / max_dimension)
+
+    def _paint_vdw_impostors(self, painter: QPainter, projected: list[ProjectedAtom]):
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        atoms = sorted(projected, key=lambda atom: (round(atom.z, 2), atom.y, atom.x))
+        for atom in atoms:
+            pixmap = self._sphere_pixmap(atom)
+            size = atom.radius * 2.0 + 2.0
+            painter.drawPixmap(
+                QRectF(atom.x - size / 2.0, atom.y - size / 2.0, size, size),
+                pixmap,
+                QRectF(0.0, 0.0, pixmap.width(), pixmap.height()),
+            )
+
+    def _sphere_pixmap(self, atom: ProjectedAtom) -> QPixmap:
+        diameter = max(4, int(atom.radius * 2))
+        light_x, light_y, light_z = self._view_light_vector()
+        quadrant = 0 if light_x < 0 and light_y >= 0 else 1 if light_x >= 0 and light_y >= 0 else 2 if light_x >= 0 else 3
+        cache_key = (atom.element, diameter, quadrant, self.render_resolution > 1, self._is_interacting)
+        cached = self._sphere_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        supersample = 2 if self._is_interacting else 3
+        size = (diameter + 2) * supersample
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        base = ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
+        rect = QRectF(float(supersample), float(supersample), diameter * supersample, diameter * supersample)
+        scaled_radius = atom.radius * supersample
+        offset_x = -0.34 if light_x < 0 else 0.34
+        offset_y = -0.38 if light_y >= 0 else 0.38
+        gradient = QRadialGradient(
+            rect.center() + QPointF(offset_x * scaled_radius, offset_y * scaled_radius),
+            scaled_radius * 1.12,
+        )
+        gradient.setColorAt(0.0, QColor(255, 255, 255, 190))
+        gradient.setColorAt(0.22, base.lighter(114))
+        gradient.setColorAt(0.78, base)
+        gradient.setColorAt(1.0, base.darker(112))
+        painter.setPen(QPen(base.darker(125), max(1.0, supersample * 0.45)))
+        painter.setBrush(gradient)
+        painter.drawEllipse(rect)
+        painter.end()
+
+        if len(self._sphere_cache) > 256:
+            self._sphere_cache.clear()
+        scaled = pixmap.scaled(diameter + 2, diameter + 2, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self._sphere_cache[cache_key] = scaled
+        return scaled
+
+    def _paint_vdw_depth_buffer(self, painter: QPainter, projected: list[ProjectedAtom]):
+        width = self.width()
+        height = self.height()
+        render_scale = self._vdw_depth_render_scale(width, height, len(projected))
+        render_width = max(1, int(width * render_scale))
+        render_height = max(1, int(height * render_scale))
+        image = QImage(render_width, render_height, QImage.Format_ARGB32)
+        image.fill(Qt.transparent)
+        zbuffer = [-float("inf")] * (render_width * render_height)
+        z_min = min(atom.z - atom.depth_radius for atom in projected)
+        z_max = max(atom.z + atom.depth_radius for atom in projected)
+        z_span = max(1.0e-6, z_max - z_min)
+        light_x, light_y, light_z = self._view_light_vector()
+        light_len = math.sqrt(light_x * light_x + light_y * light_y + light_z * light_z)
+        light_x, light_y, light_z = light_x / light_len, light_y / light_len, light_z / light_len
+
+        for atom in projected:
+            base = ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
+            center_x = atom.x * render_scale
+            center_y = atom.y * render_scale
+            radius = max(1.0, atom.radius * render_scale)
+            x_min = max(0, int(center_x - radius - 1))
+            x_max = min(render_width - 1, int(center_x + radius + 1))
+            y_min = max(0, int(center_y - radius - 1))
+            y_max = min(render_height - 1, int(center_y + radius + 1))
+
+            for py in range(y_min, y_max + 1):
+                dy = (py + 0.5 - center_y) / radius
+                dy_sq = dy * dy
+                row = py * render_width
+                for px in range(x_min, x_max + 1):
+                    dx = (px + 0.5 - center_x) / radius
+                    dist_sq = dx * dx + dy_sq
+                    if dist_sq > 1.0:
+                        continue
+                    nz = math.sqrt(max(0.0, 1.0 - dist_sq))
+                    surface_z = atom.z + nz * atom.depth_radius
+                    index = row + px
+                    if surface_z <= zbuffer[index]:
+                        continue
+
+                    zbuffer[index] = surface_z
+                    normal_y = -dy
+                    ndotl = max(0.0, dx * light_x + normal_y * light_y + nz * light_z)
+                    depth = (surface_z - z_min) / z_span
+                    shade = 0.62 + 0.30 * ndotl + 0.08 * depth
+                    edge = max(0.0, min(1.0, (1.0 - math.sqrt(dist_sq)) / 0.10))
+                    shade *= 0.88 + 0.12 * edge
+                    spec = max(0.0, ndotl) ** 24
+                    red = min(255, int(base.red() * shade + 255 * spec * 0.20))
+                    green = min(255, int(base.green() * shade + 255 * spec * 0.20))
+                    blue = min(255, int(base.blue() * shade + 255 * spec * 0.20))
+                    if dist_sq > 0.992:
+                        red = int(red * 0.55)
+                        green = int(green * 0.55)
+                        blue = int(blue * 0.55)
+                    image.setPixel(px, py, QColor(red, green, blue).rgba())
+
+        painter.drawImage(QRectF(0.0, 0.0, width, height), image)
+
+    def _vdw_depth_render_scale(self, width: int, height: int, atom_count: int) -> float:
+        max_dimension = max(width, height, 1)
+        target_dimension = 420 if self._is_interacting else 680
+        if atom_count > 1200:
+            target_dimension = min(target_dimension, 300)
+        elif atom_count > 500:
+            target_dimension = min(target_dimension, 380)
+        elif atom_count > 180:
+            target_dimension = min(target_dimension, 480)
+        if self.render_resolution > 1 and not self._is_interacting:
+            target_dimension = min(900, target_dimension + 180)
+        return min(1.0, target_dimension / max_dimension)
+
+    def _view_light_vector(self) -> tuple[float, float, float]:
+        # Keep the light in molecular space so highlights move as the structure rotates.
+        return self._rotate_point(-0.38, 0.55, 0.74)
 
     def _projected_bonds(self, projected: list[ProjectedAtom]) -> list[ProjectedBond]:
         bonds = []
@@ -511,13 +877,14 @@ class VdwCanvas(QWidget):
                 if 0.25 < distance <= (radius_a + radius_b) * 1.22 + 0.18:
                     first = by_index[i]
                     second = by_index[j]
-                    bonds.append(ProjectedBond(first, second, (first.z + second.z) / 2.0))
+                    width = min(12.0, max(3.0, min(first.radius, second.radius) * 0.10 * self.bond_width_scale))
+                    bonds.append(ProjectedBond(first, second, (first.z + second.z) / 2.0, width))
         bonds.sort(key=lambda item: item.z)
         return bonds
 
     def _paint_bond(self, painter: QPainter, bond: ProjectedBond):
-        color = QColor("#777777")
-        pen = QPen(color, max(1.0, 5.0 * self.bond_width_scale))
+        color = QColor("#767676")
+        pen = QPen(color, bond.width)
         pen.setCapStyle(Qt.RoundCap)
         painter.setPen(pen)
         painter.drawLine(QPointF(bond.first.x, bond.first.y), QPointF(bond.second.x, bond.second.y))
@@ -527,14 +894,13 @@ class VdwCanvas(QWidget):
         shaded = QColor(base)
 
         rect = QRectF(atom.x - atom.radius, atom.y - atom.radius, atom.radius * 2, atom.radius * 2)
-        outline = QPen(QColor("#111111"), 1.1 if atom.cpk else 0.8)
-        if self._use_fine_atom_rendering():
-            gradient = QRadialGradient(rect.center() - QPoint(int(atom.radius * 0.34), int(atom.radius * 0.38)), atom.radius)
-            highlight = QColor(255, 255, 255, 235)
-            gradient.setColorAt(0.0, highlight)
-            gradient.setColorAt(0.16, shaded.lighter(128))
-            gradient.setColorAt(0.82, shaded)
-            gradient.setColorAt(1.0, shaded.darker(112))
+        outline = QPen(QColor("#111111"), 1.05 if atom.cpk else 0.8)
+        if self._use_lit_atom_rendering(atom):
+            gradient = QRadialGradient(rect.center() - QPointF(atom.radius * 0.34, atom.radius * 0.38), atom.radius * 1.05)
+            gradient.setColorAt(0.0, QColor(255, 255, 255, 210))
+            gradient.setColorAt(0.18, shaded.lighter(118))
+            gradient.setColorAt(0.72, shaded)
+            gradient.setColorAt(1.0, shaded.darker(124))
             painter.setPen(outline)
             painter.setBrush(gradient)
             painter.drawEllipse(rect)
@@ -542,19 +908,21 @@ class VdwCanvas(QWidget):
             painter.setPen(outline)
             painter.setBrush(shaded)
             painter.drawEllipse(rect)
-            highlight_size = max(2.0, atom.radius * 0.24)
+            highlight_size = max(1.6, atom.radius * 0.18)
             highlight = QRectF(
-                rect.center().x() - atom.radius * 0.38,
-                rect.center().y() - atom.radius * 0.42,
+                rect.center().x() - atom.radius * 0.36,
+                rect.center().y() - atom.radius * 0.40,
                 highlight_size,
                 highlight_size,
             )
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor(255, 255, 255, 82))
+            painter.setBrush(QColor(255, 255, 255, 62))
             painter.drawEllipse(highlight)
 
-    def _use_fine_atom_rendering(self) -> bool:
-        return self.render_resolution > 1 and not (self._is_interacting and self._scene_has_cpk())
+    def _use_lit_atom_rendering(self, atom: ProjectedAtom) -> bool:
+        if self.render_resolution > 1:
+            return not (self._is_interacting and self._scene_has_cpk())
+        return not self._is_interacting and (not atom.cpk or len(self.atoms) <= 600)
 
     def _rotate_point(self, x: float, y: float, z: float) -> tuple[float, float, float]:
         cos_x, sin_x = math.cos(self.rotation_x), math.sin(self.rotation_x)
@@ -686,7 +1054,7 @@ class StructureWindow(QMainWindow):
         self.current_result: StructureResult | None = None
         self.output_root: Path | None = None
         self.empty_canvas: VdwCanvas | None = None
-        self.vdw_scale = 1.6
+        self.vdw_scale = 1.45
         self.bond_width_scale = 1.35
         self.render_resolution = 1
         self.setWindowTitle(APP_TITLE)
@@ -822,7 +1190,7 @@ class StructureWindow(QMainWindow):
         self.smiles_button.setObjectName("smilesButton")
         self.smiles_button.clicked.connect(self.load_smiles_from_input)
 
-        self.vdw_scale_input = self._make_viewer_spin(160, 60, 260, "%")
+        self.vdw_scale_input = self._make_viewer_spin(145, 60, 260, "%")
         self.vdw_scale_input.valueChanged.connect(self._set_vdw_scale_from_input)
 
         self.resolution_input = self._make_viewer_spin(1, 1, 4, "x")
