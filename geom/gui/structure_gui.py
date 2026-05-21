@@ -228,23 +228,29 @@ STRUCTURES = {
         "bowtie": True,
         "fields": (("z_max", "Height", 50.0, 2.0, 500.0), ("a", "a", 0.02, 0.001, 2.0), ("b", "b", 0.02, 0.001, 2.0)),
     },
-    "Pyramid": {
+    "Pyramid square base": {
         "flag": "-pyramid",
         "metals": "bulk",
         "bowtie": True,
         "fields": (("z_max", "Height", 50.0, 2.0, 500.0), ("side", "Base side", 30.0, 2.0, 500.0)),
-    },
-    "Pentagonal Pyramid": {
-        "flag": "-pentpyramid",
-        "metals": "bulk",
-        "bowtie": True,
-        "fields": (("base", "Base width", 30.0, 2.0, 500.0), ("z_max", "Height", 50.0, 2.0, 500.0)),
     },
     "Cone": {
         "flag": "-cone",
         "metals": "bulk",
         "bowtie": True,
         "fields": (("z_max", "Height", 50.0, 2.0, 500.0), ("radius", "Radius", 30.0, 2.0, 300.0)),
+    },
+    "Microscope": {
+        "flag": "-microscope",
+        "metals": "bulk",
+        "bowtie": True,
+        "fields": (
+            ("z_max_paraboloid", "Paraboloid height", 40.0, 2.0, 500.0),
+            ("a", "a", 0.02, 0.001, 2.0),
+            ("b", "b", 0.02, 0.001, 2.0),
+            ("z_max_pyramid", "Pyramid height", 26.0, 2.0, 500.0),
+            ("side", "Base side", 33.0, 2.0, 500.0),
+        ),
     },
     "Icosahedron": {
         "flag": "-ico",
@@ -260,11 +266,6 @@ STRUCTURES = {
         "flag": "-idh",
         "metals": "fcc",
         "fields": (("radius", "Radius", 50.0, 2.0, 300.0),),
-    },
-    "Bipyramid": {
-        "flag": "-bipyramid",
-        "metals": "bulk",
-        "fields": (("width", "Width", 30.0, 2.0, 300.0), ("length", "Length", 50.0, 4.0, 500.0)),
     },
 }
 
@@ -339,7 +340,7 @@ class VdwCanvas(QOpenGLWidget):
         self.pan_x = 0.0
         self.pan_y = 0.0
         self.vdw_scale = 1.45
-        self.bond_width_scale = 1.35
+        self.bond_width_scale = 1.65
         self.render_resolution = 1
         self.translate_mode = False
         self._is_interacting = False
@@ -509,9 +510,12 @@ class VdwCanvas(QOpenGLWidget):
             painter.setRenderHint(QPainter.Antialiasing, True)
             self._paint_axes(painter)
             return
+        if self._uses_mixed_vdw_cpk(projected):
+            self._paint_mixed_vdw_cpk(projected)
+            return
 
         painter = QPainter(self)
-        fine_render = self.render_resolution > 1 and not (self._is_interacting and self._scene_has_cpk())
+        fine_render = self.render_resolution > 1 or self._scene_has_cpk()
         painter.setRenderHint(QPainter.Antialiasing, fine_render)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, fine_render)
         self._paint_background(painter)
@@ -570,6 +574,23 @@ class VdwCanvas(QOpenGLWidget):
 
     def _uses_vdw_opengl(self, projected: list[ProjectedAtom]) -> bool:
         return bool(projected) and self._gl is not None and not any(atom.cpk for atom in projected)
+
+    def _uses_mixed_vdw_cpk(self, projected: list[ProjectedAtom]) -> bool:
+        return bool(projected) and self._gl is not None and any(atom.cpk for atom in projected) and any(not atom.cpk for atom in projected)
+
+    def _paint_mixed_vdw_cpk(self, projected: list[ProjectedAtom]):
+        metal_atoms = [atom for atom in projected if not atom.cpk]
+        cpk_atoms = [atom for atom in projected if atom.cpk]
+
+        self._paint_vdw_opengl(metal_atoms)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        for bond in self._projected_bonds(projected):
+            self._paint_bond(painter, bond)
+        for atom in cpk_atoms:
+            self._paint_atom(painter, atom)
+        self._paint_axes(painter)
 
     def _paint_vdw_opengl(self, projected: list[ProjectedAtom]):
         gl = self._gl
@@ -879,30 +900,45 @@ class VdwCanvas(QOpenGLWidget):
                 if 0.25 < distance <= (radius_a + radius_b) * 1.22 + 0.18:
                     first = by_index[i]
                     second = by_index[j]
-                    width = min(12.0, max(3.0, min(first.radius, second.radius) * 0.10 * self.bond_width_scale))
+                    width = min(14.0, max(1.15, min(first.radius, second.radius) * 0.22 * self.bond_width_scale))
                     bonds.append(ProjectedBond(first, second, (first.z + second.z) / 2.0, width))
         bonds.sort(key=lambda item: item.z)
         return bonds
 
     def _paint_bond(self, painter: QPainter, bond: ProjectedBond):
-        color = QColor("#767676")
-        pen = QPen(color, bond.width)
-        pen.setCapStyle(Qt.RoundCap)
-        painter.setPen(pen)
-        painter.drawLine(QPointF(bond.first.x, bond.first.y), QPointF(bond.second.x, bond.second.y))
+        start = QPointF(bond.first.x, bond.first.y)
+        end = QPointF(bond.second.x, bond.second.y)
+        middle = QPointF((bond.first.x + bond.second.x) * 0.5, (bond.first.y + bond.second.y) * 0.5)
+
+        outline = QPen(QColor(35, 35, 35, 105), bond.width + 0.75)
+        outline.setCapStyle(Qt.RoundCap)
+        painter.setPen(outline)
+        painter.drawLine(start, end)
+
+        first_color = CPK_COLORS.get(bond.first.element, CPK_DEFAULT)
+        second_color = CPK_COLORS.get(bond.second.element, CPK_DEFAULT)
+        first_pen = QPen(first_color.darker(108), bond.width)
+        first_pen.setCapStyle(Qt.RoundCap)
+        second_pen = QPen(second_color.darker(108), bond.width)
+        second_pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(first_pen)
+        painter.drawLine(start, middle)
+        painter.setPen(second_pen)
+        painter.drawLine(middle, end)
 
     def _paint_atom(self, painter: QPainter, atom: ProjectedAtom):
         base = CPK_COLORS.get(atom.element, CPK_DEFAULT) if atom.cpk else ELEMENT_COLORS.get(atom.element, DEFAULT_VMD_PINK)
         shaded = QColor(base)
 
         rect = QRectF(atom.x - atom.radius, atom.y - atom.radius, atom.radius * 2, atom.radius * 2)
-        outline = QPen(QColor("#111111"), 1.05 if atom.cpk else 0.8)
+        outline_color = QColor(20, 20, 20, 150 if atom.cpk else 190)
+        outline = QPen(outline_color, 0.65 if atom.cpk else 0.8)
         if self._use_lit_atom_rendering(atom):
             gradient = QRadialGradient(rect.center() - QPointF(atom.radius * 0.34, atom.radius * 0.38), atom.radius * 1.05)
-            gradient.setColorAt(0.0, QColor(255, 255, 255, 210))
-            gradient.setColorAt(0.18, shaded.lighter(118))
+            gradient.setColorAt(0.0, QColor(255, 255, 255, 128))
+            gradient.setColorAt(0.18, shaded.lighter(110))
             gradient.setColorAt(0.72, shaded)
-            gradient.setColorAt(1.0, shaded.darker(124))
+            gradient.setColorAt(1.0, shaded.darker(112))
             painter.setPen(outline)
             painter.setBrush(gradient)
             painter.drawEllipse(rect)
@@ -923,8 +959,10 @@ class VdwCanvas(QOpenGLWidget):
 
     def _use_lit_atom_rendering(self, atom: ProjectedAtom) -> bool:
         if self.render_resolution > 1:
-            return not (self._is_interacting and self._scene_has_cpk())
-        return not self._is_interacting and (not atom.cpk or len(self.atoms) <= 600)
+            return True
+        if atom.cpk:
+            return len(self.atoms) <= 1400
+        return not self._is_interacting
 
     def _rotate_point(self, x: float, y: float, z: float) -> tuple[float, float, float]:
         cos_x, sin_x = math.cos(self.rotation_x), math.sin(self.rotation_x)
@@ -937,16 +975,16 @@ class VdwCanvas(QOpenGLWidget):
 
     def _paint_axes(self, painter: QPainter):
         origin = QPointF(54.0, max(78.0, self.height() - 58.0))
-        axis_length = 48.0
+        axis_length = 46.0
         axes = [
-            ("X", QColor("#C84A4A"), self._rotate_point(1.0, 0.0, 0.0)),
-            ("Y", QColor("#2E8B57"), self._rotate_point(0.0, 1.0, 0.0)),
-            ("Z", QColor("#4169B1"), self._rotate_point(0.0, 0.0, 1.0)),
+            ("X", QColor("#C7352E"), self._rotate_point(1.0, 0.0, 0.0)),
+            ("Y", QColor("#208246"), self._rotate_point(0.0, 1.0, 0.0)),
+            ("Z", QColor("#3158A7"), self._rotate_point(0.0, 0.0, 1.0)),
         ]
         axes.sort(key=lambda item: item[2][2])
 
         font = QFontDatabase.systemFont(QFontDatabase.GeneralFont)
-        font.setPointSize(10)
+        font.setPointSize(9)
         font.setWeight(QFont.Bold)
         painter.setFont(font)
 
@@ -955,24 +993,24 @@ class VdwCanvas(QOpenGLWidget):
             direction = QPointF(end.x() - origin.x(), end.y() - origin.y())
             length = math.hypot(direction.x(), direction.y())
             if length < 2.0:
-                radius = 7.5 if z >= 0 else 5.5
-                alpha = 230 if z >= 0 else 120
-                painter.setPen(QPen(QColor("#111111"), 1.1))
+                radius = 5.8 if z >= 0 else 4.4
+                alpha = 235 if z >= 0 else 120
+                painter.setPen(QPen(QColor("#0E0E0E"), 1.2))
                 painter.setBrush(QColor(color.red(), color.green(), color.blue(), alpha))
                 painter.drawEllipse(origin, radius, radius)
                 if z >= 0:
-                    painter.setBrush(QColor("#FFFFFF"))
+                    painter.setBrush(QColor(255, 255, 255, 120))
                     painter.setPen(Qt.NoPen)
-                    painter.drawEllipse(origin.x() - 2.0, origin.y() - 2.0, 3.5, 3.5)
+                    painter.drawEllipse(origin.x() - 1.4, origin.y() - 1.4, 2.4, 2.4)
                 painter.setPen(QColor("#111111"))
-                painter.drawText(QRectF(origin.x() + 11.0, origin.y() - 21.0, 18.0, 16.0), Qt.AlignCenter, label)
+                painter.drawText(QRectF(origin.x() + 7.0, origin.y() - 15.0, 14.0, 14.0), Qt.AlignCenter, label)
                 continue
             unit = QPointF(direction.x() / length, direction.y() / length)
             normal = QPointF(-unit.y(), unit.x())
-            label_pos = QPointF(origin.x() + unit.x() * (axis_length + 15.0), origin.y() + unit.y() * (axis_length + 15.0))
-            shaft_end = QPointF(end.x() - unit.x() * 8.0, end.y() - unit.y() * 8.0)
-            arrow_back = 10.0
-            arrow_half_width = 4.8
+            label_pos = QPointF(origin.x() + unit.x() * (axis_length + 4.5), origin.y() + unit.y() * (axis_length + 4.5))
+            shaft_end = QPointF(end.x() - unit.x() * 7.4, end.y() - unit.y() * 7.4)
+            arrow_back = 9.2
+            arrow_half_width = 4.5
             left = QPointF(
                 end.x() - unit.x() * arrow_back + normal.x() * arrow_half_width,
                 end.y() - unit.y() * arrow_back + normal.y() * arrow_half_width,
@@ -981,27 +1019,27 @@ class VdwCanvas(QOpenGLWidget):
                 end.x() - unit.x() * arrow_back - normal.x() * arrow_half_width,
                 end.y() - unit.y() * arrow_back - normal.y() * arrow_half_width,
             )
-            alpha = 135 if z < -0.25 else 235
-            outline = QPen(QColor("#111111"), 5.0)
+            alpha = 130 if z < -0.25 else 240
+            outline = QPen(QColor("#0D0D0D"), 5.4)
             outline.setCapStyle(Qt.RoundCap)
             painter.setPen(outline)
             painter.drawLine(origin, shaft_end)
-            pen = QPen(QColor(color.red(), color.green(), color.blue(), alpha), 3.0)
+            pen = QPen(QColor(color.red(), color.green(), color.blue(), alpha), 3.8)
             pen.setCapStyle(Qt.RoundCap)
             painter.setPen(pen)
             painter.drawLine(origin, shaft_end)
-            painter.setBrush(QColor("#111111"))
+            painter.setBrush(QColor("#0D0D0D"))
             painter.setPen(Qt.NoPen)
             painter.drawPolygon([end, left, right])
             painter.setBrush(QColor(color.red(), color.green(), color.blue(), alpha))
-            painter.setPen(QPen(QColor("#111111"), 1.0))
+            painter.setPen(QPen(QColor("#0D0D0D"), 1.05))
             painter.drawPolygon([end, left, right])
             painter.setPen(QColor("#111111"))
-            painter.drawText(QRectF(label_pos.x() - 8.0, label_pos.y() - 8.0, 16.0, 16.0), Qt.AlignCenter, label)
+            painter.drawText(QRectF(label_pos.x() - 6.0, label_pos.y() - 7.0, 12.0, 14.0), Qt.AlignCenter, label)
 
-        painter.setPen(QPen(QColor("#111111"), 1.0))
-        painter.setBrush(QColor("#E8E8E8"))
-        painter.drawEllipse(origin, 3.2, 3.2)
+        painter.setPen(QPen(QColor("#0D0D0D"), 1.0))
+        painter.setBrush(QColor("#BFC3C9"))
+        painter.drawEllipse(origin, 2.9, 2.9)
 
 
 class ViewerStepper(QWidget):
@@ -1082,8 +1120,9 @@ class StructureWindow(QMainWindow):
         self.current_result: StructureResult | None = None
         self.output_root: Path | None = None
         self.empty_canvas: VdwCanvas | None = None
+        self.pending_generation_meta: dict[str, object] = {}
         self.vdw_scale = 1.45
-        self.bond_width_scale = 1.35
+        self.bond_width_scale = 1.65
         self.render_resolution = 1
         self.setWindowTitle(APP_TITLE)
         self.resize(1180, 760)
@@ -1138,7 +1177,7 @@ class StructureWindow(QMainWindow):
 
         self.param_labels: list[QLabel] = []
         self.param_spins: list[QDoubleSpinBox] = []
-        for _ in range(3):
+        for _ in range(5):
             label = self._field_label("")
             spin = QDoubleSpinBox()
             spin.setButtonSymbols(QDoubleSpinBox.NoButtons)
@@ -1155,15 +1194,16 @@ class StructureWindow(QMainWindow):
         form.setHorizontalSpacing(12)
         form.setVerticalSpacing(14)
         form.addWidget(self.metal_label, 0, 0)
-        form.addWidget(self.metal_combo, 0, 1)
+        form.addWidget(self.metal_combo, 0, 1, 1, 3)
         form.addWidget(self.structure_label, 1, 0)
-        form.addWidget(self.structure_combo, 1, 1)
+        form.addWidget(self.structure_combo, 1, 1, 1, 3)
         form.addWidget(self.graphene_variant_label, 1, 0)
-        form.addWidget(self.graphene_variant_combo, 1, 1)
+        form.addWidget(self.graphene_variant_combo, 1, 1, 1, 3)
         form.addWidget(self.axis_label, 2, 0)
-        form.addWidget(self.axis_combo, 2, 1)
+        form.addWidget(self.axis_combo, 2, 1, 1, 3)
         form.addWidget(self.graphene_edge_label, 2, 0)
-        form.addWidget(self.graphene_edge_combo, 2, 1)
+        form.addWidget(self.graphene_edge_combo, 2, 1, 1, 3)
+        self.generator_form = form
         for index, (label, spin) in enumerate(zip(self.param_labels, self.param_spins), start=3):
             form.addWidget(label, index, 0)
             form.addWidget(spin, index, 1)
@@ -1196,6 +1236,14 @@ class StructureWindow(QMainWindow):
         self.bowtie_distance = self._make_option_spin(10.0, 0.1, 300.0)
         self.bowtie_widgets = (self.bowtie_check, self.bowtie_distance)
 
+        self.core_shell_check = QCheckBox("Core-shell")
+        self.core_shell_check.toggled.connect(self._refresh_structure_controls)
+        self.core_atom = QComboBox()
+        self.core_atom.addItems(("Au", "Ag"))
+        self.shell_atom = QComboBox()
+        self.shell_atom.addItems(("Ag", "Au"))
+        self.core_shell_widgets = (self.core_shell_check, self.core_atom, self.shell_atom)
+
         option_layout.addWidget(self.dimer_check, 0, 0)
         option_layout.addWidget(self.dimer_distance, 0, 1)
         option_layout.addWidget(self.dimer_axis, 0, 2)
@@ -1204,6 +1252,9 @@ class StructureWindow(QMainWindow):
         option_layout.addWidget(self.alloy_percent, 1, 2)
         option_layout.addWidget(self.bowtie_check, 2, 0)
         option_layout.addWidget(self.bowtie_distance, 2, 1, 1, 2)
+        option_layout.addWidget(self.core_shell_check, 3, 0)
+        option_layout.addWidget(self.core_atom, 3, 1)
+        option_layout.addWidget(self.shell_atom, 3, 2)
 
         self.create_button = QPushButton("Create structure")
         self.create_button.setObjectName("primaryButton")
@@ -1229,7 +1280,7 @@ class StructureWindow(QMainWindow):
         self.resolution_input = self._make_viewer_spin(1, 1, 4, "x")
         self.resolution_input.valueChanged.connect(self._set_render_resolution_from_input)
 
-        self.bond_width_input = self._make_viewer_spin(135, 40, 260, "%")
+        self.bond_width_input = self._make_viewer_spin(165, 40, 260, "%")
         self.bond_width_input.valueChanged.connect(self._set_bond_width_from_input)
 
         self.manipulator_source = QComboBox()
@@ -1265,7 +1316,7 @@ class StructureWindow(QMainWindow):
         generator_layout.setSpacing(14)
         generator_layout.addWidget(self._section_label("Structure"))
         generator_layout.addWidget(controls)
-        generator_layout.addWidget(self._section_label("Options"))
+        generator_layout.addWidget(self._section_label("Optional"))
         generator_layout.addWidget(options)
         generator_layout.addStretch(1)
         generator_layout.addWidget(self.create_button)
@@ -1546,6 +1597,30 @@ class StructureWindow(QMainWindow):
         is_graphene = self.metal_combo.currentText() == "Graphene"
         definition = STRUCTURES[self.structure_combo.currentText()] if not is_graphene else {"fields": (), "graphene": True}
         active_definition = GRAPHENE_VARIANTS[self.graphene_variant_combo.currentText()] if is_graphene else definition
+        structure_name = self.structure_combo.currentText() if not is_graphene else ""
+        core_shell_active = (
+            not is_graphene
+            and self.metal_combo.currentText() in {"Au", "Ag"}
+            and structure_name in {"Sphere", "Rod"}
+            and self.core_shell_check.isChecked()
+        )
+
+        if core_shell_active and structure_name == "Sphere":
+            active_definition = {
+                "fields": (
+                    ("core_radius", "Core radius", 20.0, 2.0, 300.0),
+                    ("shell_radius", "Shell radius", 30.0, 3.0, 500.0),
+                )
+            }
+        elif core_shell_active and structure_name == "Rod":
+            active_definition = {
+                "fields": (
+                    ("core_length", "Core length", 20.0, 4.0, 500.0),
+                    ("core_width", "Core width", 10.0, 2.0, 300.0),
+                    ("shell_length", "Shell length", 50.0, 5.0, 700.0),
+                    ("shell_width", "Shell width", 20.0, 3.0, 500.0),
+                )
+            }
 
         has_axis = bool(definition.get("axis")) and not is_graphene
         self.structure_label.setVisible(not is_graphene)
@@ -1559,21 +1634,63 @@ class StructureWindow(QMainWindow):
         self.graphene_edge_combo.setVisible(has_graphene_edge)
 
         fields = active_definition["fields"]
-        for index, (label, spin) in enumerate(zip(self.param_labels, self.param_spins)):
-            if index < len(fields):
-                _, text, value, minimum, maximum = fields[index]
-                label.setText(text)
-                label.setVisible(True)
-                spin.setVisible(True)
-                spin.setRange(minimum, maximum)
-                spin.setValue(value)
-                spin.setSuffix("" if text in {"a", "b"} else " Å")
-                spin.setSingleStep(0.01 if text in {"a", "b"} else 1.0)
+        for label, spin in zip(self.param_labels, self.param_spins):
+            self.generator_form.removeWidget(label)
+            self.generator_form.removeWidget(spin)
+
+        paired_rows = {"a", "b"}
+        layout_row = 3
+        index = 0
+        while index < len(fields):
+            field_name, text, value, minimum, maximum = fields[index]
+            label = self.param_labels[index]
+            spin = self.param_spins[index]
+            if (
+                field_name == "a"
+                and index + 1 < len(fields)
+                and fields[index + 1][0] == "b"
+            ):
+                next_field_name, next_text, next_value, next_minimum, next_maximum = fields[index + 1]
+                next_label = self.param_labels[index + 1]
+                next_spin = self.param_spins[index + 1]
+
+                self._configure_parameter_widget(label, spin, text, value, minimum, maximum)
+                self._configure_parameter_widget(next_label, next_spin, next_text, next_value, next_minimum, next_maximum)
+                self.generator_form.addWidget(label, layout_row, 0)
+                self.generator_form.addWidget(spin, layout_row, 1)
+                self.generator_form.addWidget(next_label, layout_row, 2)
+                self.generator_form.addWidget(next_spin, layout_row, 3)
+                index += 2
             else:
+                self._configure_parameter_widget(label, spin, text, value, minimum, maximum)
+                self.generator_form.addWidget(label, layout_row, 0)
+                self.generator_form.addWidget(spin, layout_row, 1, 1, 3 if text not in paired_rows else 1)
+                index += 1
+            layout_row += 1
+
+        for index, (label, spin) in enumerate(zip(self.param_labels, self.param_spins)):
+            if index >= len(fields):
                 label.setVisible(False)
                 spin.setVisible(False)
 
         self._refresh_option_controls()
+
+    def _configure_parameter_widget(
+        self,
+        label: QLabel,
+        spin: QDoubleSpinBox,
+        text: str,
+        value: float,
+        minimum: float,
+        maximum: float,
+    ):
+        label.setText(text)
+        label.setVisible(True)
+        spin.setVisible(True)
+        spin.setRange(minimum, maximum)
+        spin.setValue(value)
+        spin.setSuffix("" if text in {"a", "b"} else " Å")
+        spin.setSingleStep(0.01 if text in {"a", "b"} else 1.0)
 
     def _ordered_metals(self, metals: list[str]) -> list[str]:
         priority = ["Au", "Ag", "Na"]
@@ -1582,13 +1699,16 @@ class StructureWindow(QMainWindow):
     def _refresh_option_controls(self):
         metal = self.metal_combo.currentText()
         is_graphene = metal == "Graphene"
+        structure_name = self.structure_combo.currentText() if not is_graphene else ""
         alloy_allowed = metal in {"Ag", "Au"}
         bowtie_allowed = bool(STRUCTURES[self.structure_combo.currentText()].get("bowtie")) if not is_graphene else False
+        core_shell_allowed = not is_graphene and metal in {"Au", "Ag"} and structure_name in {"Sphere", "Rod"}
 
         if is_graphene:
             self.dimer_check.setChecked(False)
             self.alloy_check.setChecked(False)
             self.bowtie_check.setChecked(False)
+            self.core_shell_check.setChecked(False)
         elif alloy_allowed:
             self.alloy_atom.setCurrentText("Au" if metal == "Ag" else "Ag")
         else:
@@ -1596,6 +1716,11 @@ class StructureWindow(QMainWindow):
 
         if not bowtie_allowed:
             self.bowtie_check.setChecked(False)
+        if not core_shell_allowed:
+            self.core_shell_check.setChecked(False)
+        elif not self.core_shell_check.isChecked():
+            self.core_atom.setCurrentText(metal)
+            self.shell_atom.setCurrentText("Au" if metal == "Ag" else "Ag")
 
         if self.dimer_check.isChecked() and self.bowtie_check.isChecked():
             sender = self.sender()
@@ -1614,6 +1739,11 @@ class StructureWindow(QMainWindow):
             widget.setVisible(not is_graphene and bowtie_allowed)
         self._set_optional_row_enabled(self.bowtie_widgets, not is_graphene and bowtie_allowed and self.bowtie_check.isChecked())
         self.bowtie_check.setEnabled(not is_graphene and bowtie_allowed)
+
+        for widget in self.core_shell_widgets:
+            widget.setVisible(core_shell_allowed)
+        self._set_optional_row_enabled(self.core_shell_widgets, core_shell_allowed and self.core_shell_check.isChecked())
+        self.core_shell_check.setEnabled(core_shell_allowed)
 
     def _set_optional_row_enabled(self, widgets, enabled: bool):
         for widget in widgets:
@@ -2110,6 +2240,7 @@ class StructureWindow(QMainWindow):
 
         try:
             command_args = self._build_command_args()
+            self.pending_generation_meta = self._generation_metadata()
         except ValueError as exc:
             QMessageBox.warning(self, "GEOM structure options", str(exc))
             return
@@ -2154,7 +2285,13 @@ class StructureWindow(QMainWindow):
         self._add_structure_tab("SMILES", atoms, xyz_path)
         self.smiles_input.clear()
 
-    def _add_structure_tab(self, title: str, atoms: tuple[AtomRecord, ...], path: Path | None = None):
+    def _add_structure_tab(
+        self,
+        title: str,
+        atoms: tuple[AtomRecord, ...],
+        path: Path | None = None,
+        metadata: dict[str, object] | None = None,
+    ):
         if self.empty_canvas is not None and self.tabs.count() == 1 and not self.empty_canvas.atoms:
             self.tabs.removeTab(0)
             self.empty_canvas = None
@@ -2164,6 +2301,9 @@ class StructureWindow(QMainWindow):
         canvas.setProperty("atom_count", len(atoms))
         if path is not None:
             canvas.setProperty("path", str(path))
+        if metadata:
+            for key, value in metadata.items():
+                canvas.setProperty(key, value)
 
         tab_index = self.tabs.addTab(canvas, self._short_tab_title(title))
         self._install_tab_menu(tab_index, canvas)
@@ -2223,15 +2363,17 @@ class StructureWindow(QMainWindow):
             message.setIcon(QMessageBox.Question)
             message.setWindowTitle("Save joint visualization")
             message.setText("Which structure do you want to save?")
-            fixed_button = message.addButton("Fixed", QMessageBox.AcceptRole)
             translated_button = message.addButton("Translated", QMessageBox.AcceptRole)
-            message.addButton(QMessageBox.Cancel)
+            fixed_button = message.addButton("Fixed", QMessageBox.AcceptRole)
+            cancel_button = message.addButton("Cancel", QMessageBox.RejectRole)
+            message.setDefaultButton(translated_button)
+            message.setEscapeButton(cancel_button)
             message.exec()
             clicked = message.clickedButton()
-            if clicked is fixed_button:
-                return Path(fixed_path)
             if clicked is translated_button:
                 return Path(translated_path)
+            if clicked is fixed_button:
+                return Path(fixed_path)
             return False
 
         return Path(canvas.property("path")) if canvas.property("path") else None
@@ -2425,12 +2567,43 @@ class StructureWindow(QMainWindow):
             return
         atom_count = widget.property("atom_count")
         min_distance = widget.property("min_distance")
+        assembly_distance = widget.property("assembly_distance")
+        au_count = widget.property("au_count")
+        ag_count = widget.property("ag_count")
         parts = []
         if atom_count:
             parts.append(f"{atom_count} atoms")
+        if au_count is not None:
+            parts.append(f"Au {int(au_count)}")
+        if ag_count is not None:
+            parts.append(f"Ag {int(ag_count)}")
+        if assembly_distance is not None:
+            parts.append(f"distance {float(assembly_distance):.2f} Å")
         if min_distance is not None:
             parts.append(f"distance {float(min_distance):.2f} Å")
         self.meta_label.setText("  |  ".join(parts))
+
+    def _generation_metadata(self) -> dict[str, object]:
+        metadata: dict[str, object] = {}
+        if self.dimer_check.isChecked():
+            metadata["assembly_distance"] = self.dimer_distance.value()
+        if self.bowtie_check.isChecked():
+            metadata["assembly_distance"] = self.bowtie_distance.value()
+        if self.alloy_check.isChecked():
+            metadata["is_alloy"] = True
+        return metadata
+
+    def _metadata_for_generated_atoms(self, atoms: tuple[AtomRecord, ...]) -> dict[str, object]:
+        metadata = dict(self.pending_generation_meta)
+        if metadata.get("is_alloy"):
+            counts: dict[str, int] = {}
+            for atom in atoms:
+                element = atom.element.capitalize()
+                counts[element] = counts.get(element, 0) + 1
+            metadata["au_count"] = counts.get("Au", 0)
+            metadata["ag_count"] = counts.get("Ag", 0)
+            metadata.pop("is_alloy", None)
+        return metadata
 
     def _build_command_args(self) -> list[str]:
         atomtype = self.metal_combo.currentText()
@@ -2438,6 +2611,28 @@ class StructureWindow(QMainWindow):
         structure = self.structure_combo.currentText()
         definition = STRUCTURES[structure] if not is_graphene else {"graphene": True}
         active_definition = GRAPHENE_VARIANTS[self.graphene_variant_combo.currentText()] if is_graphene else definition
+        core_shell_active = (
+            not is_graphene
+            and atomtype in {"Au", "Ag"}
+            and structure in {"Sphere", "Rod"}
+            and self.core_shell_check.isChecked()
+        )
+        if core_shell_active and structure == "Sphere":
+            active_definition = {
+                "fields": (
+                    ("core_radius", "Core radius", 20.0, 2.0, 300.0),
+                    ("shell_radius", "Shell radius", 30.0, 3.0, 500.0),
+                )
+            }
+        elif core_shell_active and structure == "Rod":
+            active_definition = {
+                "fields": (
+                    ("core_length", "Core length", 20.0, 4.0, 500.0),
+                    ("core_width", "Core width", 10.0, 2.0, 300.0),
+                    ("shell_length", "Shell length", 50.0, 5.0, 700.0),
+                    ("shell_width", "Shell width", 20.0, 3.0, 500.0),
+                )
+            }
         values = {field[0]: self.param_spins[index].value() for index, field in enumerate(active_definition["fields"])}
         if active_definition.get("graphene") == "rib":
             return ["-create", "-graphene", "rib", self._fmt(values["x_length"]), self._fmt(values["y_length"])]
@@ -2455,24 +2650,67 @@ class StructureWindow(QMainWindow):
                 self.graphene_edge_combo.currentText(),
                 self._fmt(values["side_length"]),
             ]
-        args = ["-create", definition["flag"], atomtype]
+        if core_shell_active:
+            core_atom = self.core_atom.currentText()
+            shell_atom = self.shell_atom.currentText()
+            if core_atom == shell_atom:
+                raise ValueError("Core and shell atom types must be different.")
+            if structure == "Sphere":
+                if values["core_radius"] >= values["shell_radius"]:
+                    raise ValueError("Shell radius must be greater than core radius.")
+                args = [
+                    "-create",
+                    definition["flag"],
+                    "-core",
+                    core_atom,
+                    self._fmt(values["core_radius"]),
+                    "-shell",
+                    shell_atom,
+                    self._fmt(values["shell_radius"]),
+                ]
+            else:
+                if values["core_length"] >= values["shell_length"]:
+                    raise ValueError("Shell length must be greater than core length.")
+                if values["core_width"] >= values["shell_width"]:
+                    raise ValueError("Shell width must be greater than core width.")
+                args = [
+                    "-create",
+                    definition["flag"],
+                    self.axis_combo.currentText(),
+                    "-core",
+                    core_atom,
+                    self._fmt(values["core_length"]),
+                    self._fmt(values["core_width"]),
+                    "-shell",
+                    shell_atom,
+                    self._fmt(values["shell_length"]),
+                    self._fmt(values["shell_width"]),
+                ]
+        else:
+            args = ["-create", definition["flag"], atomtype]
 
-        if structure == "Sphere":
+        if core_shell_active:
+            pass
+        elif structure == "Sphere":
             args.append(self._fmt(values["radius"]))
         elif structure == "Rod":
             args.extend([self.axis_combo.currentText(), self._fmt(values["length"]), self._fmt(values["width"])])
         elif structure == "Tip":
             args.extend([self._fmt(values["z_max"]), self._fmt(values["a"]), self._fmt(values["b"])])
-        elif structure == "Pyramid":
+        elif structure == "Pyramid square base":
             args.extend([self._fmt(values["z_max"]), self._fmt(values["side"])])
-        elif structure == "Pentagonal Pyramid":
-            args.extend([self._fmt(values["base"]), self._fmt(values["z_max"])])
         elif structure == "Cone":
             args.extend([self._fmt(values["z_max"]), self._fmt(values["radius"])])
+        elif structure == "Microscope":
+            args.extend([
+                self._fmt(values["z_max_paraboloid"]),
+                self._fmt(values["a"]),
+                self._fmt(values["b"]),
+                self._fmt(values["z_max_pyramid"]),
+                self._fmt(values["side"]),
+            ])
         elif structure in {"Icosahedron", "Cuboctahedron", "Decahedron"}:
             args.append(self._fmt(values["radius"]))
-        elif structure == "Bipyramid":
-            args.extend([self._fmt(values["width"]), self._fmt(values["length"])])
         else:
             raise ValueError(f'Structure "{structure}" is not supported.')
 
@@ -2499,12 +2737,19 @@ class StructureWindow(QMainWindow):
 
     def _structure_ready(self, result: StructureResult):
         self.current_result = result
-        self._add_structure_tab(result.xyz_path.stem, result.atoms, result.xyz_path)
+        self._add_structure_tab(
+            result.xyz_path.stem,
+            result.atoms,
+            result.xyz_path,
+            self._metadata_for_generated_atoms(result.atoms),
+        )
+        self.pending_generation_meta = {}
         self.create_button.setEnabled(True)
         self.create_button.setText("Create structure")
         self.worker = None
 
     def _structure_failed(self, details: str):
+        self.pending_generation_meta = {}
         self.create_button.setEnabled(True)
         self.create_button.setText("Create structure")
         self.worker = None
