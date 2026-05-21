@@ -1288,6 +1288,9 @@ class StructureWindow(QMainWindow):
         self.center_button = QPushButton("Center to origin")
         self.center_button.setObjectName("loadButton")
         self.center_button.clicked.connect(self.center_selected_structure)
+        self.enantiomer_button = QPushButton("Enantiomer")
+        self.enantiomer_button.setObjectName("smilesButton")
+        self.enantiomer_button.clicked.connect(self.mirror_selected_structure)
         self.rotate_axis = QComboBox()
         self.rotate_axis.addItems(("+x", "-x", "+y", "-y", "+z", "-z"))
         self.rotate_angle = self._make_manipulator_spin(90.0, -360.0, 360.0, "°")
@@ -1369,8 +1372,8 @@ class StructureWindow(QMainWindow):
         single_page = QWidget()
         single_page.setObjectName("sidePage")
         single_layout = QVBoxLayout(single_page)
-        single_layout.setContentsMargins(0, 14, 0, 0)
-        single_layout.setSpacing(14)
+        single_layout.setContentsMargins(0, 10, 0, 0)
+        single_layout.setSpacing(8)
         single_layout.addWidget(self._section_label("Loaded structure"))
         source_group = QFrame()
         source_group.setObjectName("controlCard")
@@ -1378,13 +1381,13 @@ class StructureWindow(QMainWindow):
         source_group_layout.setContentsMargins(0, 0, 0, 0)
         source_group_layout.addWidget(self.manipulator_source)
         single_layout.addWidget(source_group)
-        single_layout.addSpacing(12)
+        single_layout.addSpacing(4)
         single_layout.addWidget(self._section_label("Translate"))
         translate_group = QFrame()
         translate_group.setObjectName("toolGroup")
         translate_group_layout = QVBoxLayout(translate_group)
         translate_group_layout.setContentsMargins(0, 0, 0, 0)
-        translate_group_layout.setSpacing(10)
+        translate_group_layout.setSpacing(7)
         translate_row = QHBoxLayout()
         translate_row.setSpacing(8)
         translate_row.addWidget(self.translate_axis)
@@ -1392,13 +1395,13 @@ class StructureWindow(QMainWindow):
         translate_group_layout.addLayout(translate_row)
         translate_group_layout.addWidget(self.translate_button)
         single_layout.addWidget(translate_group)
-        single_layout.addSpacing(12)
+        single_layout.addSpacing(4)
         single_layout.addWidget(self._section_label("Rotate"))
         rotate_group = QFrame()
         rotate_group.setObjectName("toolGroup")
         rotate_group_layout = QVBoxLayout(rotate_group)
         rotate_group_layout.setContentsMargins(0, 0, 0, 0)
-        rotate_group_layout.setSpacing(10)
+        rotate_group_layout.setSpacing(7)
         rotate_row = QHBoxLayout()
         rotate_row.setSpacing(8)
         rotate_row.addWidget(self.rotate_axis)
@@ -1406,7 +1409,15 @@ class StructureWindow(QMainWindow):
         rotate_group_layout.addLayout(rotate_row)
         rotate_group_layout.addWidget(self.rotate_button)
         single_layout.addWidget(rotate_group)
-        single_layout.addSpacing(12)
+        single_layout.addSpacing(4)
+        enantiomer_group = QFrame()
+        enantiomer_group.setObjectName("controlCard")
+        enantiomer_group_layout = QVBoxLayout(enantiomer_group)
+        enantiomer_group_layout.setContentsMargins(0, 0, 0, 0)
+        enantiomer_group_layout.addWidget(self.enantiomer_button)
+        single_layout.addWidget(self._section_label("Mirror"))
+        single_layout.addWidget(enantiomer_group)
+        single_layout.addSpacing(4)
         center_group = QFrame()
         center_group.setObjectName("controlCard")
         center_group_layout = QVBoxLayout(center_group)
@@ -1419,14 +1430,14 @@ class StructureWindow(QMainWindow):
         pair_page = QWidget()
         pair_page.setObjectName("sidePage")
         pair_layout = QVBoxLayout(pair_page)
-        pair_layout.setContentsMargins(0, 14, 0, 0)
-        pair_layout.setSpacing(14)
+        pair_layout.setContentsMargins(0, 10, 0, 0)
+        pair_layout.setSpacing(8)
         pair_layout.addWidget(self._section_label("Controlled distance"))
         pair_group = QFrame()
         pair_group.setObjectName("toolGroup")
         pair_group_layout = QVBoxLayout(pair_group)
         pair_group_layout.setContentsMargins(0, 0, 0, 0)
-        pair_group_layout.setSpacing(10)
+        pair_group_layout.setSpacing(7)
         pair_group_layout.addWidget(self._field_label("Fixed"))
         pair_group_layout.addWidget(self.pair_fixed_source)
         pair_group_layout.addWidget(self._field_label("Translated"))
@@ -1808,13 +1819,13 @@ class StructureWindow(QMainWindow):
                 background: #FFFFFF;
                 border: 1px solid #EEEAF4;
                 border-radius: 18px;
-                padding: 14px;
+                padding: 10px;
             }}
             QFrame#toolGroup {{
                 background: #FFFFFF;
                 border: 1px solid #EEEAF4;
                 border-radius: 18px;
-                padding: 14px;
+                padding: 10px;
             }}
             QLabel#appTitle {{
                 color: {TEXT};
@@ -2282,7 +2293,7 @@ class StructureWindow(QMainWindow):
             QMessageBox.warning(self, "Could not load SMILES", str(exc))
             return
 
-        self._add_structure_tab("SMILES", atoms, xyz_path)
+        self._add_structure_tab(smiles, atoms, xyz_path)
         self.smiles_input.clear()
 
     def _add_structure_tab(
@@ -2466,6 +2477,7 @@ class StructureWindow(QMainWindow):
         for widget in (
             self.manipulator_source,
             self.center_button,
+            self.enantiomer_button,
             self.rotate_axis,
             self.rotate_angle,
             self.rotate_button,
@@ -2504,6 +2516,9 @@ class StructureWindow(QMainWindow):
 
     def center_selected_structure(self):
         self._run_manipulation(lambda filename: ["-tc", filename])
+
+    def mirror_selected_structure(self):
+        self._run_manipulation(lambda filename: ["-mirror", filename])
 
     def rotate_selected_structure(self):
         angle = self._fmt(self.rotate_angle.value())
