@@ -172,10 +172,12 @@ def manipulate_xyz(input_path: Path, command_args: Callable[[str], list[str]]) -
     runner = (
         "import sys; "
         "from geom.classes import input_class; "
-        "from geom.functions import general, translate, rotate; "
+        "from geom.functions import general, translate, rotate, various; "
         "inp = input_class.input_class(); "
         "general.read_command_line(['geom', *sys.argv[1:]], inp); "
-        "translate.select_case(inp) if inp.translate else rotate.select_case(inp)"
+        "translate.select_case(inp) if inp.translate else "
+        "various.select_case(inp) if inp.geom_specular else "
+        "rotate.select_case(inp)"
     )
     command = (sys.executable, "-c", runner, *command_args(local_input.name))
 

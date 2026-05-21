@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import ast
 import math
+import re
 import shutil
 import sys
 import traceback
@@ -229,7 +231,7 @@ STRUCTURES = {
         "bowtie": True,
         "fields": (("z_max", "Height", 50.0, 2.0, 500.0), ("a", "a", 0.02, 0.001, 2.0), ("b", "b", 0.02, 0.001, 2.0)),
     },
-    "Pyramid square base": {
+    "Pyramid": {
         "flag": "-pyramid",
         "metals": "bulk",
         "bowtie": True,
@@ -313,6 +315,80 @@ class ProjectedBond:
     width: float
 
 
+def atom_matches_selection(atom: AtomRecord, expression: str) -> bool:
+    """Evaluate a VMD-like coordinate selection expression for one atom."""
+
+    expression = expression.strip()
+    if not expression or expression.lower() == "all":
+        return True
+    expression = _normalize_selection_expression(expression)
+    tree = ast.parse(expression, mode="eval")
+    result = _evaluate_selection_node(tree.body, {"x": atom.x, "y": atom.y, "z": atom.z, "name": atom.element.lower()})
+    if not isinstance(result, bool):
+        raise ValueError("Use a comparison such as x > 0.")
+    return result
+
+
+def _normalize_selection_expression(expression: str) -> str:
+    expression = re.sub(
+        r"\bname\s+([A-Za-z][A-Za-z0-9]*)\b",
+        lambda match: f"name == '{match.group(1).lower()}'",
+        expression,
+        flags=re.IGNORECASE,
+    )
+    replacements = {
+        "and": "and",
+        "or": "or",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "name": "name",
+    }
+    pattern = re.compile(r"\b(and|or|x|y|z|name)\b", re.IGNORECASE)
+    return pattern.sub(lambda match: replacements[match.group(1).lower()], expression)
+
+
+def _evaluate_selection_node(node: ast.AST, values: dict[str, float | str]) -> bool | float | str:
+    if isinstance(node, ast.BoolOp):
+        results = [_evaluate_selection_node(value, values) for value in node.values]
+        if isinstance(node.op, ast.And):
+            return all(bool(result) for result in results)
+        if isinstance(node.op, ast.Or):
+            return any(bool(result) for result in results)
+    if isinstance(node, ast.Compare):
+        left = _evaluate_selection_node(node.left, values)
+        for operator, comparator in zip(node.ops, node.comparators):
+            right = _evaluate_selection_node(comparator, values)
+            if not _compare_selection_values(left, operator, right):
+                return False
+            left = right
+        return True
+    if isinstance(node, ast.Name) and node.id in values:
+        return values[node.id]
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float, str)):
+        return node.value.lower() if isinstance(node.value, str) else float(node.value)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        value = float(_evaluate_selection_node(node.operand, values))
+        return -value if isinstance(node.op, ast.USub) else value
+    raise ValueError("Use coordinate conditions such as x > 0 and y < 2.")
+
+
+def _compare_selection_values(left: bool | float | str, operator: ast.cmpop, right: bool | float | str) -> bool:
+    if isinstance(operator, ast.Gt):
+        return float(left) > float(right)
+    if isinstance(operator, ast.GtE):
+        return float(left) >= float(right)
+    if isinstance(operator, ast.Lt):
+        return float(left) < float(right)
+    if isinstance(operator, ast.LtE):
+        return float(left) <= float(right)
+    if isinstance(operator, ast.Eq):
+        return left == right
+    if isinstance(operator, ast.NotEq):
+        return left != right
+    raise ValueError("Use comparisons such as >, >=, <, <=, ==, or !=.")
+
+
 class GenerationWorker(QThread):
     generated = Signal(object)
     failed = Signal(str)
@@ -335,6 +411,8 @@ class VdwCanvas(QOpenGLWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.atoms: tuple[AtomRecord, ...] = ()
+        self.source_atoms: tuple[AtomRecord, ...] = ()
+        self.selection_expression = ""
         self.rotation_x = 0.0
         self.rotation_y = 0.0
         self.zoom = 1.0
@@ -360,8 +438,13 @@ class VdwCanvas(QOpenGLWidget):
         self.setFocusPolicy(Qt.StrongFocus)
 
     def set_atoms(self, atoms: tuple[AtomRecord, ...]):
+        self.source_atoms = atoms
         self.atoms = atoms
         self.reset_view()
+        self.update()
+
+    def set_visible_atoms(self, atoms: tuple[AtomRecord, ...]):
+        self.atoms = atoms
         self.update()
 
     def reset_view(self):
@@ -1100,6 +1183,7 @@ class ViewerTabBar(QTabBar):
         self.setElideMode(Qt.ElideRight)
         self.setCursor(Qt.OpenHandCursor)
         self.setToolTip("Drag tabs to reorder. Scroll over tabs to navigate.")
+        self.setContentsMargins(0, 0, 0, 0)
 
     def wheelEvent(self, event):
         if self.count() < 2:
@@ -1233,6 +1317,7 @@ class StructureWindow(QMainWindow):
         options = QFrame()
         options.setObjectName("controlCard")
         option_layout = QGridLayout(options)
+        self.option_layout = option_layout
         option_layout.setContentsMargins(0, 0, 0, 0)
         option_layout.setHorizontalSpacing(12)
         option_layout.setVerticalSpacing(12)
@@ -1304,9 +1389,14 @@ class StructureWindow(QMainWindow):
 
         self.bond_width_input = self._make_viewer_spin(165, 40, 260, "%")
         self.bond_width_input.valueChanged.connect(self._set_bond_width_from_input)
+        self.atom_selection_input = QLineEdit()
+        self.atom_selection_input.setObjectName("atomSelectionInput")
+        self.atom_selection_input.setPlaceholderText("e.g. x > 0 and y > 0")
+        self.atom_selection_input.returnPressed.connect(self._apply_atom_selection)
 
         self.manipulator_source = QComboBox()
         self.manipulator_source.setObjectName("manipulatorSource")
+        self.manipulator_source.currentIndexChanged.connect(self._refresh_manipulator_actions)
         self.center_button = QPushButton("Center to origin")
         self.center_button.setObjectName("loadButton")
         self.center_button.clicked.connect(self.center_selected_structure)
@@ -1389,6 +1479,14 @@ class StructureWindow(QMainWindow):
         appearance_layout.addLayout(bond_row)
         viewer_layout.addWidget(self._section_label("Appearance"))
         viewer_layout.addWidget(appearance_card)
+        select_card = QFrame()
+        select_card.setObjectName("controlCard")
+        select_layout = QVBoxLayout(select_card)
+        select_layout.setContentsMargins(0, 0, 0, 0)
+        select_layout.setSpacing(10)
+        select_layout.addWidget(self.atom_selection_input)
+        viewer_layout.addWidget(self._section_label("Select atoms"))
+        viewer_layout.addWidget(select_card)
         viewer_layout.addStretch(1)
 
         single_page = QWidget()
@@ -1496,28 +1594,26 @@ class StructureWindow(QMainWindow):
         main = QFrame()
         main.setObjectName("main")
         main_layout = QVBoxLayout(main)
-        main_layout.setContentsMargins(0, 0, 24, 24)
+        main_layout.setContentsMargins(24, 0, 24, 24)
         main_layout.setSpacing(0)
-
-        header = QHBoxLayout()
-        header.setContentsMargins(28, 22, 0, 0)
         self.meta_label = QLabel("")
         self.meta_label.setObjectName("meta")
-        header.addStretch(1)
-        header.addWidget(self.meta_label)
 
         self.tabs = QTabWidget()
         self.tabs.setObjectName("viewerTabs")
         self.tabs.setTabBar(ViewerTabBar())
+        self.tabs.setDocumentMode(False)
         self.tabs.setUsesScrollButtons(True)
         self.tabs.setElideMode(Qt.ElideRight)
+        self.tabs.setCornerWidget(self.meta_label, Qt.TopRightCorner)
         self.tabs.currentChanged.connect(self._sync_current_tab_meta)
         self.tabs.currentChanged.connect(self._refresh_manipulator_sources)
+        self.tabs.currentChanged.connect(self._sync_atom_selection_input)
+        self.tabs.currentChanged.connect(self._refresh_manipulator_actions)
         self.canvas = self._make_canvas()
         self.empty_canvas = self.canvas
         self.tabs.addTab(self.canvas, "")
         self.tabs.tabBar().hide()
-        main_layout.addLayout(header)
         main_layout.addWidget(self.tabs)
 
         layout.addWidget(sidebar)
@@ -1736,6 +1832,7 @@ class StructureWindow(QMainWindow):
         alloy_allowed = metal in {"Ag", "Au"}
         bowtie_allowed = bool(STRUCTURES[self.structure_combo.currentText()].get("bowtie")) if not is_graphene else False
         core_shell_allowed = not is_graphene and metal in {"Au", "Ag"} and structure_name in {"Sphere", "Rod"}
+        core_shell_active = core_shell_allowed and self.core_shell_check.isChecked()
 
         if is_graphene:
             self.dimer_check.setChecked(False)
@@ -1765,6 +1862,13 @@ class StructureWindow(QMainWindow):
         self._set_optional_row_enabled(self.dimer_widgets, not is_graphene and self.dimer_check.isChecked())
         self.dimer_check.setEnabled(not is_graphene)
 
+        self.option_layout.removeWidget(self.alloy_percent)
+        self.alloy_atom.setVisible(not core_shell_active)
+        if core_shell_active:
+            self.option_layout.addWidget(self.alloy_percent, 1, 1, 1, 2)
+        else:
+            self.option_layout.addWidget(self.alloy_percent, 1, 2)
+
         self._set_optional_row_enabled(self.alloy_widgets, not is_graphene and alloy_allowed and self.alloy_check.isChecked())
         self.alloy_check.setEnabled(not is_graphene and alloy_allowed)
 
@@ -1781,6 +1885,48 @@ class StructureWindow(QMainWindow):
     def _set_optional_row_enabled(self, widgets, enabled: bool):
         for widget in widgets:
             widget.setEnabled(enabled)
+
+    def _apply_atom_selection(self, *_args):
+        if not hasattr(self, "atom_selection_input"):
+            return
+        canvas = self.tabs.currentWidget()
+        if not isinstance(canvas, VdwCanvas):
+            return
+        expression = self.atom_selection_input.text().strip()
+        if not expression or expression.lower() == "all":
+            canvas.set_visible_atoms(canvas.source_atoms)
+            canvas.setProperty("atom_count", len(canvas.source_atoms))
+            canvas.selection_expression = expression
+            self._set_atom_selection_invalid(False)
+            self._sync_current_tab_meta()
+            return
+        try:
+            selected = tuple(atom for atom in canvas.source_atoms if atom_matches_selection(atom, expression))
+        except Exception:
+            self._set_atom_selection_invalid(True)
+            return
+        canvas.set_visible_atoms(selected)
+        canvas.setProperty("atom_count", len(selected))
+        canvas.selection_expression = expression
+        self._set_atom_selection_invalid(False)
+        self._sync_current_tab_meta()
+
+    def _sync_atom_selection_input(self):
+        if not hasattr(self, "atom_selection_input"):
+            return
+        canvas = self.tabs.currentWidget()
+        expression = canvas.selection_expression if isinstance(canvas, VdwCanvas) else ""
+        self.atom_selection_input.blockSignals(True)
+        self.atom_selection_input.setText(expression)
+        self.atom_selection_input.blockSignals(False)
+        self._set_atom_selection_invalid(False)
+
+    def _set_atom_selection_invalid(self, invalid: bool):
+        if self.atom_selection_input.property("invalid") == invalid:
+            return
+        self.atom_selection_input.setProperty("invalid", invalid)
+        self.atom_selection_input.style().unpolish(self.atom_selection_input)
+        self.atom_selection_input.style().polish(self.atom_selection_input)
 
     def _set_vdw_scale_from_input(self, value: int):
         self.vdw_scale = value / 100.0
@@ -2093,7 +2239,12 @@ class StructureWindow(QMainWindow):
             QPushButton#loadButton:hover {{
                 border-color: {ACCENT_INDIGO};
             }}
-            QLineEdit#smilesInput {{
+            QPushButton#loadButton:disabled {{
+                background: #F3F1F8;
+                color: #A8A2B8;
+                border-color: #E6E0F2;
+            }}
+            QLineEdit#smilesInput, QLineEdit#atomSelectionInput {{
                 background: #FFFFFF;
                 color: {TEXT};
                 border: 1px solid #E8E4F2;
@@ -2103,8 +2254,12 @@ class StructureWindow(QMainWindow):
                 font-size: 14px;
                 selection-background-color: {ACCENT_SOFT};
             }}
-            QLineEdit#smilesInput:focus {{
+            QLineEdit#smilesInput:focus, QLineEdit#atomSelectionInput:focus {{
                 border-color: {ACCENT_VIOLET};
+            }}
+            QLineEdit#atomSelectionInput[invalid="true"] {{
+                border-color: #D94A4A;
+                color: #A62626;
             }}
             QPushButton#smilesButton {{
                 background: #FFFFFF;
@@ -2215,22 +2370,30 @@ class StructureWindow(QMainWindow):
             QTabWidget#viewerTabs::pane {{
                 border: 0;
                 top: -1px;
+                background: #FFFFFF;
+            }}
+            QTabWidget#viewerTabs::tab-bar {{
+                left: 0;
+                top: 8px;
             }}
             QTabWidget#viewerTabs QTabBar {{
                 alignment: left;
-                left: 24px;
-                top: 8px;
+                left: 0;
+                top: 0;
+                min-height: 38px;
+                background: #FFFFFF;
+                padding-left: 24px;
             }}
             QTabWidget#viewerTabs QTabBar::tab {{
                 background: #FFFFFF;
                 color: #7C7C88;
                 border: 1px solid transparent;
                 border-bottom: 2px solid transparent;
-                border-radius: 12px 12px 0 0;
-                padding: 7px 9px 7px 12px;
-                margin-right: 6px;
-                min-width: 112px;
-                max-width: 172px;
+                border-radius: 10px 10px 0 0;
+                padding: 8px 28px 8px 18px;
+                margin: 0 2px 0 0;
+                min-width: 90px;
+                max-width: 138px;
                 font-size: 13px;
                 font-weight: 600;
             }}
@@ -2247,13 +2410,16 @@ class StructureWindow(QMainWindow):
             QTabWidget#viewerTabs QTabBar QToolButton {{
                 background: #FFFFFF;
                 color: {ACCENT_VIOLET};
-                border: 1px solid #EEEAF7;
+                border: 1px solid #E3DAF5;
                 border-radius: 9px;
-                min-width: 24px;
-                max-width: 24px;
-                min-height: 24px;
-                max-height: 24px;
-                margin-top: 3px;
+                min-width: 28px;
+                max-width: 28px;
+                min-height: 28px;
+                max-height: 28px;
+                margin: 4px 5px 0 0;
+                padding: 0;
+                font-size: 16px;
+                font-weight: 900;
             }}
             QTabWidget#viewerTabs QTabBar QToolButton:hover {{
                 background: {ACCENT_SOFT};
@@ -2341,6 +2507,7 @@ class StructureWindow(QMainWindow):
         self.tabs.tabBar().show()
         self.tabs.setCurrentIndex(tab_index)
         self.canvas = canvas
+        self._sync_atom_selection_input()
         self._sync_current_tab_meta()
         self._refresh_manipulator_sources()
 
@@ -2496,7 +2663,6 @@ class StructureWindow(QMainWindow):
         has_pair_sources = self.manipulator_source.count() > 0
         for widget in (
             self.manipulator_source,
-            self.center_button,
             self.enantiomer_button,
             self.rotate_axis,
             self.rotate_angle,
@@ -2518,6 +2684,33 @@ class StructureWindow(QMainWindow):
             self.manipulator_tabs.setTabEnabled(1, has_pair_sources)
             if not has_pair_sources and self.manipulator_tabs.currentIndex() == 1:
                 self.manipulator_tabs.setCurrentIndex(0)
+        self._refresh_manipulator_actions()
+
+    def _refresh_manipulator_actions(self, *_args):
+        if not hasattr(self, "center_button"):
+            return
+        self.center_button.setEnabled(self._center_to_origin_available())
+
+    def _center_to_origin_available(self) -> bool:
+        path = self.manipulator_source.currentData()
+        if not path or self._current_viewer_tab_is_joint():
+            return False
+        try:
+            return not self._atoms_are_centered(read_xyz(Path(path)))
+        except Exception:
+            return False
+
+    def _current_viewer_tab_is_joint(self) -> bool:
+        canvas = self.tabs.currentWidget()
+        return isinstance(canvas, VdwCanvas) and bool(canvas.property("fixed_path") and canvas.property("translated_path"))
+
+    def _atoms_are_centered(self, atoms: tuple[AtomRecord, ...], tolerance: float = 1e-6) -> bool:
+        if not atoms:
+            return True
+        center_x = sum(atom.x for atom in atoms) / len(atoms)
+        center_y = sum(atom.y for atom in atoms) / len(atoms)
+        center_z = sum(atom.z for atom in atoms) / len(atoms)
+        return abs(center_x) <= tolerance and abs(center_y) <= tolerance and abs(center_z) <= tolerance
 
     def _selected_manipulator_path(self) -> Path:
         path = self.manipulator_source.currentData()
@@ -2538,7 +2731,14 @@ class StructureWindow(QMainWindow):
         self._run_manipulation(lambda filename: ["-tc", filename])
 
     def mirror_selected_structure(self):
-        self._run_manipulation(lambda filename: ["-mirror", filename])
+        try:
+            mirror_path = manipulate_xyz(self._selected_manipulator_path(), lambda filename: ["-mirror", filename])
+            xyz_path = manipulate_xyz(mirror_path, lambda filename: ["-tc", filename])
+            atoms = read_xyz(xyz_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Could not create enantiomer", str(exc))
+            return
+        self._add_structure_tab(xyz_path.stem, atoms, xyz_path)
 
     def rotate_selected_structure(self):
         angle = self._fmt(self.rotate_angle.value())
@@ -2732,7 +2932,7 @@ class StructureWindow(QMainWindow):
             args.extend([self.axis_combo.currentText(), self._fmt(values["length"]), self._fmt(values["width"])])
         elif structure == "Tip":
             args.extend([self._fmt(values["z_max"]), self._fmt(values["a"]), self._fmt(values["b"])])
-        elif structure == "Pyramid square base":
+        elif structure == "Pyramid":
             args.extend([self._fmt(values["z_max"]), self._fmt(values["side"])])
         elif structure == "Cone":
             args.extend([self._fmt(values["z_max"]), self._fmt(values["radius"])])
@@ -2750,9 +2950,12 @@ class StructureWindow(QMainWindow):
             raise ValueError(f'Structure "{structure}" is not supported.')
 
         if self.alloy_check.isChecked():
-            if atomtype not in {"Ag", "Au"}:
+            if not core_shell_active and atomtype not in {"Ag", "Au"}:
                 raise ValueError("Alloy generation is only available for Ag and Au.")
-            args.extend(["-alloy", self.alloy_atom.currentText(), "-percentual", self._fmt(self.alloy_percent.value())])
+            if core_shell_active:
+                args.extend(["-alloy", "-percentual", self._fmt(self.alloy_percent.value())])
+            else:
+                args.extend(["-alloy", self.alloy_atom.currentText(), "-percentual", self._fmt(self.alloy_percent.value())])
 
         if self.dimer_check.isChecked() and self.bowtie_check.isChecked():
             raise ValueError("Dimer and bowtie are alternative assembly modes. Select only one.")
