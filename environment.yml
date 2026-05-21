@@ -4,10 +4,12 @@ channels:
 dependencies:
   - python=3.10
   - numpy=1.24.3
+  - gmsh=4.11.1
   - ase=3.22.1
   - pytest=8.3.4
   - rdkit
   - matplotlib
+  - pyside6
   - python-dotenv
   - pip
   - pip:
