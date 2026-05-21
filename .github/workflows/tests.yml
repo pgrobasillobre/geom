@@ -53,7 +53,7 @@ jobs:
       - name: Install GEOM package
         run: |
           conda run -n geom_env python -m pip install --upgrade pip setuptools wheel
-          conda run -n geom_env python -m pip install --editable ".[ui]" --config-settings editable_mode=compat
+          conda run -n geom_env python -m pip install --editable ".[ui,cad,viz]" --config-settings editable_mode=compat
 
       - name: Run GEOM command tests
         run: |
