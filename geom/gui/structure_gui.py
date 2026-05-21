@@ -1146,14 +1146,35 @@ class StructureWindow(QMainWindow):
         sidebar.setFixedWidth(390)
         side = QVBoxLayout(sidebar)
         side.setContentsMargins(32, 34, 32, 24)
-        side.setSpacing(20)
+        side.setSpacing(0)
 
+        logo_header = QWidget()
+        logo_header.setObjectName("logoHeader")
+        logo_header_layout = QVBoxLayout(logo_header)
+        logo_header_layout.setContentsMargins(0, 0, 0, 0)
+        logo_header_layout.setSpacing(0)
         title = QLabel("GEOM")
         title.setObjectName("appTitle")
         title.setAlignment(Qt.AlignHCenter)
-        accent_bar = QFrame()
-        accent_bar.setObjectName("accentBar")
-        accent_bar.setFixedHeight(4)
+        title.setFixedHeight(58)
+        title_font = QFont("Times New Roman")
+        title_font.setPointSize(50)
+        title_font.setWeight(QFont.Bold)
+        title.setFont(title_font)
+
+        logo_lines = QWidget()
+        logo_lines.setObjectName("logoLines")
+        logo_lines.setFixedHeight(19)
+        logo_lines_layout = QVBoxLayout(logo_lines)
+        logo_lines_layout.setContentsMargins(0, 0, 0, 0)
+        logo_lines_layout.setSpacing(3)
+        for name, width in (("logoLineLong", 126), ("logoLineMid", 66), ("logoLineShort", 38)):
+            line = QFrame()
+            line.setObjectName(name)
+            line.setFixedSize(width, 4)
+            logo_lines_layout.addWidget(line, 0, Qt.AlignHCenter)
+        logo_header_layout.addWidget(title)
+        logo_header_layout.addWidget(logo_lines)
 
         self.metal_combo = QComboBox()
         self.metal_combo.addItems(self._material_items())
@@ -1468,8 +1489,8 @@ class StructureWindow(QMainWindow):
         self.side_tabs.addTab(generator_page, "Generator")
         self.side_tabs.addTab(manipulator_page, "Manipulator")
 
-        side.addWidget(title)
-        side.addWidget(accent_bar)
+        side.addWidget(logo_header)
+        side.addSpacing(40)
         side.addWidget(self.side_tabs, 1)
 
         main = QFrame()
@@ -1802,16 +1823,13 @@ class StructureWindow(QMainWindow):
             QFrame#main {{
                 background: {SURFACE};
             }}
-            QFrame#accentBar {{
+            QWidget#logoHeader, QWidget#logoLines {{
+                background: transparent;
+            }}
+            QFrame#logoLineLong, QFrame#logoLineMid, QFrame#logoLineShort {{
                 border: 0;
-                border-radius: 2px;
-                margin-left: 112px;
-                margin-right: 112px;
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 1, y2: 0,
-                    stop: 0 {ACCENT_VIOLET},
-                    stop: 1 {ACCENT_INDIGO}
-                );
+                border-radius: 1px;
+                background: #050509;
             }}
             QWidget#sidePage {{
                 background: transparent;
@@ -1829,9 +1847,10 @@ class StructureWindow(QMainWindow):
                 padding: 10px;
             }}
             QLabel#appTitle {{
-                color: {TEXT};
-                font-size: 42px;
-                font-weight: 760;
+                color: #050509;
+                font-family: "Times New Roman";
+                font-size: 50px;
+                font-weight: 800;
                 letter-spacing: 0;
             }}
             QLabel#subtitle, QLabel#fieldLabel {{
