@@ -56,7 +56,21 @@ jobs:
           conda run -n geom_env python -m pip install --editable ".[ui]" --config-settings editable_mode=compat
 
       - name: Run GEOM command tests
-        run: conda run -n geom_env bash ./geom/tests/run_all_tests.sh
+        run: |
+          set +e
+          conda run -n geom_env bash ./geom/tests/run_all_tests.sh > command-tests.log 2>&1
+          status=$?
+          cat command-tests.log
+          if [ "$status" -ne 0 ]; then
+            python - <<'PY'
+          from pathlib import Path
+
+          message = Path("command-tests.log").read_text(errors="replace")[-6000:]
+          message = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::error title=GEOM command tests failed::{message}")
+          PY
+            exit "$status"
+          fi
 
       - name: Run GEOM GUI tests
         env:
