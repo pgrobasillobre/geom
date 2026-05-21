@@ -105,6 +105,24 @@ def test_generator_builds_core_shell_and_microscope_commands(window):
     ]
 
 
+def test_core_shell_generation_reports_au_ag_counts(window):
+    window.metal_combo.setCurrentText("Au")
+    window.structure_combo.setCurrentText("Sphere")
+    window.core_shell_check.setChecked(True)
+    window.pending_generation_meta = window._generation_metadata()
+
+    metadata = window._metadata_for_generated_atoms(
+        (
+            AtomRecord("Au", 0.0, 0.0, 0.0),
+            AtomRecord("Ag", 1.0, 0.0, 0.0),
+            AtomRecord("Ag", 2.0, 0.0, 0.0),
+        )
+    )
+
+    assert metadata["au_count"] == 1
+    assert metadata["ag_count"] == 2
+
+
 def test_smiles_tab_uses_typed_title(window):
     atoms = (AtomRecord("C", 0.0, 0.0, 0.0),)
     window._add_structure_tab("C[C@H](O)N", atoms, None)
@@ -262,5 +280,6 @@ def test_manipulator_enantiomer_generates_mirrored_xyz(monkeypatch, tmp_path):
 
 def test_install_and_uninstall_scripts_parse():
     root = Path(__file__).resolve().parents[3]
-    assert (root / "install.sh").exists()
-    assert (root / "uninstall.sh").exists()
+    install_script = root / "install.sh"
+    assert install_script.exists()
+    assert "create_uninstall_script" in install_script.read_text(encoding="utf-8")

@@ -2826,11 +2826,13 @@ class StructureWindow(QMainWindow):
             metadata["assembly_distance"] = self.bowtie_distance.value()
         if self.alloy_check.isChecked():
             metadata["is_alloy"] = True
+        if self.core_shell_check.isChecked():
+            metadata["has_au_ag_counts"] = True
         return metadata
 
     def _metadata_for_generated_atoms(self, atoms: tuple[AtomRecord, ...]) -> dict[str, object]:
         metadata = dict(self.pending_generation_meta)
-        if metadata.get("is_alloy"):
+        if metadata.get("is_alloy") or metadata.get("has_au_ag_counts"):
             counts: dict[str, int] = {}
             for atom in atoms:
                 element = atom.element.capitalize()
@@ -2838,6 +2840,7 @@ class StructureWindow(QMainWindow):
             metadata["au_count"] = counts.get("Au", 0)
             metadata["ag_count"] = counts.get("Ag", 0)
             metadata.pop("is_alloy", None)
+            metadata.pop("has_au_ag_counts", None)
         return metadata
 
     def _build_command_args(self) -> list[str]:
