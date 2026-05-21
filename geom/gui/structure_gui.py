@@ -1316,6 +1316,7 @@ class StructureWindow(QMainWindow):
 
         options = QFrame()
         options.setObjectName("controlCard")
+        self.options_card = options
         option_layout = QGridLayout(options)
         self.option_layout = option_layout
         option_layout.setContentsMargins(0, 0, 0, 0)
@@ -1431,7 +1432,8 @@ class StructureWindow(QMainWindow):
         generator_layout.setSpacing(14)
         generator_layout.addWidget(self._section_label("Structure"))
         generator_layout.addWidget(controls)
-        generator_layout.addWidget(self._section_label("Optional"))
+        self.optional_label = self._section_label("Optional")
+        generator_layout.addWidget(self.optional_label)
         generator_layout.addWidget(options)
         generator_layout.addStretch(1)
         generator_layout.addWidget(self.create_button)
@@ -1607,7 +1609,7 @@ class StructureWindow(QMainWindow):
         self.tabs.setElideMode(Qt.ElideRight)
         self.tabs.setCornerWidget(self.meta_label, Qt.TopRightCorner)
         self.tabs.currentChanged.connect(self._sync_current_tab_meta)
-        self.tabs.currentChanged.connect(self._refresh_manipulator_sources)
+        self.tabs.currentChanged.connect(lambda _index: self._refresh_manipulator_sources(sync_to_current_tab=True))
         self.tabs.currentChanged.connect(self._sync_atom_selection_input)
         self.tabs.currentChanged.connect(self._refresh_manipulator_actions)
         self.canvas = self._make_canvas()
@@ -1833,6 +1835,8 @@ class StructureWindow(QMainWindow):
         bowtie_allowed = bool(STRUCTURES[self.structure_combo.currentText()].get("bowtie")) if not is_graphene else False
         core_shell_allowed = not is_graphene and metal in {"Au", "Ag"} and structure_name in {"Sphere", "Rod"}
         core_shell_active = core_shell_allowed and self.core_shell_check.isChecked()
+        self.optional_label.setVisible(not is_graphene)
+        self.options_card.setVisible(not is_graphene)
 
         if is_graphene:
             self.dimer_check.setChecked(False)
@@ -2614,11 +2618,15 @@ class StructureWindow(QMainWindow):
         self._sync_current_tab_meta()
         self._refresh_manipulator_sources()
 
-    def _refresh_manipulator_sources(self):
+    def _refresh_manipulator_sources(self, sync_to_current_tab: bool = False):
         if not hasattr(self, "manipulator_source"):
             return
 
         current_path = self.manipulator_source.currentData()
+        if sync_to_current_tab:
+            current = self.tabs.currentWidget()
+            if isinstance(current, VdwCanvas) and current.property("path"):
+                current_path = current.property("path")
         fixed_path = self.pair_fixed_source.currentData()
         moving_path = self.pair_moving_source.currentData()
         entries: list[tuple[str, str]] = []

@@ -41,6 +41,8 @@ def test_gui_window_smoke_loads_main_sections(window):
 
 def test_generator_keeps_expected_metal_and_graphene_options(window):
     window.metal_combo.setCurrentText("Au")
+    assert not window.optional_label.isHidden()
+    assert not window.options_card.isHidden()
     assert combo_items(window.structure_combo) == [
         "Sphere",
         "Rod",
@@ -54,6 +56,8 @@ def test_generator_keeps_expected_metal_and_graphene_options(window):
     ]
 
     window.metal_combo.setCurrentText("Graphene")
+    assert window.optional_label.isHidden()
+    assert window.options_card.isHidden()
     assert combo_items(window.graphene_variant_combo) == list(GRAPHENE_VARIANTS.keys())
     assert "Triangle" in combo_items(window.graphene_variant_combo)
 
@@ -250,6 +254,23 @@ def test_center_to_origin_button_depends_on_selected_structure_center(window, tm
 
     window.manipulator_source.setCurrentIndex(window.manipulator_source.findData(str(centered)))
     assert not window.center_button.isEnabled()
+
+
+def test_manipulator_source_tracks_selected_viewer_tab(window, tmp_path):
+    first = tmp_path / "first.xyz"
+    first.write_text("1\nfirst\nC 0 0 0\n", encoding="utf-8")
+    second = tmp_path / "second.xyz"
+    second.write_text("1\nsecond\nH 0 0 0\n", encoding="utf-8")
+
+    window._add_structure_tab("first", (AtomRecord("C", 0.0, 0.0, 0.0),), first)
+    first_index = window.tabs.currentIndex()
+    window._add_structure_tab("second", (AtomRecord("H", 0.0, 0.0, 0.0),), second)
+
+    assert window.manipulator_source.currentData() == str(second)
+
+    window.tabs.setCurrentIndex(first_index)
+
+    assert window.manipulator_source.currentData() == str(first)
 
 
 def test_center_to_origin_disabled_for_joint_visualization(window, tmp_path):
