@@ -18,6 +18,7 @@ try:
         QFont,
         QFontDatabase,
         QGuiApplication,
+        QIcon,
         QImage,
         QKeySequence,
         QLinearGradient,
@@ -57,7 +58,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users with
     missing_dependency = exc
     QPoint = QPointF = QRectF = Qt = QGuiApplication = QApplication = QFileDialog = QMessageBox = None
     QColor = lambda *args, **kwargs: None
-    QImage = QKeySequence = QLinearGradient = QPainter = QPen = QPixmap = QRadialGradient = QShortcut = None
+    QIcon = QImage = QKeySequence = QLinearGradient = QPainter = QPen = QPixmap = QRadialGradient = QShortcut = None
 
     class QFont:
         DemiBold = 63
@@ -2787,7 +2788,14 @@ def main() -> int:
 
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     app = QApplication(sys.argv)
+    logo_path = Path(__file__).resolve().parents[2] / "docs" / "_static" / "geom-logo-cloud.png"
+    if not logo_path.exists():
+        logo_path = Path(__file__).resolve().parents[2] / "docs" / "_static" / "geom-logo-desktop.png"
+    if logo_path.exists():
+        app.setWindowIcon(QIcon(str(logo_path)))
     window = StructureWindow()
+    if logo_path.exists():
+        window.setWindowIcon(QIcon(str(logo_path)))
     window.show()
     try:
         return app.exec()
