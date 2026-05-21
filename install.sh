@@ -223,7 +223,10 @@ EOF
 create_macos_geom_app
 
 echo " Running tests..."
-conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh || echo " Some tests failed."
+echo " Running GEOM command tests..."
+conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh
+echo " Running GEOM GUI tests..."
+conda run -n $ENV_NAME bash ./geom/gui/tests/run_gui_tests.sh
 
 echo  "  Installation complete!"
 echo  " "
