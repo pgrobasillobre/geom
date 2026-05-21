@@ -38,6 +38,7 @@ try:
         QHBoxLayout,
         QLabel,
         QLineEdit,
+        QListView,
         QMainWindow,
         QMenu,
         QMessageBox,
@@ -64,6 +65,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by users with
     QFontDatabase = None
     QCheckBox = QComboBox = QDoubleSpinBox = QFrame = QGridLayout = QHBoxLayout = QLabel = QLineEdit = None
     QPushButton = QSizePolicy = QMenu = QSpinBox = QTabBar = QTabWidget = QToolButton = QVBoxLayout = None
+    QListView = None
     QMainWindow = QWidget = QOpenGLWidget = object
     QOpenGLFunctions_1_1 = None
 
@@ -1047,6 +1049,32 @@ class ViewerStepper(QWidget):
         return self.spin.value()
 
 
+class ViewerTabBar(QTabBar):
+    """Compact tab bar with drag reordering and wheel navigation."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setExpanding(False)
+        self.setDrawBase(False)
+        self.setMovable(True)
+        self.setUsesScrollButtons(True)
+        self.setElideMode(Qt.ElideRight)
+        self.setCursor(Qt.OpenHandCursor)
+        self.setToolTip("Drag tabs to reorder. Scroll over tabs to navigate.")
+
+    def wheelEvent(self, event):
+        if self.count() < 2:
+            event.ignore()
+            return
+        delta = event.angleDelta().x() or event.angleDelta().y()
+        if delta == 0:
+            event.ignore()
+            return
+        next_index = self.currentIndex() - 1 if delta > 0 else self.currentIndex() + 1
+        self.setCurrentIndex(max(0, min(self.count() - 1, next_index)))
+        event.accept()
+
+
 class StructureWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -1121,11 +1149,11 @@ class StructureWindow(QMainWindow):
             self.param_spins.append(spin)
 
         controls = QFrame()
-        controls.setObjectName("controls")
+        controls.setObjectName("controlCard")
         form = QGridLayout(controls)
         form.setContentsMargins(0, 0, 0, 0)
         form.setHorizontalSpacing(12)
-        form.setVerticalSpacing(18)
+        form.setVerticalSpacing(14)
         form.addWidget(self.metal_label, 0, 0)
         form.addWidget(self.metal_combo, 0, 1)
         form.addWidget(self.structure_label, 1, 0)
@@ -1141,7 +1169,7 @@ class StructureWindow(QMainWindow):
             form.addWidget(spin, index, 1)
 
         options = QFrame()
-        options.setObjectName("controls")
+        options.setObjectName("controlCard")
         option_layout = QGridLayout(options)
         option_layout.setContentsMargins(0, 0, 0, 0)
         option_layout.setHorizontalSpacing(12)
@@ -1231,52 +1259,74 @@ class StructureWindow(QMainWindow):
         self.pair_translate_button.clicked.connect(self.translate_pair_selected_structures)
 
         generator_page = QWidget()
+        generator_page.setObjectName("sidePage")
         generator_layout = QVBoxLayout(generator_page)
-        generator_layout.setContentsMargins(0, 24, 0, 0)
-        generator_layout.setSpacing(18)
+        generator_layout.setContentsMargins(0, 18, 0, 0)
+        generator_layout.setSpacing(14)
+        generator_layout.addWidget(self._section_label("Structure"))
         generator_layout.addWidget(controls)
-        generator_layout.addSpacing(6)
+        generator_layout.addWidget(self._section_label("Options"))
         generator_layout.addWidget(options)
         generator_layout.addStretch(1)
         generator_layout.addWidget(self.create_button)
 
         viewer_page = QWidget()
+        viewer_page.setObjectName("sidePage")
         viewer_layout = QVBoxLayout(viewer_page)
-        viewer_layout.setContentsMargins(0, 24, 0, 0)
+        viewer_layout.setContentsMargins(0, 18, 0, 0)
         viewer_layout.setSpacing(14)
-        viewer_layout.addWidget(self.load_button)
-        viewer_layout.addWidget(self.file_hint)
-        viewer_layout.addSpacing(8)
-        viewer_layout.addWidget(self._section_label("Load from SMILES"))
-        viewer_layout.addWidget(self.smiles_input)
-        viewer_layout.addWidget(self.smiles_button)
-        viewer_layout.addSpacing(12)
+        load_card = QFrame()
+        load_card.setObjectName("controlCard")
+        load_layout = QVBoxLayout(load_card)
+        load_layout.setContentsMargins(0, 0, 0, 0)
+        load_layout.setSpacing(10)
+        load_layout.addWidget(self.load_button)
+        load_layout.addWidget(self.file_hint)
+        load_layout.addSpacing(4)
+        load_layout.addWidget(self._section_label("SMILES"))
+        load_layout.addWidget(self.smiles_input)
+        load_layout.addWidget(self.smiles_button)
+        viewer_layout.addWidget(self._section_label("Load"))
+        viewer_layout.addWidget(load_card)
 
+        appearance_card = QFrame()
+        appearance_card.setObjectName("controlCard")
+        appearance_layout = QVBoxLayout(appearance_card)
+        appearance_layout.setContentsMargins(0, 0, 0, 0)
+        appearance_layout.setSpacing(12)
         vdw_row = QHBoxLayout()
         vdw_label = self._field_label("Sphere size")
         vdw_row.addWidget(vdw_label)
         vdw_row.addStretch(1)
         vdw_row.addWidget(self.vdw_scale_input)
-        viewer_layout.addLayout(vdw_row)
+        appearance_layout.addLayout(vdw_row)
 
         resolution_row = QHBoxLayout()
         resolution_row.addWidget(self._field_label("Resolution"))
         resolution_row.addStretch(1)
         resolution_row.addWidget(self.resolution_input)
-        viewer_layout.addLayout(resolution_row)
+        appearance_layout.addLayout(resolution_row)
         bond_row = QHBoxLayout()
         bond_row.addWidget(self._field_label("Bond width"))
         bond_row.addStretch(1)
         bond_row.addWidget(self.bond_width_input)
-        viewer_layout.addLayout(bond_row)
+        appearance_layout.addLayout(bond_row)
+        viewer_layout.addWidget(self._section_label("Appearance"))
+        viewer_layout.addWidget(appearance_card)
         viewer_layout.addStretch(1)
 
         single_page = QWidget()
+        single_page.setObjectName("sidePage")
         single_layout = QVBoxLayout(single_page)
-        single_layout.setContentsMargins(0, 18, 0, 0)
+        single_layout.setContentsMargins(0, 14, 0, 0)
         single_layout.setSpacing(14)
         single_layout.addWidget(self._section_label("Loaded structure"))
-        single_layout.addWidget(self.manipulator_source)
+        source_group = QFrame()
+        source_group.setObjectName("controlCard")
+        source_group_layout = QVBoxLayout(source_group)
+        source_group_layout.setContentsMargins(0, 0, 0, 0)
+        source_group_layout.addWidget(self.manipulator_source)
+        single_layout.addWidget(source_group)
         single_layout.addSpacing(12)
         single_layout.addWidget(self._section_label("Translate"))
         translate_group = QFrame()
@@ -1306,12 +1356,19 @@ class StructureWindow(QMainWindow):
         rotate_group_layout.addWidget(self.rotate_button)
         single_layout.addWidget(rotate_group)
         single_layout.addSpacing(12)
-        single_layout.addWidget(self.center_button)
+        center_group = QFrame()
+        center_group.setObjectName("controlCard")
+        center_group_layout = QVBoxLayout(center_group)
+        center_group_layout.setContentsMargins(0, 0, 0, 0)
+        center_group_layout.addWidget(self.center_button)
+        single_layout.addWidget(self._section_label("Center"))
+        single_layout.addWidget(center_group)
         single_layout.addStretch(1)
 
         pair_page = QWidget()
+        pair_page.setObjectName("sidePage")
         pair_layout = QVBoxLayout(pair_page)
-        pair_layout.setContentsMargins(0, 18, 0, 0)
+        pair_layout.setContentsMargins(0, 14, 0, 0)
         pair_layout.setSpacing(14)
         pair_layout.addWidget(self._section_label("Controlled distance"))
         pair_group = QFrame()
@@ -1367,9 +1424,9 @@ class StructureWindow(QMainWindow):
 
         self.tabs = QTabWidget()
         self.tabs.setObjectName("viewerTabs")
+        self.tabs.setTabBar(ViewerTabBar())
         self.tabs.setUsesScrollButtons(True)
-        self.tabs.setElideMode(Qt.ElideNone)
-        self.tabs.tabBar().setExpanding(False)
+        self.tabs.setElideMode(Qt.ElideRight)
         self.tabs.currentChanged.connect(self._sync_current_tab_meta)
         self.tabs.currentChanged.connect(self._refresh_manipulator_sources)
         self.canvas = self._make_canvas()
@@ -1381,6 +1438,7 @@ class StructureWindow(QMainWindow):
 
         layout.addWidget(sidebar)
         layout.addWidget(main, 1)
+        self._configure_dropdown_popups()
         self._apply_styles()
         self.reset_view_shortcut = QShortcut(QKeySequence("Shift+0"), self)
         self.reset_view_shortcut.activated.connect(self.reset_current_view)
@@ -1392,6 +1450,15 @@ class StructureWindow(QMainWindow):
         label = QLabel(text)
         label.setObjectName("fieldLabel")
         return label
+
+    def _configure_dropdown_popups(self):
+        for combo in self.findChildren(QComboBox):
+            popup = QListView(combo)
+            popup.setObjectName("comboPopup")
+            popup.setMouseTracking(True)
+            popup.setUniformItemSizes(True)
+            popup.setSpacing(2)
+            combo.setView(popup)
 
     def _section_label(self, text: str) -> QLabel:
         label = QLabel(text)
@@ -1587,7 +1654,7 @@ class StructureWindow(QMainWindow):
                 color: {TEXT};
             }}
             QFrame#sidebar {{
-                background: #FCFCFE;
+                background: #FBFBFD;
                 border-right: 1px solid #F1F1F4;
             }}
             QFrame#main {{
@@ -1604,16 +1671,20 @@ class StructureWindow(QMainWindow):
                     stop: 1 {ACCENT_INDIGO}
                 );
             }}
-            QFrame#controls {{
+            QWidget#sidePage {{
                 background: transparent;
-                border: 0;
-                border-radius: 0;
+            }}
+            QFrame#controlCard {{
+                background: #FFFFFF;
+                border: 1px solid #EEEAF4;
+                border-radius: 18px;
+                padding: 14px;
             }}
             QFrame#toolGroup {{
                 background: #FFFFFF;
-                border: 1px solid #F0EDF7;
-                border-radius: 16px;
-                padding: 10px;
+                border: 1px solid #EEEAF4;
+                border-radius: 18px;
+                padding: 14px;
             }}
             QLabel#appTitle {{
                 color: {TEXT};
@@ -1628,8 +1699,9 @@ class StructureWindow(QMainWindow):
             QLabel#sectionLabel {{
                 color: {TEXT};
                 font-size: 13px;
-                font-weight: 700;
-                margin-top: 4px;
+                font-weight: 720;
+                margin-top: 2px;
+                margin-left: 2px;
             }}
             QLabel#helperText {{
                 color: #8A8795;
@@ -1649,36 +1721,54 @@ class StructureWindow(QMainWindow):
             QTabWidget#sideTabs::pane {{
                 border: 0;
             }}
+            QTabWidget#sideTabs QTabBar {{
+                background: #F4F3F8;
+                border: 1px solid #EEEAF4;
+                border-radius: 17px;
+                padding: 3px;
+            }}
             QTabWidget#sideTabs QTabBar::tab {{
                 background: transparent;
                 color: #7C7C88;
                 border: 0;
-                border-bottom: 2px solid transparent;
-                padding: 9px 16px 8px 16px;
-                margin-right: 8px;
+                border-radius: 13px;
+                padding: 8px 13px;
+                margin: 0;
                 font-size: 13px;
                 font-weight: 650;
             }}
             QTabWidget#sideTabs QTabBar::tab:selected {{
                 color: {TEXT};
-                border-bottom: 2px solid {ACCENT_VIOLET};
+                background: #FFFFFF;
+                border: 1px solid #E8E4F2;
+            }}
+            QTabWidget#sideTabs QTabBar::tab:hover:!selected {{
+                color: {TEXT};
+                background: #FFFFFF;
             }}
             QTabWidget#manipulatorTabs::pane {{
                 border: 0;
+            }}
+            QTabWidget#manipulatorTabs QTabBar {{
+                background: #F4F3F8;
+                border: 1px solid #EEEAF4;
+                border-radius: 15px;
+                padding: 3px;
             }}
             QTabWidget#manipulatorTabs QTabBar::tab {{
                 background: transparent;
                 color: #7C7C88;
                 border: 0;
-                border-bottom: 2px solid transparent;
-                padding: 8px 15px 7px 15px;
-                margin-right: 8px;
+                border-radius: 11px;
+                padding: 7px 18px;
+                margin: 0;
                 font-size: 13px;
                 font-weight: 650;
             }}
             QTabWidget#manipulatorTabs QTabBar::tab:selected {{
                 color: #000000;
-                border-bottom: 2px solid {ACCENT_VIOLET};
+                background: #FFFFFF;
+                border: 1px solid #E8E4F2;
             }}
             QTabWidget#manipulatorTabs QTabBar::tab:disabled {{
                 color: #BAB8C3;
@@ -1712,12 +1802,23 @@ class StructureWindow(QMainWindow):
                 selection-color: #000000;
                 outline: 0;
             }}
-            QComboBox QAbstractItemView::item {{
+            QListView#comboPopup {{
+                background: #FFFFFF;
+                border: 1px solid #E8E4F2;
+                border-radius: 10px;
+                padding: 6px;
+                outline: 0;
+            }}
+            QComboBox QAbstractItemView::item,
+            QListView#comboPopup::item {{
                 min-height: 30px;
                 padding: 5px 10px;
                 border-radius: 7px;
             }}
-            QComboBox QAbstractItemView::item:hover {{
+            QComboBox QAbstractItemView::item:hover,
+            QComboBox QAbstractItemView::item:selected,
+            QListView#comboPopup::item:hover,
+            QListView#comboPopup::item:selected {{
                 background: {ACCENT_SOFT};
                 color: #000000;
             }}
@@ -1956,32 +2057,42 @@ class StructureWindow(QMainWindow):
             }}
             QTabWidget#viewerTabs QTabBar {{
                 alignment: left;
-                left: 28px;
-                top: 22px;
+                left: 24px;
+                top: 8px;
             }}
             QTabWidget#viewerTabs QTabBar::tab {{
-                background: transparent;
+                background: #FFFFFF;
                 color: #7C7C88;
-                border: 0;
+                border: 1px solid transparent;
                 border-bottom: 2px solid transparent;
-                padding: 8px 12px;
-                margin-right: 10px;
-                min-width: 260px;
+                border-radius: 12px 12px 0 0;
+                padding: 7px 9px 7px 12px;
+                margin-right: 6px;
+                min-width: 112px;
+                max-width: 172px;
                 font-size: 13px;
                 font-weight: 600;
             }}
             QTabWidget#viewerTabs QTabBar::tab:selected {{
                 color: {TEXT};
+                background: #FFFFFF;
+                border-color: #F0EDF7;
                 border-bottom: 2px solid {ACCENT_VIOLET};
+            }}
+            QTabWidget#viewerTabs QTabBar::tab:hover {{
+                color: {TEXT};
+                background: {ACCENT_SOFT};
             }}
             QTabWidget#viewerTabs QTabBar QToolButton {{
                 background: #FFFFFF;
                 color: {ACCENT_VIOLET};
                 border: 1px solid #EEEAF7;
-                border-radius: 10px;
-                min-width: 22px;
-                min-height: 22px;
-                margin-top: 4px;
+                border-radius: 9px;
+                min-width: 24px;
+                max-width: 24px;
+                min-height: 24px;
+                max-height: 24px;
+                margin-top: 3px;
             }}
             QTabWidget#viewerTabs QTabBar QToolButton:hover {{
                 background: {ACCENT_SOFT};
