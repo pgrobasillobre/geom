@@ -115,6 +115,7 @@ def merge_geoms(inp, geom1, geom2):
     geom3.xyz_center = np.mean(geom3.xyz, axis=1)
     geom3.xyz_max = np.max(geom3.xyz, axis=1)
     geom3.xyz_min = np.min(geom3.xyz, axis=1)
+    geom3.remove_duplicate_xyz()
 
     return geom3
 # -------------------------------------------------------------------------------------
