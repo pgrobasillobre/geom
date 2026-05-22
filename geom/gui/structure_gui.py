@@ -336,16 +336,12 @@ def _normalize_selection_expression(expression: str) -> str:
         expression,
         flags=re.IGNORECASE,
     )
-    replacements = {
-        "and": "and",
-        "or": "or",
-        "x": "x",
-        "y": "y",
-        "z": "z",
-        "name": "name",
-    }
-    pattern = re.compile(r"\b(and|or|x|y|z|name)\b", re.IGNORECASE)
-    return pattern.sub(lambda match: replacements[match.group(1).lower()], expression)
+    return re.sub(
+        r"\b(and|or|x|y|z|name)\b",
+        lambda match: match.group(1).lower(),
+        expression,
+        flags=re.IGNORECASE,
+    )
 
 
 def _evaluate_selection_node(node: ast.AST, values: dict[str, float | str]) -> bool | float | str:
@@ -590,35 +586,35 @@ class VdwCanvas(QOpenGLWidget):
         projected = self._project_atoms() if self.atoms else []
         if self._uses_vdw_opengl(projected):
             self._paint_vdw_opengl(projected)
-            painter = QPainter(self)
-            painter.setRenderHint(QPainter.Antialiasing, True)
-            self._paint_axes(painter)
+            self._paint_axes_overlay()
             return
         if self._uses_mixed_vdw_cpk(projected):
             self._paint_mixed_vdw_cpk(projected)
             return
 
-        painter = QPainter(self)
         fine_render = self.render_resolution > 1 or self._scene_has_cpk()
-        painter.setRenderHint(QPainter.Antialiasing, fine_render)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, fine_render)
+        painter = self._make_painter(fine_render)
         self._paint_background(painter)
 
         if not self.atoms:
             self._paint_axes(painter)
             return
 
-        for bond in self._projected_bonds(projected):
-            self._paint_bond(painter, bond)
-        for atom in projected:
-            self._paint_atom(painter, atom)
+        self._paint_bonds_and_atoms(painter, projected, projected)
+        self._paint_axes(painter)
+
+    def _make_painter(self, fine_render: bool) -> QPainter:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, fine_render)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform, fine_render)
+        return painter
+
+    def _paint_axes_overlay(self):
+        painter = self._make_painter(True)
         self._paint_axes(painter)
 
     def _paint_background(self, painter: QPainter):
         painter.fillRect(self.rect(), QColor("#FFFFFF"))
-
-    def _paint_empty_state(self, painter: QPainter):
-        return
 
     def _project_atoms(self) -> list[ProjectedAtom]:
         cx = sum(atom.x for atom in self.atoms) / len(self.atoms)
@@ -645,7 +641,21 @@ class VdwCanvas(QOpenGLWidget):
             else:
                 depth_radius = VDW_RADII.get(element, VDW_RADII["X"]) * 0.68 * self.vdw_scale
             radius = depth_radius * scale
-            atoms.append(ProjectedAtom(index, element, center_x + x * scale, center_y - y * scale, z, radius, depth_radius, cpk_mode, atom.x, atom.y, atom.z))
+            atoms.append(
+                ProjectedAtom(
+                    index,
+                    element,
+                    center_x + x * scale,
+                    center_y - y * scale,
+                    z,
+                    radius,
+                    depth_radius,
+                    cpk_mode,
+                    atom.x,
+                    atom.y,
+                    atom.z,
+                )
+            )
 
         atoms.sort(key=lambda item: item.z)
         return atoms
@@ -667,14 +677,20 @@ class VdwCanvas(QOpenGLWidget):
         cpk_atoms = [atom for atom in projected if atom.cpk]
 
         self._paint_vdw_opengl(metal_atoms)
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        for bond in self._projected_bonds(projected):
-            self._paint_bond(painter, bond)
-        for atom in cpk_atoms:
-            self._paint_atom(painter, atom)
+        painter = self._make_painter(True)
+        self._paint_bonds_and_atoms(painter, projected, cpk_atoms)
         self._paint_axes(painter)
+
+    def _paint_bonds_and_atoms(
+        self,
+        painter: QPainter,
+        bond_source: list[ProjectedAtom],
+        atoms: list[ProjectedAtom],
+    ):
+        for bond in self._projected_bonds(bond_source):
+            self._paint_bond(painter, bond)
+        for atom in atoms:
+            self._paint_atom(painter, atom)
 
     def _paint_vdw_opengl(self, projected: list[ProjectedAtom]):
         gl = self._gl
@@ -2668,7 +2684,7 @@ class StructureWindow(QMainWindow):
         self.pair_moving_source.blockSignals(False)
 
         has_sources = self.manipulator_source.count() > 0
-        has_pair_sources = self.manipulator_source.count() > 0
+        has_pair_sources = has_sources
         for widget in (
             self.manipulator_source,
             self.enantiomer_button,

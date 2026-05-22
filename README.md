@@ -1,6 +1,6 @@
 # GEOM – Geometry File Management
 
-**GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
+**GEOM** is a tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research, with both a command-line interface and a native desktop GUI.
 
 **[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v2.0.0)**
 
@@ -18,8 +18,9 @@ GEOM has been used in the following research paper(s):
 
 ## Features
 
+- **GEOM Structure Studio**: native desktop GUI for interactive nanoparticle and graphene generation, 3D visualization, and structure manipulation.
 - **RDKit tools**: molecular visualization, file conversion, force field optimization, and conformers generation.
-- **AI Assistant for nanoparticle and graphene creation** 
+- **AI Assistant for nanoparticle and graphene creation**
 - **Geometry Transformations**: Translation, rotation, merging, and specular (mirror) transformations.
 - **Nanoparticle Generation**: Sphere, rod, core-shell, tip, pyramid, cone, icosahedron, and more.
 - **Graphene Structures**: Ribbons, disks, rings, and triangles.
@@ -51,6 +52,12 @@ This script will:
  - Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
  - Set up a virtual environment named geom_env with the necessary dependencies.
  - Configure environment variables and aliases for running **GEOM**.
+ - Build the **GEOM Structure Studio** desktop app (macOS only).
+
+After installation, the GUI can be launched in two ways:
+
+- **Terminal**: load the environment with `geom_load`, then run `geomapp`.
+- **macOS app**: open `~/Applications/GEOM.app` directly from Finder or Spotlight.
 
 ## Activate the Environment
 
@@ -132,6 +139,33 @@ You’ll be greeted with a ChatGPT-like chat prompt where you can type your requ
 
 
 The assistant will automatically create and execute the corresponding GEOM command for you.
+
+
+## GEOM Structure Studio
+
+GEOM includes a native desktop GUI — **GEOM Structure Studio** — for interactive nanoparticle and graphene creation, 3D visualization, and structure manipulation.
+
+### Launch from the terminal
+
+After loading the environment with `geom_load`:
+
+```
+geomapp
+```
+
+### Launch as a macOS app
+
+On macOS, the installer creates a native `.app` bundle at `~/Applications/GEOM.app`. Open it from Spotlight or Finder.
+
+### What you can do
+
+- **Generator** — create nanoparticles (sphere, rod, tip, pyramid, cone, icosahedron, and more) and graphene structures (disk, ribbon, ring, triangle) with interactive parameter controls. Supports alloy, dimer, bowtie, and core-shell configurations.
+- **Viewer** — load XYZ, PDB, or SMILES structures via file picker or drag-and-drop. Interactive 3D view with VdW/CPK rendering, atom selection expressions (`x > 0 and name C`), and adjustable sphere size, bond width, and resolution.
+- **Manipulator** — translate, rotate, mirror (enantiomer), and center structures. Pair mode sets a controlled distance between two loaded structures along any axis.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geomapp.png" width="800">
+</p>
 
 
 ## Running Tests

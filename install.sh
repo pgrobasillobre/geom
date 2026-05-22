@@ -4,12 +4,14 @@ set -e
 
 ENV_NAME="geom_env"
 GEOM_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GEOM_VERSION="$(grep '^version' "$GEOM_ROOT/pyproject.toml" | head -1 | sed 's/version = "\(.*\)"/\1/')"
 
 echo " Setting up GEOM with conda environment..."
 
 # Check for conda
 if ! command -v conda &> /dev/null; then
-    echo -e "\n Conda was not found in your system."
+    echo ""
+    echo " Conda was not found in your system."
 
     # Check if Miniconda is already installed
     if [[ -x "$HOME/miniconda/bin/conda" ]]; then
@@ -25,8 +27,9 @@ if ! command -v conda &> /dev/null; then
         read -p " Would you like to automatically install Miniconda now? (y/N): " INSTALL_MINICONDA
         if [[ "$INSTALL_MINICONDA" =~ ^[Yy]$ ]]; then
             OS_TYPE="$(uname -s)"
+            ARCH="$(uname -m)"
             echo " Downloading Miniconda installer..."
-            curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-$([[ $OS_TYPE == "Darwin" ]] && echo "MacOSX" || echo "Linux")-x86_64.sh -o miniconda.sh
+            curl -L "https://repo.anaconda.com/miniconda/Miniconda3-latest-$([[ $OS_TYPE == "Darwin" ]] && echo "MacOSX" || echo "Linux")-${ARCH}.sh" -o miniconda.sh
 
             echo " Running Miniconda installer..."
             bash miniconda.sh -b -p "$HOME/miniconda"
@@ -52,9 +55,9 @@ else
 fi
 
 echo " Installing Python package inside the conda environment..."
-conda run -n $ENV_NAME python -m pip install --upgrade pip setuptools wheel
-conda run -n $ENV_NAME python -m pip install gmsh==4.11.1
-conda run -n $ENV_NAME python -m pip install --editable ".[ui]" --config-settings editable_mode=compat
+conda run -n "$ENV_NAME" python -m pip install --upgrade pip setuptools wheel
+conda run -n "$ENV_NAME" python -m pip install gmsh==4.11.1
+conda run -n "$ENV_NAME" python -m pip install --editable ".[ui]" --config-settings editable_mode=compat
 
 # Set up shell config file
 SHELL_RC="$HOME/.bashrc"
@@ -91,7 +94,7 @@ LOGO_PATH="$(realpath ./docs/_static/geom-logo-cloud.png)"
 if [[ ! -f "$LOGO_PATH" ]]; then
     LOGO_PATH="$(realpath ./docs/_static/geom-logo-desktop.png)"
 fi
-ENV_PYTHON="$(conda run -n $ENV_NAME which python)"
+ENV_PYTHON="$(conda run -n "$ENV_NAME" which python)"
 echo "Installing geom_load shell helper in $SHELL_RC..."
 
 touch "$SHELL_RC"
@@ -179,7 +182,7 @@ create_macos_geom_app() {
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1.0</string>
+    <string>$GEOM_VERSION</string>
     <key>CFBundleIconFile</key>
     <string>geom-logo</string>
     <key>LSMinimumSystemVersion</key>
@@ -317,33 +320,33 @@ UNINSTALL_EOF
 
 echo " Running tests..."
 echo " Running GEOM command tests..."
-conda run -n $ENV_NAME bash ./geom/tests/run_all_tests.sh
+conda run -n "$ENV_NAME" bash ./geom/tests/run_all_tests.sh
 echo " Running GEOM GUI tests..."
-conda run -n $ENV_NAME bash ./geom/gui/tests/run_gui_tests.sh
+conda run -n "$ENV_NAME" bash ./geom/gui/tests/run_gui_tests.sh
 
 create_uninstall_script
 
-echo  "  Installation complete!"
-echo  " "
-echo  "  To uninstall GEOM helpers and the desktop app:"
-echo  "     ./uninstall.sh"
-echo  " "
-echo  "  Next steps"
-echo  "  ----------"
-echo  " "
-echo  "  1. Reload your shell:"
-echo  "     source $SHELL_RC"
-echo  " "
-echo  "  2. Load the GEOM environment:"
-echo  "     geom_load"
-echo  " "
-echo  "  3. Open the GEOM App:"
-echo  "     geomapp"
+echo "  Installation complete!"
+echo " "
+echo "  To uninstall GEOM helpers and the desktop app:"
+echo "     ./uninstall.sh"
+echo " "
+echo "  Next steps"
+echo "  ----------"
+echo " "
+echo "  1. Reload your shell:"
+echo "     source $SHELL_RC"
+echo " "
+echo "  2. Load the GEOM environment:"
+echo "     geom_load"
+echo " "
+echo "  3. Open the GEOM App:"
+echo "     geomapp"
 if [[ "$(uname -s)" == "Darwin" ]]; then
-echo  " "
-echo  "  You can also open GEOM from Spotlight/Finder:"
-echo  "     ~/Applications/GEOM.app"
+echo " "
+echo "  You can also open GEOM from Spotlight/Finder:"
+echo "     ~/Applications/GEOM.app"
 fi
-echo  " "
-echo  "  Check GEOM options using: geom -h"
-echo  " "
+echo " "
+echo "  Check GEOM options using: geom -h"
+echo " "
