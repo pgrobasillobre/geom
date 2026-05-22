@@ -225,6 +225,45 @@ EOF
 
 create_macos_geom_app
 
+create_linux_geom_app() {
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        return 0
+    fi
+
+    DESKTOP_DIR="$HOME/.local/share/applications"
+    ICON_DIR="$HOME/.local/share/icons"
+    DESKTOP_FILE="$DESKTOP_DIR/geom.desktop"
+
+    mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
+
+    if [[ -f "$LOGO_PATH" ]]; then
+        cp "$LOGO_PATH" "$ICON_DIR/geom-logo.png"
+    fi
+
+    cat > "$DESKTOP_FILE" << EOF
+[Desktop Entry]
+Name=GEOM
+Comment=GEOM Structure Studio
+Exec=$ENV_PYTHON $GUI_PATH
+Icon=$ICON_DIR/geom-logo.png
+Type=Application
+Categories=Science;Education;
+Terminal=false
+StartupNotify=true
+EOF
+
+    chmod +x "$DESKTOP_FILE"
+
+    if command -v update-desktop-database &> /dev/null; then
+        update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
+    fi
+
+    echo " Created Linux desktop entry:"
+    echo "   $DESKTOP_FILE"
+}
+
+create_linux_geom_app
+
 create_uninstall_script() {
     cat > "$GEOM_ROOT/uninstall.sh" << 'UNINSTALL_EOF'
 #!/bin/bash
@@ -298,6 +337,19 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     fi
 fi
 
+if [[ "$(uname -s)" == "Linux" ]]; then
+    DESKTOP_FILE="$HOME/.local/share/applications/geom.desktop"
+    ICON_FILE="$HOME/.local/share/icons/geom-logo.png"
+    if [[ -f "$DESKTOP_FILE" ]]; then
+        rm -f "$DESKTOP_FILE"
+        echo " Removed $DESKTOP_FILE"
+    fi
+    if [[ -f "$ICON_FILE" ]]; then
+        rm -f "$ICON_FILE"
+        echo " Removed $ICON_FILE"
+    fi
+fi
+
 if command -v conda &> /dev/null; then
     if conda info --envs | grep -q "^$ENV_NAME"; then
         read -p " Remove conda environment '$ENV_NAME'? (y/N): " REMOVE_ENV
@@ -346,6 +398,10 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 echo " "
 echo "  You can also open GEOM from Spotlight/Finder:"
 echo "     ~/Applications/GEOM.app"
+fi
+if [[ "$(uname -s)" == "Linux" ]]; then
+echo " "
+echo "  You can also open GEOM from your desktop application launcher."
 fi
 echo " "
 echo "  Check GEOM options using: geom -h"

@@ -25,4 +25,5 @@ This script will:
  - Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
  - Set up a virtual environment named geom_env with the necessary dependencies.
  - Configure environment variables and aliases for running **GEOM**.
+ - Build the **GEOM Structure Studio** desktop app (macOS: ``~/Applications/GEOM.app``; Linux/WSL: ``~/.local/share/applications/geom.desktop``).
 

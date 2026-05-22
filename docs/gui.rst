@@ -19,8 +19,11 @@ Launching the App
 
    geomapp
 
-**macOS app** — the installer creates a native ``.app`` bundle at ``~/Applications/GEOM.app``.
+**macOS** — the installer creates a native ``.app`` bundle at ``~/Applications/GEOM.app``.
 Open it directly from Finder or Spotlight.
+
+**Linux / WSL** — the installer registers a ``.desktop`` entry at
+``~/.local/share/applications/geom.desktop``. Open GEOM from your application launcher.
 
 
 Generator

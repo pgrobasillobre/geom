@@ -52,12 +52,13 @@ This script will:
  - Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
  - Set up a virtual environment named geom_env with the necessary dependencies.
  - Configure environment variables and aliases for running **GEOM**.
- - Build the **GEOM Structure Studio** desktop app (macOS only).
+ - Build the **GEOM Structure Studio** desktop app (macOS and Linux/WSL).
 
 After installation, the GUI can be launched in two ways:
 
 - **Terminal**: load the environment with `geom_load`, then run `geomapp`.
-- **macOS app**: open `~/Applications/GEOM.app` directly from Finder or Spotlight.
+- **macOS**: open `~/Applications/GEOM.app` directly from Finder or Spotlight.
+- **Linux / WSL**: open GEOM from your desktop application launcher (the installer registers a `.desktop` entry).
 
 ## Activate the Environment
 
@@ -119,9 +120,10 @@ After loading the environment with `geom_load`:
 geomapp
 ```
 
-### Launch as a macOS app
+### Launch as a desktop app
 
-On macOS, the installer creates a native `.app` bundle at `~/Applications/GEOM.app`. Open it from Spotlight or Finder.
+- **macOS** — the installer creates a native `.app` bundle at `~/Applications/GEOM.app`. Open it from Spotlight or Finder.
+- **Linux / WSL** — the installer registers a `.desktop` entry at `~/.local/share/applications/geom.desktop`. Open GEOM from your application launcher.
 
 ### What you can do
 
