@@ -107,40 +107,6 @@ geom -create -sphere Ag 30
 geom -create -graphene rib 50 20
 ```
 
-## Starting the AI Assistant
-
-GEOM now includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
-
-This assistant is built using [Microsoft's AutoGen framework](https://github.com/microsoft/autogen), which enables a multi-agent system to interface with OpenAI’s language models and run commands dynamically.
-
-### 1. Export your OpenAI API key
-
-The assistant requires access to **OpenAI's LLMs**. Make sure you have your API key set:
-
-```
-export OPENAI_API_KEY=your-api-key-here
-```
-
-> You can obtain an API key from https://platform.openai.com/account/api-keys
-
-### 2. Start the assistant
-
-To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_load`) and run:
-
-```
-ai_geom
-```
-
-You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometry creation:
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assistant.png" width="600">
-</p>
-
-
-The assistant will automatically create and execute the corresponding GEOM command for you.
-
-
 ## GEOM Structure Studio
 
 GEOM includes a native desktop GUI — **GEOM Structure Studio** — for interactive nanoparticle and graphene creation, 3D visualization, and structure manipulation.
@@ -164,8 +130,42 @@ On macOS, the installer creates a native `.app` bundle at `~/Applications/GEOM.a
 - **Manipulator** — translate, rotate, mirror (enantiomer), and center structures. Pair mode sets a controlled distance between two loaded structures along any axis.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geomapp.png" width="800">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/gui-creation/docs/_static/geomapp.png" width="800">
 </p>
+
+
+## Starting the AI Assistant
+
+GEOM now includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
+
+This assistant is built using [Microsoft’s AutoGen framework](https://github.com/microsoft/autogen), which enables a multi-agent system to interface with OpenAI’s language models and run commands dynamically.
+
+### 1. Export your OpenAI API key
+
+The assistant requires access to **OpenAI’s LLMs**. Make sure you have your API key set:
+
+```
+export OPENAI_API_KEY=your-api-key-here
+```
+
+> You can obtain an API key from https://platform.openai.com/account/api-keys
+
+### 2. Start the assistant
+
+To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_load`) and run:
+
+```
+ai_geom
+```
+
+You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometry creation:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assistant.png" width="600">
+</p>
+
+
+The assistant will automatically create and execute the corresponding GEOM command for you.
 
 
 ## Running Tests
