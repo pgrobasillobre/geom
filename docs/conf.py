@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'geom'
-copyright = '2025, Pablo Grobas Illobre'
+copyright = '2026, Pablo Grobas Illobre'
 author = 'Pablo Grobas Illobre'
-release = '1.0.0'
+release = '2.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches:
+      - main
+      - master
+      - gui-creation
+
+jobs:
+  tests:
+    name: Command and GUI tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Qt runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 \
+            libgl1 \
+            libglu1-mesa \
+            libxkbcommon-x11-0 \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-shape0 \
+            libxcb-xinerama0
+
+      - name: Set up conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: geom_env
+          environment-file: environment.yml
+          conda-remove-defaults: true
+          miniforge-version: latest
+          use-mamba: true
+
+      - name: Install GEOM package
+        run: |
+          conda run -n geom_env python -m pip install --upgrade pip setuptools wheel
+          conda run -n geom_env python -m pip install --editable ".[ui,cad,viz]" --config-settings editable_mode=compat
+
+      - name: Run GEOM command tests
+        run: |
+          set +e
+          conda run -n geom_env bash ./geom/tests/run_all_tests.sh > command-tests.log 2>&1
+          status=$?
+          cat command-tests.log
+          if [ "$status" -ne 0 ]; then
+            python - <<'PY'
+          from pathlib import Path
+
+          message = Path("command-tests.log").read_text(errors="replace")[-6000:]
+          message = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::error title=GEOM command tests failed::{message}")
+          PY
+            exit "$status"
+          fi
+
+      - name: Run GEOM GUI tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: conda run -n geom_env bash ./geom/gui/tests/run_gui_tests.sh

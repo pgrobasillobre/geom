@@ -1,26 +1,17 @@
 # GEOM – Geometry File Management
 
+**GEOM** is a tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research, with both a command-line interface and a native desktop GUI.
 
-[![PyPI version](https://img.shields.io/pypi/v/geom-x.svg)](https://pypi.org/project/geom-x/)
-
-**GEOM** is a command-line tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research.
-
-**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v2.0.0)**
+**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v2.1.0)**
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo-rdkit.png" width="600">
 </p>
 
 
-## Publications
-
-GEOM has been cited in the following research paper(s):
-
-- Giovannini, T.; **Grobas Illobre, P.**; Lafiosca, P.; Nicoli, L.; Bonatti, L.; Corni, S.; Cappelli, C. *plasmonX: an Open-Source Code for Nanoplasmonics.* **Comput. Phys. Commun.** *2026*, **110035**. https://doi.org/10.1016/j.cpc.2026.110035
-
-
 ## Features
 
+- **GEOM Structure Studio**: native desktop GUI for interactive nanoparticle and graphene generation, 3D visualization, and structure manipulation.
 - **RDKit tools**: molecular visualization, file conversion, force field optimization, and conformers generation.
 - **AI Assistant for nanoparticle and graphene creation**
 - **Geometry Transformations**: Translation, rotation, merging, and specular (mirror) transformations.
@@ -30,21 +21,13 @@ GEOM has been cited in the following research paper(s):
 - **Minimum Distance Calculation** between XYZ geometries.
 - **Geometrical Center Computation**.
 
+
 ## Installation
 
-GEOM can be installed in **two** supported ways:
+GEOM requires **Python 3.8+**. All dependencies are managed by conda via `environment.yml`.
 
-- **pip (PyPI)**: best for quick installs, CI, and lightweight usage.
-- **conda (recommended for scientific stacks)**: best if you want the *full* ecosystem.
+### Set up the environment
 
-> On PyPI, the project name is **`geom-x`** (the import/module name is still `geom`).
-
-### Option A — Install via pip (PyPI)
-
-Create/activate an environment first (venv or conda), then:
-
-```bash
-pip install geom-x
 ```
 
 Quick sanity check:
@@ -64,28 +47,25 @@ GEOM uses **Conda** to set up a virtual environment for your project. To install
 
 This script will:
 
- - Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
- - Set up a virtual environment named `geom_env` with the necessary dependencies.
- - Configure environment variables and aliases for running **GEOM**.
+- Check if **Miniconda** or **Anaconda** is installed. If not, it will prompt you to install Miniconda.
+- Set up a conda environment named `geom_env` with all dependencies.
+- Configure shell aliases for running GEOM.
+- Build the **GEOM Structure Studio** desktop app (macOS and Linux/WSL).
 
 
-## Activate the Environment
+## Quick Start
 
-After installation, load the GEOM environment by running:
+Load the GEOM environment:
 
 ```
 geom_load
 ```
 
-This will set the necessary aliases and environment variables to run the tool properly.
-
-Once the environment is set up, run the following command to see the available options:
+See all available options:
 
 ```
 geom -h
 ```
-
-This will display the help menu with all the available commands and their descriptions.
 
 Example commands:
 
@@ -100,75 +80,94 @@ geom -rdkit -i tyrosine.mol -o tyrosine.pdb
 ```
 
 - **Rotate geometry 90 degrees** around the Y-axis:
-
 ```
 geom -r1 90 geom.xyz origin_CM_yes +y
 ```
 
-- **Generate** a nanoparticle sphere:
-
+- **Generate a nanoparticle sphere:**
 ```
 geom -create -sphere Ag 30
 ```
 
-- **Generate** a graphene ribbon:
-
+- **Generate a graphene ribbon:**
 ```
 geom -create -graphene rib 50 20
 ```
 
+
+## GEOM Structure Studio
+
+GEOM includes a native desktop GUI — **GEOM Structure Studio** — for interactive nanoparticle and graphene creation, 3D visualization, and structure manipulation.
+
+### Launch
+
+- **Terminal** — load the environment with `geom_load`, then run `geomapp`.
+- **macOS** — open `~/Applications/GEOM.app` directly from Finder or Spotlight.
+- **Linux / WSL** — open GEOM from your desktop application launcher (the installer registers a `.desktop` entry).
+
+### What you can do
+
+- **Generator** — create nanoparticles (sphere, rod, tip, pyramid, cone, icosahedron, and more) and graphene structures (disk, ribbon, ring, triangle) with interactive parameter controls. Supports alloy, dimer, bowtie, and core-shell configurations.
+- **Viewer** — load XYZ, PDB, or SMILES structures via file picker or drag-and-drop. Interactive 3D view with VdW/CPK rendering, atom selection expressions (`x > 0 and name C`), and adjustable sphere size, bond width, and resolution.
+- **Manipulator** — translate, rotate, mirror (enantiomer), and center structures. Pair mode sets a controlled distance between two loaded structures along any axis.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/branch-v2.1.0/docs/_static/geomapp.png" width="800">
+</p>
+
+
 ## Starting the AI Assistant
 
-GEOM now includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
+GEOM includes an **AI-powered assistant** that understands natural language, translates it into valid GEOM CLI commands, and executes them automatically.
 
-This assistant is built using [Microsoft's AutoGen framework](https://github.com/microsoft/autogen), which enables a multi-agent system to interface with OpenAI’s language models and run commands dynamically.
+This assistant is built using [Microsoft's AutoGen framework](https://github.com/microsoft/autogen), which enables a multi-agent system to interface with OpenAI's language models and run commands dynamically.
 
 ### 1. Export your OpenAI API key
-
-The assistant requires access to **OpenAI's LLMs**. Make sure you have your API key set:
 
 ```
 export OPENAI_API_KEY=your-api-key-here
 ```
 
-> You can obtain an API key from https://platform.openai.com/account/api-keys
+> Obtain an API key at https://platform.openai.com/account/api-keys
 
 ### 2. Start the assistant
-
-To launch the chat-based assistant, load the GEOM environment (i.e., with `geom_load`) and run:
 
 ```
 ai_geom
 ```
 
-You’ll be greeted with a ChatGPT-like chat prompt where you can type your requests for geometry creation:
-
 <p align="center">
   <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/ai_assistant.png" width="600">
 </p>
-
 
 The assistant will automatically create and execute the corresponding GEOM command for you.
 
 
 ## Running Tests
 
-The `./install.sh` script automatically runs tests to ensure everything is set up correctly.
-
-
-To manually run the tests again:
+Tests run automatically during installation. To run them manually:
 
 ```
 ./geom/tests/run_all_tests.sh
 ```
 
+
 ## License
 
 GEOM is licensed under the **GNU General Public License v3.0**.
 
+
 ## Funding
 
-This project has been supported by the **FARE 2020** program — *"Framework per l’attrazione e il rafforzamento delle eccellenze per la ricerca in Italia."*
+This project has been supported by the **FARE 2020** program — *"Framework per l'attrazione e il rafforzamento delle eccellenze per la ricerca in Italia."*
+
+
+## Publications
+
+GEOM has been used in the following research paper(s):
+
+- Giovannini, T.; **Grobas Illobre, P.**; Lafiosca, P.; Nicoli, L.; Bonatti, L.; Corni, S.; Cappelli, C. *plasmonX: an Open-Source Code for Nanoplasmonics.* **Comput. Phys. Commun.** *2026*, **110035**. https://doi.org/10.1016/j.cpc.2026.110035
+
 
 ## Contact
 

@@ -1,6 +1,6 @@
 [project]
-name = "geom-x"
-version = "2.0.1"
+name = "geom"
+version = "2.1.0"
 description = "Include RDKit for molecular manipulation."
 readme = "README.md"
 authors = [{ name = "Pablo Grobas Illobre", email = "pgrobasillobre@gmail.com" }]
@@ -43,6 +43,7 @@ Documentation = "https://github.com/pgrobasillobre/geom/wiki"
 
 [project.scripts]
 geom = "geom.__main__:main"
+geom-gui = "geom.gui.structure_gui:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -53,4 +54,3 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["geom", "geom.*"]
-

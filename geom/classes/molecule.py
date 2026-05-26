@@ -160,6 +160,49 @@ class molecule:
       return(self)
 
 
+   # ------------------------------------------- #
+   # ------- Remove duplicate XYZ entries ------ #
+   
+   def remove_duplicate_xyz(self, decimals=8):
+      """
+      Removes duplicate atomic coordinates from the molecule.
+
+      Args:
+          decimals (int): Number of decimal places used to compare coordinates.
+
+      Returns:
+          molecule: Updated molecule object without duplicate XYZ entries.
+
+      Notes:
+          - The first occurrence of each coordinate is preserved.
+          - Atom labels remain aligned with their corresponding XYZ columns.
+      """
+
+      if self.nAtoms == 0:
+         return(self)
+
+      xyz_rows = np.round(self.xyz.T, decimals=decimals)
+      _, unique_indices = np.unique(xyz_rows, axis=0, return_index=True)
+      keep_atoms = np.sort(unique_indices)
+
+      if len(keep_atoms) == self.nAtoms:
+         return(self)
+
+      self.xyz = self.xyz[:, keep_atoms]
+      self.nAtoms = len(keep_atoms)
+
+      if len(self.atoms) == len(xyz_rows):
+         self.atoms = [self.atoms[i] for i in keep_atoms]
+      else:
+         self.atoms = self.atoms[:self.nAtoms]
+
+      self.xyz_center = np.mean(self.xyz, axis=1)
+      self.xyz_max = np.max(self.xyz, axis=1)
+      self.xyz_min = np.min(self.xyz, axis=1)
+
+      return(self)
+
+
    # ------------------------------------------------- #
    # ------- Translate geometry along dir_axis ------- #
    
@@ -1173,5 +1216,4 @@ class molecule:
           output.error(f"{len(dangling_atoms)} dangling atoms on generated metal structure could not be eliminated after {max_iterations} iterations.")
 
       return self
-
 
