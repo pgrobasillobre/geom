@@ -12,6 +12,8 @@ miniconda.sh
 docs/build
 
 geom.egg-info/
+geom_x.egg-info/
+uninstall.sh
 build/
 venv/
 

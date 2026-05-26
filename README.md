@@ -99,7 +99,7 @@ GEOM includes a native desktop GUI — **GEOM Structure Studio** — for interac
 - **Manipulator** — translate, rotate, mirror (enantiomer), and center structures. Pair mode sets a controlled distance between two loaded structures along any axis.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/gui-creation/docs/_static/geomapp.png" width="800">
+  <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/branch-v2.1.0/docs/_static/geomapp.png" width="800">
 </p>
 
 
