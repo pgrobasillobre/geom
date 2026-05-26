@@ -2,7 +2,7 @@
 
 **GEOM** is a tool for creating, modifying, and analyzing XYZ geometry files. It provides **geometry transformations, nanoparticle generation, and graphene structure creation** for computational research, with both a command-line interface and a native desktop GUI.
 
-**[View the Documentation](https://geom-grobas.readthedocs.io/en/latest)**
+**[View the Documentation](https://geom-grobas.readthedocs.io/en/branch-v2.1.0)**
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/pgrobasillobre/geom/master/docs/_static/geom-logo-rdkit.png" width="600">
@@ -29,19 +29,6 @@ GEOM requires **Python 3.8+**. All dependencies are managed by conda via `enviro
 ### Set up the environment
 
 ```
-
-Quick sanity check:
-
-```bash
-python -c "import geom; print('geom imported OK')"
-geom -h
-```
-
-### Option B — Install via Conda (recommended for full scientific setups)
-
-GEOM uses **Conda** to set up a virtual environment for your project. To install it and set up your environment, run:
-
-```bash
 ./install.sh
 ```
 
