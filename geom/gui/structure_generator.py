@@ -285,7 +285,7 @@ def _newest_generated_xyz(results_dir: Path, before: dict[Path, int]) -> Path:
     if not candidates:
         raise RuntimeError("GEOM finished without producing an XYZ file.")
 
-    return max(candidates, key=lambda path: path.stat().st_mtime_ns)
+    return max(candidates, key=lambda path: (path.stat().st_mtime_ns, path.name))
 
 
 def read_xyz(path: Path) -> tuple[AtomRecord, ...]:
